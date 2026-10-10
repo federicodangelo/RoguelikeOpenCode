@@ -2,11 +2,15 @@ import { MAP_W, MAP_H, type GameMap } from "./mapgen/common.ts";
 
 export const FOV_RADIUS = 8;
 
-const QUADRANTS: [number, number, number, number][] = [
+const OCTANTS: [number, number, number, number][] = [
   [1, 0, 0, -1],
   [1, 0, 0, 1],
-  [-1, 0, 0, 1],
   [-1, 0, 0, -1],
+  [-1, 0, 0, 1],
+  [0, 1, -1, 0],
+  [0, 1, 1, 0],
+  [0, -1, -1, 0],
+  [0, -1, 1, 0],
 ];
 
 export function computeFOV(map: GameMap, ox: number, oy: number, radius = FOV_RADIUS): Set<number> {
@@ -16,7 +20,7 @@ export function computeFOV(map: GameMap, ox: number, oy: number, radius = FOV_RA
     const c = map.cells[y]![x]!;
     return c === "wall" || c === "doorClosed";
   };
-  for (const [xx, xy, yx, yy] of QUADRANTS) {
+  for (const [xx, xy, yx, yy] of OCTANTS) {
     castLight(1, 0, 1, ox, oy, radius, xx, xy, yx, yy, visible, isOpaque);
   }
   return visible;
@@ -42,10 +46,10 @@ function castLight(
 
   for (let dist = row; dist <= radius; dist++) {
     let blocked = false;
-    for (let col = -dist; col <= dist; col++) {
+    for (let col = 0; col <= dist; col++) {
       const lSlope = (col - 0.5) / (dist + 0.5);
       const rSlope = (col + 0.5) / (dist + 0.5);
-      if (startSlope < rSlope || endSlope > lSlope) continue;
+      if (lSlope > startSlope || rSlope < endSlope) continue;
 
       const mx = ox + xx * dist + xy * col;
       const my = oy + yx * dist + yy * col;
@@ -58,12 +62,12 @@ function castLight(
           nextStart = lSlope;
         } else {
           blocked = false;
-          startSlope = nextStart;
+          endSlope = nextStart;
         }
       } else if (isOpaque(mx, my) && dist < radius) {
         blocked = true;
-        castLight(startSlope, rSlope, dist + 1, ox, oy, radius, xx, xy, yx, yy, visible, isOpaque);
-        nextStart = lSlope;
+        castLight(lSlope, endSlope, dist + 1, ox, oy, radius, xx, xy, yx, yy, visible, isOpaque);
+        nextStart = rSlope;
       }
     }
     if (blocked) break;
