@@ -55,6 +55,13 @@ PHASE 2 - Dungeon generation [DONE]
     - connect with L-shaped corridors
     - place stairs down, doors, items
 [x] 2.3 Level progression: stairs descend to a new, harder level
+[x] 2.4 Multiple map generators, cycled per depth (src/mapgen/):
+    - BSP: recursive space splitting, room per leaf, sibling corridors
+    - Cellular automata: random fill + neighbor smoothing -> organic caves
+    - Delaunay triangulation + Prim MST + 15% extra loop edges
+    - Random walk (drunkard's walk) carving until open quota
+[x] 2.5 Stairs up: new floors get an up-stair at the descent point;
+    floors are cached per depth so going back returns the same map
 
 PHASE 3 - Entities & FOV
 ------------------------
