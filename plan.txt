@@ -9,14 +9,14 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 0 in progress
+STATUS: PHASE 0 done -> PHASE 1 next
 
-PHASE 0 - Setup
----------------
-1. Install Bun (winget install Oven-sh.Bun)
-2. bun init -> package.json, tsconfig.json (strict mode)
-3. Install dev deps: typescript, @types/bun
-4. Project layout:
+PHASE 0 - Setup [DONE]
+----------------------
+[x] 1. Install Bun (winget install Oven-sh.Bun) - v1.4.3
+[x] 2. bun init -> package.json, tsconfig.json (strict mode)
+[x] 3. Install dev deps: typescript, @types/bun
+[x] 4. Project layout:
    src/
      main.ts          - entry point, game loop
      game.ts          - game state & turn manager
@@ -31,7 +31,8 @@ PHASE 0 - Setup
    public/
      index.html
      assets/tiles.png - 32x32 tileset
-5. Scripts: dev (bun run), build (bun build --bundle), typecheck
+[x] 5. Scripts: dev (bun run tools/dev.ts, on-the-fly bundle),
+       build (tools/build.ts -> dist/), typecheck (tsc --noEmit)
 
 PHASE 1 - Rendering core
 ------------------------
