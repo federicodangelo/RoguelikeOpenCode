@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "bun run tools/dev.ts",
+    "tiles": "bun run tools/make-tiles.ts",
     "build": "bun run tools/build.ts",
     "typecheck": "tsc --noEmit"
   },
