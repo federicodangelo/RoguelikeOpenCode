@@ -71,22 +71,26 @@ export function carveCorridor(cells: CellType[][], a: Point, b: Point, rng: RNG)
 }
 
 export function placeDoors(cells: CellType[][], rooms: Room[], rng: RNG): void {
+  if (rooms.length === 0) return;
   const inRoom = (x: number, y: number): boolean =>
     rooms.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
-  const isWall = (x: number, y: number): boolean => cells[y]![x] === "wall";
 
-  for (let y = 1; y < MAP_H - 1; y++) {
-    for (let x = 1; x < MAP_W - 1; x++) {
-      if (cells[y]![x] !== "floor" || inRoom(x, y)) continue;
-      const wallL = isWall(x - 1, y);
-      const wallR = isWall(x + 1, y);
-      const wallU = isWall(x, y - 1);
-      const wallD = isWall(x, y + 1);
-      const horizontalPinch = wallL && wallR && !wallU && !wallD;
-      const verticalPinch = wallU && wallD && !wallL && !wallR;
-      if (horizontalPinch || verticalPinch) {
-        cells[y]![x] = rng.next() < 0.6 ? "doorClosed" : "floor";
+  for (const r of rooms) {
+    const entrances: Point[] = [];
+    for (let x = r.x - 1; x <= r.x + r.w; x++) {
+      for (const y of [r.y - 1, r.y + r.h]) {
+        if (cells[y]?.[x] === "floor") entrances.push({ x, y });
       }
+    }
+    for (let y = r.y - 1; y <= r.y + r.h; y++) {
+      for (const x of [r.x - 1, r.x + r.w]) {
+        if (cells[y]?.[x] === "floor") entrances.push({ x, y });
+      }
+    }
+    for (const e of entrances) {
+      if (cells[e.y]![e.x] !== "floor") continue;
+      if (inRoom(e.x, e.y)) continue;
+      if (rng.next() < 0.5) cells[e.y]![e.x] = "doorClosed";
     }
   }
 }

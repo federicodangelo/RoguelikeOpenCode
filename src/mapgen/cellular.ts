@@ -50,7 +50,7 @@ function tryCave(rng: RNG): ReturnType<typeof emptyCells> | null {
 
   let open = 0;
   let spawn: Point | null = null;
-  for (let y = 1; y < MAP_H - 1 && !spawn; y++) {
+  for (let y = 1; y < MAP_H - 1; y++) {
     for (let x = 1; x < MAP_W - 1; x++) {
       if (cells[y]![x] === "floor") {
         open++;
@@ -58,7 +58,7 @@ function tryCave(rng: RNG): ReturnType<typeof emptyCells> | null {
       }
     }
   }
-  if (!spawn || open < 250) return null;
+  if (!spawn || open < 300 || open > 850) return null;
   return cells;
 }
 
