@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 1 done -> PHASE 2 next
+STATUS: PHASE 2 done -> PHASE 3 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -45,16 +45,16 @@ PHASE 1 - Rendering core [DONE]
     16x16 pixel art scaled 2x; run `bun run tiles` to regenerate)
 [x] 1.3 Game loop: requestAnimationFrame, dirty-flag redraw
 
-PHASE 2 - Dungeon generation [NEXT]
+PHASE 2 - Dungeon generation [DONE]
 ----------------------------------
-[ ] 2.1 Render layers: draw each cell in layer order
+[x] 2.1 Render layers: draw each cell in layer order
     (floor -> features(walls/doors/stairs/items) -> entities -> overlay/FOV)
     via a CellLayers structure in render.ts
-[ ] 2.2 Room-and-corridor algorithm:
+[x] 2.2 Room-and-corridor algorithm:
     - random non-overlapping rooms (minimap 40x30)
     - connect with L-shaped corridors
     - place stairs down, doors, items
-[ ] 2.3 Level progression: stairs descend to a new, harder level
+[x] 2.3 Level progression: stairs descend to a new, harder level
 
 PHASE 3 - Entities & FOV
 ------------------------
@@ -96,7 +96,7 @@ PHASE 8 - Verification
 MILESTONES (each = one commit)
 ------------------------------
 [x] M1: project scaffold + canvas shows a test tilemap
-[ ] M2: dungeon generated and rendered (with render layers)
+[x] M2: dungeon generated and rendered (with render layers)
 [ ] M3: player moves with FOV
 [ ] M4: monsters + combat work
 [ ] M5: items + UI + game over loop
