@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 2 done -> PHASE 3 next
+STATUS: PHASE 3 done -> PHASE 4 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -65,9 +65,9 @@ PHASE 2 - Dungeon generation [DONE]
 
 PHASE 3 - Entities & FOV
 ------------------------
-[ ] 3.1 Entity system: player + monsters (HP, ATK, DEF, sprite, AI flag)
-[ ] 3.2 Turn-based loop: player acts -> monsters act
-[ ] 3.3 FOV: recursive shadowcasting; unexplored = black,
+[x] 3.1 Entity system: player + monsters (HP, ATK, DEF, sprite, AI flag)
+[x] 3.2 Turn-based loop: player acts -> monsters act
+[x] 3.3 FOV: recursive shadowcasting; unexplored = black,
     explored-but-unseen = dimmed memory
 
 PHASE 4 - Combat & AI
