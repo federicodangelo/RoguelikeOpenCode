@@ -1,5 +1,7 @@
 import { T, TILE_SIZE } from "./tiles.ts";
 import { Tileset, drawScene, type CellView } from "./render.ts";
+import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
+import { RNG } from "./rng.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -21,73 +23,52 @@ function fitCanvas(): void {
 window.addEventListener("resize", fitCanvas);
 fitCanvas();
 
-const CHAR_TO_FEATURE: Record<string, number> = {
-  "#": T.Wall,
-  "<": T.Stairs,
-  "+": T.DoorClosed,
-  "!": T.Potion,
-  "/": T.Sword,
-  "[": T.Shield,
-  "$": T.Gold,
-  "%": T.Corpse,
-};
-
-const CHAR_TO_ENTITY: Record<string, number> = {
-  "@": T.Player,
-  r: T.Rat,
-  g: T.Goblin,
-  s: T.Skeleton,
-};
-
-const testMap = [
-  "##############################",
-  "#....#.........#.............#",
-  "#....#.........#....!........#",
-  "#....#....gg...#.............#",
-  "#....#.........#....[........#",
-  "#<...#.........#.............#",
-  "#....#.........#.............#",
-  "#....#.........#.............#",
-  "#....+....r....+.....$.......#",
-  "#....#.........#.............#",
-  "#.@..#.........#.............#",
-  "#....#.........#.............#",
-  "#....#....s....#.............#",
-  "#....#.........#.............#",
-  "#....#.........#.............#",
-  "#....#.........#.............#",
-  "#....#.........#.............#",
-  "#....#.........#.............#",
-  "#....#.........#.............#",
-  "##############################",
-];
-
-for (const row of testMap) {
-  if (row.length !== VIEW_COLS) {
-    throw new Error(`test map row has ${row.length} cols, expected ${VIEW_COLS}`);
-  }
-}
-
-function buildTestScene(): CellView[][] {
-  return testMap.map((row) =>
-    [...row].map((ch): CellView => {
-      const view: CellView = { floor: T.Floor };
-      const feature = CHAR_TO_FEATURE[ch];
-      if (feature !== undefined) view.feature = feature;
-      const entity = CHAR_TO_ENTITY[ch];
-      if (entity !== undefined) view.entity = entity;
-      return view;
-    }),
-  );
-}
-
+const BASE_SEED = 1337;
+let depth = 1;
+let map: GameMap = generateMap(new RNG(BASE_SEED), depth);
+let player = { x: map.spawn.x, y: map.spawn.y };
 let dirty = true;
+
+function camera(): { x: number; y: number } {
+  return {
+    x: Math.max(0, Math.min(player.x - ((VIEW_COLS - 1) >> 1), MAP_W - VIEW_COLS)),
+    y: Math.max(0, Math.min(player.y - ((VIEW_ROWS - 1) >> 1), MAP_H - VIEW_ROWS)),
+  };
+}
+
+function buildScene(): CellView[][] {
+  const cam = camera();
+  const scene: CellView[][] = [];
+  for (let vy = 0; vy < VIEW_ROWS; vy++) {
+    const row: CellView[] = [];
+    for (let vx = 0; vx < VIEW_COLS; vx++) {
+      const mx = cam.x + vx;
+      const my = cam.y + vy;
+      const cell = map.cells[my]![mx]!;
+      const view: CellView = { floor: T.Floor };
+      if (cell === "wall") view.feature = T.Wall;
+      else if (cell === "stairs") view.feature = T.Stairs;
+      else if (cell === "doorClosed") view.feature = T.DoorClosed;
+      else if (cell === "doorOpen") view.feature = T.DoorOpen;
+      const item = map.items.find((i) => i.x === mx && i.y === my);
+      if (item) view.feature = item.tile;
+      row.push(view);
+    }
+    scene.push(row);
+  }
+  const px = player.x - cam.x;
+  const py = player.y - cam.y;
+  if (px >= 0 && px < VIEW_COLS && py >= 0 && py < VIEW_ROWS) {
+    scene[py]![px]!.entity = T.Player;
+  }
+  return scene;
+}
 
 async function main(): Promise<void> {
   const tiles = await Tileset.load("assets/tiles.png");
 
   function draw(): void {
-    drawScene(ctx, tiles, buildTestScene());
+    drawScene(ctx, tiles, buildScene());
     dirty = false;
   }
 
@@ -96,10 +77,6 @@ async function main(): Promise<void> {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-
-  window.addEventListener("keydown", () => {
-    dirty = true;
-  });
 }
 
 main();
