@@ -1,5 +1,5 @@
 import { T, TILE_SIZE } from "./tiles.ts";
-import { Tileset } from "./render.ts";
+import { Tileset, drawScene, type CellView } from "./render.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -21,20 +21,22 @@ function fitCanvas(): void {
 window.addEventListener("resize", fitCanvas);
 fitCanvas();
 
-const CHAR_TO_TILE: Record<string, number> = {
+const CHAR_TO_FEATURE: Record<string, number> = {
   "#": T.Wall,
-  ".": T.Floor,
   "<": T.Stairs,
   "+": T.DoorClosed,
-  "@": T.Player,
-  r: T.Rat,
-  g: T.Goblin,
-  s: T.Skeleton,
   "!": T.Potion,
   "/": T.Sword,
   "[": T.Shield,
   "$": T.Gold,
   "%": T.Corpse,
+};
+
+const CHAR_TO_ENTITY: Record<string, number> = {
+  "@": T.Player,
+  r: T.Rat,
+  g: T.Goblin,
+  s: T.Skeleton,
 };
 
 const testMap = [
@@ -66,18 +68,26 @@ for (const row of testMap) {
   }
 }
 
+function buildTestScene(): CellView[][] {
+  return testMap.map((row) =>
+    [...row].map((ch): CellView => {
+      const view: CellView = { floor: T.Floor };
+      const feature = CHAR_TO_FEATURE[ch];
+      if (feature !== undefined) view.feature = feature;
+      const entity = CHAR_TO_ENTITY[ch];
+      if (entity !== undefined) view.entity = entity;
+      return view;
+    }),
+  );
+}
+
 let dirty = true;
 
 async function main(): Promise<void> {
   const tiles = await Tileset.load("assets/tiles.png");
 
   function draw(): void {
-    for (let y = 0; y < VIEW_ROWS; y++) {
-      for (let x = 0; x < VIEW_COLS; x++) {
-        const tile = CHAR_TO_TILE[testMap[y]![x]!];
-        if (tile !== undefined) tiles.drawTile(ctx, tile, x, y);
-      }
-    }
+    drawScene(ctx, tiles, buildTestScene());
     dirty = false;
   }
 

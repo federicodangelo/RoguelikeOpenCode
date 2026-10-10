@@ -1,5 +1,32 @@
 import { SHEET_COLS, TILE_SIZE } from "./tiles.ts";
 
+export interface CellView {
+  floor: number;
+  feature?: number;
+  entity?: number;
+  dim?: boolean;
+}
+
+export function drawScene(
+  ctx: CanvasRenderingContext2D,
+  tileset: Tileset,
+  scene: CellView[][],
+): void {
+  for (let y = 0; y < scene.length; y++) {
+    const row = scene[y]!;
+    for (let x = 0; x < row.length; x++) {
+      const cell = row[x]!;
+      tileset.drawTile(ctx, cell.floor, x, y);
+      if (cell.feature !== undefined) tileset.drawTile(ctx, cell.feature, x, y);
+      if (cell.entity !== undefined) tileset.drawTile(ctx, cell.entity, x, y);
+      if (cell.dim) {
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
+}
+
 export class Tileset {
   private constructor(private readonly img: HTMLImageElement) {}
 
