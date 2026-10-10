@@ -75,23 +75,45 @@ export function placeDoors(cells: CellType[][], rooms: Room[], rng: RNG): void {
   const inRoom = (x: number, y: number): boolean =>
     rooms.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
 
+  const candidates = new Map<string, Point>();
+  const addCandidate = (x: number, y: number, dx: number, dy: number): void => {
+    if (cells[y]?.[x] !== "floor") return;
+    const roomSide = cells[y - dy]?.[x - dx];
+    if (roomSide !== "floor" || !inRoom(x - dx, y - dy)) return;
+    if (cells[y + dy]?.[x + dx] !== "floor") return;
+    const [lx, ly] = dy !== 0 ? [1, 0] : [0, 1];
+    if (cells[y + ly]?.[x + lx] !== "wall") return;
+    if (cells[y - ly]?.[x - lx] !== "wall") return;
+    candidates.set(`${x},${y}`, { x, y });
+  };
+
   for (const r of rooms) {
-    const entrances: Point[] = [];
-    for (let x = r.x - 1; x <= r.x + r.w; x++) {
-      for (const y of [r.y - 1, r.y + r.h]) {
-        if (cells[y]?.[x] === "floor") entrances.push({ x, y });
+    for (let x = r.x; x < r.x + r.w; x++) {
+      addCandidate(x, r.y - 1, 0, -1);
+      addCandidate(x, r.y + r.h, 0, 1);
+    }
+    for (let y = r.y; y < r.y + r.h; y++) {
+      addCandidate(r.x - 1, y, -1, 0);
+      addCandidate(r.x + r.w, y, 1, 0);
+    }
+  }
+
+  const list = [...candidates.values()];
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = rng.int(0, i);
+    [list[i], list[j]] = [list[j]!, list[i]!];
+  }
+  for (const e of list) {
+    if (rng.next() >= 0.5) continue;
+    let adjacentDoor = false;
+    for (const [dx, dy] of DIRS) {
+      if (cells[e.y + dy]?.[e.x + dx] === "doorClosed") {
+        adjacentDoor = true;
+        break;
       }
     }
-    for (let y = r.y - 1; y <= r.y + r.h; y++) {
-      for (const x of [r.x - 1, r.x + r.w]) {
-        if (cells[y]?.[x] === "floor") entrances.push({ x, y });
-      }
-    }
-    for (const e of entrances) {
-      if (cells[e.y]![e.x] !== "floor") continue;
-      if (inRoom(e.x, e.y)) continue;
-      if (rng.next() < 0.5) cells[e.y]![e.x] = "doorClosed";
-    }
+    if (adjacentDoor) continue;
+    cells[e.y]![e.x] = "doorClosed";
   }
 }
 
