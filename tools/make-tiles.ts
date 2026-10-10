@@ -327,6 +327,28 @@ const arts: TileArt[] = [
       "................",
     ],
   },
+  {
+    name: "stairsUp",
+    pal: { ".": C(48, 43, 38), s: C(217, 178, 58), d: C(168, 132, 42) },
+    rows: [
+      "ss              ",
+      "dd              ",
+      "ssss            ",
+      "dddd            ",
+      "ssssss          ",
+      "dddddd          ",
+      "ssssssss        ",
+      "dddddddd        ",
+      "ssssssssss      ",
+      "dddddddddd      ",
+      "ssssssssssss    ",
+      "dddddddddddd    ",
+      "ssssssssssssss  ",
+      "dddddddddddddd  ",
+      "ssssssssssssssss",
+      "dddddddddddddddd",
+    ],
+  },
 ];
 
 for (const art of arts) {

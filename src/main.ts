@@ -24,8 +24,19 @@ window.addEventListener("resize", fitCanvas);
 fitCanvas();
 
 const BASE_SEED = 1337;
+const floors = new Map<number, GameMap>();
+
+function getFloor(d: number, upAt?: { x: number; y: number }): GameMap {
+  let m = floors.get(d);
+  if (!m) {
+    m = generateMap(new RNG(BASE_SEED + d * 7919), d, { upAt });
+    floors.set(d, m);
+  }
+  return m;
+}
+
 let depth = 1;
-let map: GameMap = generateMap(new RNG(BASE_SEED), depth);
+let map: GameMap = getFloor(1);
 let player = { x: map.spawn.x, y: map.spawn.y };
 let dirty = true;
 
@@ -57,9 +68,18 @@ function tryMove(dx: number, dy: number): void {
 
 function descend(): void {
   if (map.cells[player.y]![player.x] !== "stairs") return;
+  const from = map.stairs;
   depth++;
-  map = generateMap(new RNG(BASE_SEED + depth * 7919), depth);
-  player = { x: map.spawn.x, y: map.spawn.y };
+  map = getFloor(depth, from);
+  player = map.upStairs ? { x: map.upStairs.x, y: map.upStairs.y } : { x: map.spawn.x, y: map.spawn.y };
+  dirty = true;
+}
+
+function ascend(): void {
+  if (map.cells[player.y]![player.x] !== "stairsUp" || depth <= 1) return;
+  depth--;
+  map = getFloor(depth);
+  player = { x: map.stairs.x, y: map.stairs.y };
   dirty = true;
 }
 
@@ -73,6 +93,11 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "." || e.key === "Enter") {
     e.preventDefault();
     descend();
+    return;
+  }
+  if (e.key === ",") {
+    e.preventDefault();
+    ascend();
   }
 });
 
@@ -95,6 +120,7 @@ function buildScene(): CellView[][] {
       const view: CellView = { floor: T.Floor };
       if (cell === "wall") view.feature = T.Wall;
       else if (cell === "stairs") view.feature = T.Stairs;
+      else if (cell === "stairsUp") view.feature = T.StairsUp;
       else if (cell === "doorClosed") view.feature = T.DoorClosed;
       else if (cell === "doorOpen") view.feature = T.DoorOpen;
       const item = map.items.find((i) => i.x === mx && i.y === my);
@@ -121,7 +147,7 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth} (${map.algorithm})   arrows move   . descend stairs`;
+    const text = `Depth ${depth} (${map.algorithm})   arrows move   . stairs down   , stairs up`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
