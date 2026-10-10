@@ -349,6 +349,11 @@ const arts: TileArt[] = [
       "dddddddddddddddd",
     ],
   },
+  {
+    name: "black",
+    pal: { K: C(12, 12, 16) },
+    rows: Array.from({ length: GRID }, () => "KKKKKKKKKKKKKKKK"),
+  },
 ];
 
 for (const art of arts) {

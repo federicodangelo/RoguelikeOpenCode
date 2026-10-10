@@ -3,6 +3,7 @@ import { Tileset, drawScene, type CellView } from "./render.ts";
 import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
 import { makePlayer, spawnMonsters, type Entity } from "./entities.ts";
+import { computeFOV } from "./fov.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -42,6 +43,20 @@ let depth = 1;
 let map: GameMap = getFloor(1);
 let player: Entity = makePlayer(map.spawn.x, map.spawn.y);
 let dirty = true;
+
+const exploredByFloor = new Map<number, Set<number>>();
+let visible = new Set<number>();
+
+function refreshFOV(): void {
+  visible = computeFOV(map, player.x, player.y);
+  let explored = exploredByFloor.get(depth);
+  if (!explored) {
+    explored = new Set<number>();
+    exploredByFloor.set(depth, explored);
+  }
+  for (const k of visible) explored.add(k);
+}
+refreshFOV();
 
 function monsters(): Entity[] {
   return monstersByFloor.get(depth)!;
@@ -146,6 +161,7 @@ window.addEventListener("keydown", (e) => {
   }
   if (acted) {
     monstersAct();
+    refreshFOV();
     dirty = true;
   }
 });
@@ -165,6 +181,12 @@ function buildScene(): CellView[][] {
     for (let vx = 0; vx < VIEW_COLS; vx++) {
       const mx = cam.x + vx;
       const my = cam.y + vy;
+      const key = my * MAP_W + mx;
+      const explored = exploredByFloor.get(depth)!.has(key);
+      if (!explored) {
+        row.push({ floor: T.Black });
+        continue;
+      }
       const cell = map.cells[my]![mx]!;
       const view: CellView = { floor: T.Floor };
       if (cell === "wall") view.feature = T.Wall;
@@ -174,8 +196,13 @@ function buildScene(): CellView[][] {
       else if (cell === "doorOpen") view.feature = T.DoorOpen;
       const item = map.items.find((i) => i.x === mx && i.y === my);
       if (item) view.feature = item.tile;
-      const monster = monsters().find((m) => m.alive && m.x === mx && m.y === my);
-      if (monster) view.entity = monster.sprite;
+      const isVisible = visible.has(key);
+      if (isVisible) {
+        const monster = monsters().find((m) => m.alive && m.x === mx && m.y === my);
+        if (monster) view.entity = monster.sprite;
+      } else {
+        view.dim = true;
+      }
       row.push(view);
     }
     scene.push(row);

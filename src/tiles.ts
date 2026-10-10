@@ -17,4 +17,5 @@ export const T = {
   Gold: 12,
   Corpse: 13,
   StairsUp: 14,
+  Black: 15,
 } as const;
