@@ -1,5 +1,10 @@
 # roguelikeopencode
 
+Small test for the capabilities of open source coding models, using:
+- Strata engine (https://github.com/Niko1221/Strata)
+- qwen3.8-flash-next-iq3_xxs 
+- OpenCode (https://opencode.ai/)
+
 To install dependencies:
 
 ```bash
