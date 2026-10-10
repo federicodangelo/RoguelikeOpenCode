@@ -121,7 +121,7 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth}   arrows move   . descend stairs`;
+    const text = `Depth ${depth} (${map.algorithm})   arrows move   . descend stairs`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
