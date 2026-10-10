@@ -30,14 +30,14 @@ let player = { x: map.spawn.x, y: map.spawn.y };
 let dirty = true;
 
 const MOVE_KEYS: Record<string, [number, number]> = {
-  ArrowUp: [0, -1], k: [0, -1],
-  ArrowDown: [0, 1], j: [0, 1],
-  ArrowLeft: [-1, 0], h: [-1, 0],
-  ArrowRight: [1, 0], l: [1, 0],
-  Home: [-1, -1], y: [-1, -1],
-  PageUp: [1, -1], u: [1, -1],
-  End: [-1, 1], b: [-1, 1],
-  PageDown: [1, 1], n: [1, 1],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  Home: [-1, -1],
+  PageUp: [1, -1],
+  End: [-1, 1],
+  PageDown: [1, 1],
 };
 
 function tryMove(dx: number, dy: number): void {
@@ -121,7 +121,7 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth}   arrows/hjkl/yubn move   . descend stairs`;
+    const text = `Depth ${depth}   arrows move   . descend stairs`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
