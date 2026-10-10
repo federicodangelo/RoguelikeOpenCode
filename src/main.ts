@@ -58,57 +58,95 @@ const MOVE_KEYS: Record<string, [number, number]> = {
   PageDown: [1, 1],
 };
 
-function tryMove(dx: number, dy: number): void {
+const AI_RNG = new RNG(BASE_SEED + 999);
+const DIRS4: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+function monsterStep(m: Entity): void {
+  const dx = player.x - m.x;
+  const dy = player.y - m.y;
+  const dist = Math.abs(dx) + Math.abs(dy);
+  const steps: [number, number][] = [];
+
+  if (dist <= 6) {
+    const ax: [number, number] = [Math.sign(dx), 0];
+    const ay: [number, number] = [0, Math.sign(dy)];
+    if (Math.abs(dx) >= Math.abs(dy)) steps.push(ax, ay);
+    else steps.push(ay, ax);
+  } else if (AI_RNG.next() < 0.5) {
+    steps.push(AI_RNG.pick(DIRS4));
+  }
+
+  for (const [sx, sy] of steps) {
+    if (sx === 0 && sy === 0) continue;
+    const nx = m.x + sx;
+    const ny = m.y + sy;
+    const cell = map.cells[ny]?.[nx];
+    if (!cell || cell === "wall" || cell === "doorClosed") continue;
+    if (nx === player.x && ny === player.y) continue;
+    if (monsters().some((o) => o !== m && o.alive && o.x === nx && o.y === ny)) continue;
+    m.x = nx;
+    m.y = ny;
+    return;
+  }
+}
+
+function monstersAct(): void {
+  for (const m of monsters()) {
+    if (m.alive) monsterStep(m);
+  }
+}
+
+function tryMove(dx: number, dy: number): boolean {
   const nx = player.x + dx;
   const ny = player.y + dy;
   const cell = map.cells[ny]?.[nx];
-  if (!cell || cell === "wall") return;
+  if (!cell || cell === "wall") return false;
   if (cell === "doorClosed") {
     map.cells[ny]![nx] = "doorOpen";
-    dirty = true;
-    return;
+    return true;
   }
-  if (monsters().some((m) => m.alive && m.x === nx && m.y === ny)) return;
+  if (monsters().some((m) => m.alive && m.x === nx && m.y === ny)) return false;
   player.x = nx;
   player.y = ny;
-  dirty = true;
+  return true;
 }
 
-function descend(): void {
-  if (map.cells[player.y]![player.x] !== "stairs") return;
+function descend(): boolean {
+  if (map.cells[player.y]![player.x] !== "stairs") return false;
   const from = map.stairs;
   depth++;
   map = getFloor(depth, from);
   const target = map.upStairs ?? map.spawn;
   player.x = target.x;
   player.y = target.y;
-  dirty = true;
+  return true;
 }
 
-function ascend(): void {
-  if (map.cells[player.y]![player.x] !== "stairsUp" || depth <= 1) return;
+function ascend(): boolean {
+  if (map.cells[player.y]![player.x] !== "stairsUp" || depth <= 1) return false;
   depth--;
   map = getFloor(depth);
   player.x = map.stairs.x;
   player.y = map.stairs.y;
-  dirty = true;
+  return true;
 }
 
 window.addEventListener("keydown", (e) => {
+  let acted = false;
   const move = MOVE_KEYS[e.key];
   if (move) {
     e.preventDefault();
-    tryMove(move[0], move[1]);
-    return;
-  }
-  if (e.key === "." || e.key === "Enter") {
+    acted = tryMove(move[0], move[1]);
+  } else if (e.key === "." || e.key === "Enter") {
     e.preventDefault();
-    descend();
-    return;
-  }
-  if (e.key === ",") {
+    acted = descend() || true;
+  } else if (e.key === ",") {
     e.preventDefault();
-    ascend();
+    acted = ascend();
+  }
+  if (acted) {
+    monstersAct();
+    dirty = true;
   }
 });
 
