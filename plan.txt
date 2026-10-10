@@ -52,9 +52,12 @@ PHASE 1 - Rendering core
    (floor, wall, stairs, door, player, monster sprites, items)
 8. Game loop: requestAnimationFrame, dirty-flag redraw
 
-PHASE 2 - Dungeon generation
-----------------------------
-9. Room-and-corridor algorithm:
+PHASE 2 - Dungeon generation [NEXT]
+----------------------------------
+[ ] 9. Render layers: draw each cell in layer order
+   (floor -> features(walls/doors/stairs/items) -> entities -> overlay/FOV)
+   via a CellLayers structure in render.ts
+[ ] 10. Room-and-corridor algorithm:
    - random non-overlapping rooms (minimap 40x30)
    - connect with L-shaped corridors
    - place stairs down, doors, items
