@@ -142,6 +142,29 @@ export function bfsFarthest(cells: CellType[][], start: Point): Point {
   return { x: far % MAP_W, y: Math.floor(far / MAP_W) };
 }
 
+export function bfsDistances(cells: CellType[][], start: Point): Int32Array {
+  const dist = new Int32Array(MAP_W * MAP_H).fill(-1);
+  const startK = start.y * MAP_W + start.x;
+  const queue: number[] = [startK];
+  dist[startK] = 0;
+  while (queue.length > 0) {
+    const k = queue.shift()!;
+    const x = k % MAP_W;
+    const y = Math.floor(k / MAP_W);
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) continue;
+      if (cells[ny]![nx] === "wall") continue;
+      const nk = ny * MAP_W + nx;
+      if (dist[nk] !== -1) continue;
+      dist[nk] = dist[k]! + 1;
+      queue.push(nk);
+    }
+  }
+  return dist;
+}
+
 export function keepLargestRegion(cells: CellType[][]): void {
   const label = new Int32Array(MAP_W * MAP_H).fill(-1);
   const regions: number[][] = [];

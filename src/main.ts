@@ -2,6 +2,7 @@ import { T, TILE_SIZE } from "./tiles.ts";
 import { Tileset, drawScene, type CellView } from "./render.ts";
 import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
+import { makePlayer, spawnMonsters, type Entity } from "./entities.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -25,20 +26,26 @@ fitCanvas();
 
 const BASE_SEED = 1337;
 const floors = new Map<number, GameMap>();
+const monstersByFloor = new Map<number, Entity[]>();
 
 function getFloor(d: number, upAt?: { x: number; y: number }): GameMap {
   let m = floors.get(d);
   if (!m) {
     m = generateMap(new RNG(BASE_SEED + d * 7919), d, { upAt });
     floors.set(d, m);
+    monstersByFloor.set(d, spawnMonsters(m, new RNG(BASE_SEED + d * 7919 + 17), d));
   }
   return m;
 }
 
 let depth = 1;
 let map: GameMap = getFloor(1);
-let player = { x: map.spawn.x, y: map.spawn.y };
+let player: Entity = makePlayer(map.spawn.x, map.spawn.y);
 let dirty = true;
+
+function monsters(): Entity[] {
+  return monstersByFloor.get(depth)!;
+}
 
 const MOVE_KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
@@ -61,6 +68,7 @@ function tryMove(dx: number, dy: number): void {
     dirty = true;
     return;
   }
+  if (monsters().some((m) => m.alive && m.x === nx && m.y === ny)) return;
   player.x = nx;
   player.y = ny;
   dirty = true;
@@ -71,7 +79,9 @@ function descend(): void {
   const from = map.stairs;
   depth++;
   map = getFloor(depth, from);
-  player = map.upStairs ? { x: map.upStairs.x, y: map.upStairs.y } : { x: map.spawn.x, y: map.spawn.y };
+  const target = map.upStairs ?? map.spawn;
+  player.x = target.x;
+  player.y = target.y;
   dirty = true;
 }
 
@@ -79,7 +89,8 @@ function ascend(): void {
   if (map.cells[player.y]![player.x] !== "stairsUp" || depth <= 1) return;
   depth--;
   map = getFloor(depth);
-  player = { x: map.stairs.x, y: map.stairs.y };
+  player.x = map.stairs.x;
+  player.y = map.stairs.y;
   dirty = true;
 }
 
@@ -125,6 +136,8 @@ function buildScene(): CellView[][] {
       else if (cell === "doorOpen") view.feature = T.DoorOpen;
       const item = map.items.find((i) => i.x === mx && i.y === my);
       if (item) view.feature = item.tile;
+      const monster = monsters().find((m) => m.alive && m.x === mx && m.y === my);
+      if (monster) view.entity = monster.sprite;
       row.push(view);
     }
     scene.push(row);
@@ -147,7 +160,7 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth} (${map.algorithm})   arrows move   . stairs down   , stairs up`;
+    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   arrows move   . stairs down   , stairs up`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
