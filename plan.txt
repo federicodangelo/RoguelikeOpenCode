@@ -69,6 +69,9 @@ PHASE 3 - Entities & FOV
 [x] 3.2 Turn-based loop: player acts -> monsters act
 [x] 3.3 FOV: recursive shadowcasting; unexplored = black,
     explored-but-unseen = dimmed memory
+[x] 3.4 Unit test suite (bun test) for rng, tiles, fov, mapgen common,
+    generators, map facade, entities, render (52 tests);
+    fixed nearestOpen to search through walls
 
 PHASE 4 - Combat & AI
 ---------------------

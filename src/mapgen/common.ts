@@ -218,7 +218,7 @@ export function nearestOpen(cells: CellType[][], at: Point): Point | null {
       const ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) continue;
       const nk = ny * MAP_W + nx;
-      if (seen.has(nk) || cells[ny]![nx] === "wall") continue;
+      if (seen.has(nk)) continue;
       seen.add(nk);
       queue.push(nk);
     }
