@@ -1,7 +1,7 @@
 import { TILE_SIZE } from "../core/tiles.ts";
 import { LOGICAL_H, LOGICAL_W, VIEW_COLS, VIEW_ROWS } from "../core/constants.ts";
 import { drawPixelText, drawPixelTextRight, pixelTextWidth } from "./pixel-font.ts";
-import { drawIcon } from "./icons.ts";
+import { drawIcon, type Iconset } from "./icons.ts";
 import { minimapRect } from "./minimap.ts";
 import type { Archetype, Entity, Status, StatusKind } from "../core/entities.ts";
 import type { Inventory, ItemKind } from "../core/items.ts";
@@ -18,6 +18,7 @@ export interface HudData {
   showInventory: boolean;
   lightTurns: number;
   statuses: Status[];
+  icons: Iconset;
 }
 
 export type HintIcon =
@@ -142,7 +143,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   const barW = 120;
   const barH = 12;
 
-  drawIcon(bctx, "heart", 8, row1Y + 2, "#ff6a6a");
+  drawIcon(bctx, data.icons, "heart", 8, row1Y + 2);
   bctx.fillStyle = "#3a1a1a";
   bctx.fillRect(barX, barY, barW, barH);
 
@@ -155,17 +156,17 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   drawPixelText(bctx, `HP ${data.player.hp}/${data.player.maxHp}`, barX + barW + 8, row1Y, "#e8e4da", 2);
   drawPixelText(bctx, `Lvl ${data.player.level}`, 240, row1Y, "#e8e4da", 2);
 
-  drawIcon(bctx, "sword", 320, row1Y + 2, "#d8d8d8");
+  drawIcon(bctx, data.icons, "sword", 320, row1Y + 2);
   drawPixelText(bctx, `Atk ${data.player.atk}`, 332, row1Y, "#e8e4da", 2);
 
-  drawIcon(bctx, "shield", 440, row1Y + 2, "#7ab8ff");
+  drawIcon(bctx, data.icons, "shield", 440, row1Y + 2);
   drawPixelText(bctx, `Def ${data.player.def}`, 452, row1Y, "#e8e4da", 2);
 
-  drawIcon(bctx, "gold", 560, row1Y + 2, "#ffd97a");
+  drawIcon(bctx, data.icons, "gold", 560, row1Y + 2);
   drawPixelText(bctx, `Gold ${data.inventory.gold}`, 572, row1Y, "#e8e4da", 2);
 
   if (data.player.skillPoints > 0) {
-    drawIcon(bctx, "skill", 680, row1Y + 2, "#ffd97a");
+    drawIcon(bctx, data.icons, "skill", 680, row1Y + 2);
     drawPixelText(bctx, `Skills ${data.player.skillPoints}`, 692, row1Y, "#ffd97a", 2);
   }
 
@@ -173,7 +174,13 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
 
   const row2Y = panelY + 28;
   const lightColor = data.lightTurns > 0 ? "#ffd97a" : "#5a544a";
-  drawIcon(bctx, "light", 8, row2Y + 2, lightColor);
+  if (data.lightTurns > 0) {
+    drawIcon(bctx, data.icons, "light", 8, row2Y + 2);
+  } else {
+    bctx.globalAlpha = 0.45;
+    drawIcon(bctx, data.icons, "light", 8, row2Y + 2);
+    bctx.globalAlpha = 1;
+  }
   drawPixelText(
     bctx,
     data.lightTurns > 0 ? `Light ${data.lightTurns}` : "Light off",
@@ -183,7 +190,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
     2,
   );
 
-  drawIcon(bctx, "depth", 160, row2Y + 2, "#9a958c");
+  drawIcon(bctx, data.icons, "depth", 160, row2Y + 2);
   drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 172, row2Y, "#e8e4da", 2);
 
   let statusX = 360;
@@ -217,6 +224,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
 
 export function drawContextHints(
   bctx: CanvasRenderingContext2D,
+  icons: Iconset,
   player: Entity,
   cam: { x: number; y: number },
   hints: ContextualHint[],
@@ -266,7 +274,7 @@ export function drawContextHints(
 
   rows.forEach((row, i) => {
     const rowY = chosen.y + 4 + i * rowH;
-    drawIcon(bctx, row.icon, chosen.x + 6, rowY, hintIconColor(row.icon));
-    drawPixelText(bctx, row.text, chosen.x + 20, rowY, "#e8e4da", 2);
+    drawIcon(bctx, icons, row.icon, chosen.x + 6, rowY);
+    drawPixelText(bctx, row.text, chosen.x + 20, rowY, hintIconColor(row.icon), 2);
   });
 }

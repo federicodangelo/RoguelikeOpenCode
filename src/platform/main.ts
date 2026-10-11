@@ -8,6 +8,7 @@ import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
 import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
 import { drawEffects } from "../ui/effects.ts";
 import { drawMinimap } from "../ui/minimap.ts";
+import { Iconset } from "../ui/icons.ts";
 import { LOGICAL_H, LOGICAL_W } from "../core/constants.ts";
 import { MenuNav } from "../ui/menu.ts";
 import { computeScaling } from "../ui/scaling.ts";
@@ -172,6 +173,7 @@ fitCanvas();
 
 async function main(): Promise<void> {
   const tiles = await Tileset.load("assets/tiles.png");
+  const icons = await Iconset.load("assets/icons.png");
 
   function draw(): void {
     if (game.screen === "title") {
@@ -189,12 +191,14 @@ async function main(): Promise<void> {
         showInventory: game.showInventory,
         lightTurns: game.lightTurns,
         statuses: game.player.statuses,
+        icons,
       });
 
       if (!game.gameOver && !game.menuOpen) {
         const interact = game.adjacentInteractables();
         drawContextHints(
           bctx,
+          icons,
           game.player,
           cam,
           contextualHints({

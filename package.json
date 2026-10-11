@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "bun run tools/dev.ts",
     "tiles": "bun run tools/make-tiles.ts",
+    "icons": "bun run tools/make-icons.ts",
     "screenshots": "bun run tools/make-screenshots.ts",
     "build": "bun run tools/build.ts",
     "verify": "bun run tools/verify-dist.ts",

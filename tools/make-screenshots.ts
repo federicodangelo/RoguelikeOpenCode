@@ -1,11 +1,13 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { encodePNG, TILE_SHEET_H, TILE_SHEET_W, tileSheet } from "./make-tiles.ts";
+import { ICON_SHEET_H, ICON_SHEET_W, iconSheet } from "./make-icons.ts";
 import { createCanvas, ShimImage } from "./canvas-shim.ts";
 import { Tileset, drawScene } from "../src/platform/render.ts";
 import { drawMenu, drawTitle } from "../src/ui/screens.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../src/ui/hud.ts";
 import { drawEffects } from "../src/ui/effects.ts";
 import { drawMinimap } from "../src/ui/minimap.ts";
+import { Iconset } from "../src/ui/icons.ts";
 import { Game } from "../src/core/game.ts";
 import { MenuNav } from "../src/ui/menu.ts";
 import { buildMenuTree } from "../src/platform/menuTree.ts";
@@ -34,6 +36,11 @@ class MemoryStorage implements SaveStorage {
 function makeTileset(): Tileset {
   const image = new ShimImage(TILE_SHEET_W, TILE_SHEET_H, tileSheet);
   return Tileset.fromImage(image as unknown as CanvasImageSource);
+}
+
+function makeIconset(): Iconset {
+  const image = new ShimImage(ICON_SHEET_W, ICON_SHEET_H, iconSheet);
+  return Iconset.fromImage(image as unknown as CanvasImageSource);
 }
 
 function createLoadedGame(): Game {
@@ -100,6 +107,7 @@ function renderTitle(hasSave: boolean): Buffer {
 function renderGameplay(showMenu: boolean): Buffer {
   const { canvas, ctx } = createCanvas(LOGICAL_W, LOGICAL_H);
   const tiles = makeTileset();
+  const icons = makeIconset();
   const game = createLoadedGame();
   const cam = game.camera();
 
@@ -114,12 +122,14 @@ function renderGameplay(showMenu: boolean): Buffer {
     showInventory: game.showInventory,
     lightTurns: game.lightTurns,
     statuses: game.player.statuses,
+    icons,
   });
 
   if (!game.gameOver && !game.menuOpen) {
     const interact = game.adjacentInteractables();
     drawContextHints(
       ctx,
+      icons,
       game.player,
       cam,
       contextualHints({

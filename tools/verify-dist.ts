@@ -1,6 +1,6 @@
 import { join } from "node:path";
 
-const required = ["index.html", "main.js", "assets/tiles.png"];
+const required = ["index.html", "main.js", "assets/tiles.png", "assets/icons.png"];
 for (const file of required) {
   if (!(await Bun.file(join("dist", file)).exists())) {
     console.error(`Missing dist/${file}`);
@@ -21,7 +21,7 @@ const server = Bun.serve({
 
 let failed = false;
 try {
-  for (const path of ["/", "/main.js", "/assets/tiles.png"]) {
+  for (const path of ["/", "/main.js", "/assets/tiles.png", "/assets/icons.png"]) {
     const res = await fetch(`http://127.0.0.1:${server.port}${path}`);
     if (!res.ok) {
       console.error(`Failed to serve dist${path}: ${res.status}`);
@@ -34,4 +34,4 @@ try {
 }
 
 if (failed) process.exit(1);
-console.log("dist/ verified: index.html, main.js, and assets/tiles.png are served");
+console.log("dist/ verified: index.html, main.js, assets/tiles.png, and assets/icons.png are served");

@@ -17,121 +17,71 @@ export type IconName =
   | "stairs"
   | "stairsUp";
 
+export const ICON_NAMES: IconName[] = [
+  "heart",
+  "sword",
+  "shield",
+  "gold",
+  "torch",
+  "light",
+  "depth",
+  "sound",
+  "mute",
+  "skill",
+  "item",
+  "monster",
+  "door",
+  "trap",
+  "potion",
+  "stairs",
+  "stairsUp",
+];
+
+export const ICON_SIZE = 8;
+export const ICON_COLS = 8;
+
+export class Iconset {
+  private constructor(private readonly img: CanvasImageSource) {}
+
+  static load(url: string): Promise<Iconset> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(new Iconset(img));
+      img.onerror = () => reject(new Error(`Failed to load iconset: ${url}`));
+      img.src = url;
+    });
+  }
+
+  static fromImage(img: CanvasImageSource): Iconset {
+    return new Iconset(img);
+  }
+
+  draw(ctx: CanvasRenderingContext2D, name: IconName, x: number, y: number): void {
+    const index = ICON_NAMES.indexOf(name);
+    if (index < 0) return;
+
+    const sx = (index % ICON_COLS) * ICON_SIZE;
+    const sy = Math.floor(index / ICON_COLS) * ICON_SIZE;
+    ctx.drawImage(
+      this.img,
+      sx,
+      sy,
+      ICON_SIZE,
+      ICON_SIZE,
+      x,
+      y,
+      ICON_SIZE,
+      ICON_SIZE,
+    );
+  }
+}
+
 export function drawIcon(
   ctx: CanvasRenderingContext2D,
+  icons: Iconset,
   name: IconName,
   x: number,
   y: number,
-  color: string,
 ): void {
-  ctx.fillStyle = color;
-
-  switch (name) {
-    case "heart":
-      ctx.fillRect(x + 1, y + 1, 2, 2);
-      ctx.fillRect(x + 5, y + 1, 2, 2);
-      ctx.fillRect(x, y + 2, 8, 2);
-      ctx.fillRect(x + 1, y + 4, 6, 1);
-      ctx.fillRect(x + 2, y + 5, 4, 1);
-      ctx.fillRect(x + 3, y + 6, 2, 1);
-      break;
-    case "sword":
-      ctx.fillRect(x + 3, y, 2, 6);
-      ctx.fillRect(x + 1, y + 6, 6, 1);
-      ctx.fillRect(x + 3, y + 7, 2, 1);
-      break;
-    case "shield":
-      ctx.fillRect(x + 1, y, 6, 1);
-      ctx.fillRect(x, y + 1, 8, 4);
-      ctx.fillRect(x + 1, y + 5, 6, 1);
-      ctx.fillRect(x + 2, y + 6, 4, 1);
-      ctx.fillRect(x + 3, y + 7, 2, 1);
-      break;
-    case "gold":
-      ctx.fillRect(x + 2, y + 1, 4, 1);
-      ctx.fillRect(x + 1, y + 2, 6, 4);
-      ctx.fillRect(x + 2, y + 6, 4, 1);
-      break;
-    case "torch":
-      ctx.fillRect(x + 3, y, 2, 1);
-      ctx.fillRect(x + 2, y + 1, 4, 2);
-      ctx.fillRect(x + 3, y + 3, 2, 1);
-      ctx.fillRect(x + 3, y + 4, 2, 4);
-      break;
-    case "light":
-      ctx.fillRect(x + 3, y + 1, 2, 1);
-      ctx.fillRect(x + 2, y + 2, 4, 4);
-      ctx.fillRect(x + 3, y + 6, 2, 1);
-      ctx.fillRect(x, y + 3, 1, 2);
-      ctx.fillRect(x + 7, y + 3, 1, 2);
-      break;
-    case "depth":
-      ctx.fillRect(x, y + 1, 3, 1);
-      ctx.fillRect(x + 2, y + 3, 3, 1);
-      ctx.fillRect(x + 4, y + 5, 3, 1);
-      ctx.fillRect(x + 6, y + 7, 2, 1);
-      break;
-    case "sound":
-      ctx.fillRect(x + 1, y + 2, 2, 4);
-      ctx.fillRect(x + 3, y + 1, 1, 6);
-      ctx.fillRect(x + 4, y + 2, 1, 4);
-      ctx.fillRect(x + 5, y + 3, 1, 2);
-      break;
-    case "mute":
-      ctx.fillRect(x + 1, y + 2, 2, 4);
-      ctx.fillRect(x + 3, y + 1, 1, 6);
-      ctx.fillRect(x + 4, y + 2, 1, 4);
-      ctx.fillRect(x + 5, y + 3, 1, 2);
-      ctx.fillRect(x + 6, y, 1, 8);
-      break;
-    case "skill":
-      ctx.fillRect(x + 3, y + 1, 2, 6);
-      ctx.fillRect(x + 1, y + 3, 6, 2);
-      break;
-    case "item":
-      ctx.fillRect(x + 1, y + 2, 6, 5);
-      ctx.fillRect(x + 3, y, 2, 2);
-      ctx.fillRect(x + 2, y + 4, 4, 1);
-      break;
-    case "monster":
-      ctx.fillRect(x + 1, y + 2, 2, 2);
-      ctx.fillRect(x + 5, y + 2, 2, 2);
-      ctx.fillRect(x + 2, y + 5, 4, 1);
-      break;
-    case "door":
-      ctx.fillRect(x + 1, y, 6, 8);
-      ctx.fillStyle = "#17150f";
-      ctx.fillRect(x + 2, y + 1, 4, 6);
-      ctx.fillStyle = color;
-      ctx.fillRect(x + 5, y + 3, 1, 2);
-      break;
-    case "trap":
-      ctx.fillRect(x + 1, y + 1, 1, 1);
-      ctx.fillRect(x + 2, y + 2, 1, 1);
-      ctx.fillRect(x + 3, y + 3, 2, 2);
-      ctx.fillRect(x + 5, y + 5, 1, 1);
-      ctx.fillRect(x + 6, y + 6, 1, 1);
-      ctx.fillRect(x + 6, y + 1, 1, 1);
-      ctx.fillRect(x + 5, y + 2, 1, 1);
-      ctx.fillRect(x + 2, y + 5, 1, 1);
-      ctx.fillRect(x + 1, y + 6, 1, 1);
-      break;
-    case "potion":
-      ctx.fillRect(x + 3, y, 2, 2);
-      ctx.fillRect(x + 2, y + 2, 4, 1);
-      ctx.fillRect(x + 1, y + 3, 6, 4);
-      break;
-    case "stairs":
-      ctx.fillRect(x, y + 1, 3, 1);
-      ctx.fillRect(x + 2, y + 3, 3, 1);
-      ctx.fillRect(x + 4, y + 5, 3, 1);
-      ctx.fillRect(x + 6, y + 7, 2, 1);
-      break;
-    case "stairsUp":
-      ctx.fillRect(x + 6, y + 1, 2, 1);
-      ctx.fillRect(x + 4, y + 3, 3, 1);
-      ctx.fillRect(x + 2, y + 5, 3, 1);
-      ctx.fillRect(x, y + 7, 3, 1);
-      break;
-  }
+  icons.draw(ctx, name, x, y);
 }
