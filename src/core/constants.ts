@@ -13,7 +13,6 @@ export const TORCH_TURNS = 20;
 
 export const HELP_LINES: [string, string][] = [
   ["arrows", "move / bump attack"],
-  ["home pgup end pgdn", "diagonal move"],
   [".", "stairs down"],
   [",", "stairs up"],
   ["g", "pick up item"],

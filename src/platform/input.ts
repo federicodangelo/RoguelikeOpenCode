@@ -7,10 +7,6 @@ export const MOVE_KEYS: Record<string, [number, number]> = {
   ArrowDown: [0, 1],
   ArrowLeft: [-1, 0],
   ArrowRight: [1, 0],
-  Home: [-1, -1],
-  PageUp: [1, -1],
-  End: [-1, 1],
-  PageDown: [1, 1],
 };
 
 export interface InputContext {

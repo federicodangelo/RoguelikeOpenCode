@@ -33,7 +33,6 @@ Monsters include rats, goblins, and skeletons. Items include potions, swords, sh
 | Key | Action |
 | --- | --- |
 | Arrow keys | Move or bump attack |
-| Home, PageUp, End, PageDown | Diagonal movement |
 | `.` | Descend stairs |
 | `,` | Ascend stairs |
 | `g` | Pick up item |

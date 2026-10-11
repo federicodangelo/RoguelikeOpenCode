@@ -129,10 +129,6 @@ export class Game {
       [-1, 0],
       [0, 1],
       [0, -1],
-      [1, 1],
-      [1, -1],
-      [-1, 1],
-      [-1, -1],
     ];
     for (const [dx, dy] of dirs) {
       const nx = this.player.x + dx;

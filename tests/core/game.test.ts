@@ -99,6 +99,18 @@ describe("Game interactables", () => {
     expect(adjacent.trap).toBe(true);
     expect(adjacent.monster?.name).toBe("test rat");
   });
+
+  it("ignores diagonal interactables", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    const x = game.player.x;
+    const y = game.player.y;
+
+    game.map.cells[y + 1]![x + 1] = "trap";
+    game.visible = new Set([(y + 1) * MAP_W + (x + 1)]);
+
+    expect(game.adjacentInteractables().trap).toBe(false);
+  });
 });
 
 describe("Game cheats", () => {
