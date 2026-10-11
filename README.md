@@ -1,7 +1,6 @@
 # roguelikeopencode
 
-[![CI](https://github.com/federicodangelo/RoguelikeOpenCode/actions/workflows/ci.yml/badge.svg)](https://github.com/federicodangelo/RoguelikeOpenCode/actions/workflows/ci.yml)
-[![Play on GitHub Pages](https://img.shields.io/badge/Play%20on%20GitHub%20Pages-32CD32?style=flat&logo=githubpages&logoColor=white)](https://federicodangelo.github.io/RoguelikeOpenCode/)
+[Build status](https://github.com/federicodangelo/RoguelikeOpenCode/actions/workflows/ci.yml) · [Play on GitHub Pages](https://federicodangelo.github.io/RoguelikeOpenCode/)
 
 A small browser roguelike built with Bun, TypeScript, and a custom HTMLCanvas2D canvas engine.
 
