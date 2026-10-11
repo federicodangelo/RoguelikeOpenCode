@@ -55,7 +55,9 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
   if (e.key === "Escape") {
     e.preventDefault();
     audio.sfx("menu");
-    if (game.menuOpen && menu.depth() > 0) {
+    if (game.menuOpen && menu.labels()[0] === "Inventory") {
+      game.menuOpen = false;
+    } else if (game.menuOpen && menu.depth() > 0) {
       menu.back();
     } else {
       game.menuOpen = !game.menuOpen;
