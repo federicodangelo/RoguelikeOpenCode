@@ -5,6 +5,7 @@ import { RNG } from "./rng.ts";
 import { makePlayer, spawnMonsters, attack, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
+import { makeInventory, pickUp, usePotion } from "./items.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -77,6 +78,9 @@ const MOVE_KEYS: Record<string, [number, number]> = {
 let AI_RNG = new RNG(BASE_SEED + 999);
 let BATTLE_RNG = new RNG(BASE_SEED + 555);
 let gameOver = false;
+let inventory = makeInventory();
+let message = "";
+let showInventory = false;
 
 function monstersAct(): void {
   const dist = chaseDistances(map, player);
@@ -142,6 +146,9 @@ function resetGame(): void {
   AI_RNG = new RNG(BASE_SEED + 999);
   BATTLE_RNG = new RNG(BASE_SEED + 555);
   gameOver = false;
+  inventory = makeInventory();
+  message = "";
+  showInventory = false;
   map = getFloor(1);
   player = makePlayer(map.spawn.x, map.spawn.y);
   refreshFOV();
@@ -167,6 +174,27 @@ window.addEventListener("keydown", (e) => {
   } else if (e.key === ",") {
     e.preventDefault();
     acted = ascend();
+  } else if (e.key === "g") {
+    e.preventDefault();
+    const idx = map.items.findIndex((i) => i.x === player.x && i.y === player.y);
+    if (idx !== -1) {
+      const msg = pickUp(player, inventory, map.items[idx]!.tile);
+      if (msg) {
+        map.items.splice(idx, 1);
+        message = msg;
+        acted = true;
+      }
+    }
+  } else if (e.key === "u") {
+    e.preventDefault();
+    const msg = usePotion(player, inventory);
+    if (msg) {
+      message = msg;
+      acted = true;
+    }
+  } else if (e.key === "i") {
+    e.preventDefault();
+    showInventory = !showInventory;
   }
   if (acted) {
     monstersAct();
@@ -247,12 +275,18 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   arrows move/bump attack   . stairs down   , stairs up`;
+    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Gold ${inventory.gold}   Potions ${inventory.potions}   arrows move/bump attack   . down   , up   g pick up   u drink   i inventory`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
     ctx.font = "14px monospace";
     ctx.fillText(text, 8, canvas.height - 7);
+    if (showInventory) {
+      const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
+      ctx.fillText(inv, 8, canvas.height - 40);
+    } else if (message) {
+      ctx.fillText(message, 8, canvas.height - 40);
+    }
   }
 
   function frame(): void {
