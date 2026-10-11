@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 3 done -> PHASE 4 next
+STATUS: PHASE 4 done -> PHASE 5 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -75,9 +75,11 @@ PHASE 3 - Entities & FOV
 
 PHASE 4 - Combat & AI
 ---------------------
-[ ] 4.1 Bump combat: move into enemy = attack; damage = ATK - DEF + variance
-[ ] 4.2 Monster AI: wander; if player visible, chase (simple pathing)
-[ ] 4.3 Death: player death screen + restart; monster drops corpse/loot
+[x] 4.1 Bump combat: move into enemy = attack; damage = ATK - DEF + variance
+    (kills drop corpse or gold loot)
+[x] 4.2 Monster AI (src/ai.ts): wander; if player visible (FOV), chase via
+    BFS distances (closed doors block), bump-attack when adjacent
+[x] 4.3 Death: player death screen + Enter restart; monster drops corpse/loot
 
 PHASE 5 - Items & progression
 -----------------------------
@@ -107,7 +109,7 @@ MILESTONES (each = one commit)
 ------------------------------
 [x] M1: project scaffold + canvas shows a test tilemap
 [x] M2: dungeon generated and rendered (with render layers)
-[ ] M3: player moves with FOV
-[ ] M4: monsters + combat work
+[x] M3: player moves with FOV
+[x] M4: monsters + combat work
 [ ] M5: items + UI + game over loop
 [ ] M6: polished tileset + build script
