@@ -49,6 +49,13 @@ export function makePlayer(x: number, y: number): Entity {
   };
 }
 
+export function attack(rng: RNG, attacker: Entity, defender: Entity): number {
+  const dmg = Math.max(1, attacker.atk - defender.def + rng.int(-1, 1));
+  defender.hp = Math.max(0, defender.hp - dmg);
+  if (defender.hp === 0) defender.alive = false;
+  return dmg;
+}
+
 export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
   const dist = bfsDistances(map.cells, map.spawn);
   const candidates: { x: number; y: number }[] = [];

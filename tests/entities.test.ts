@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { RNG } from "../src/rng.ts";
-import { makePlayer, spawnMonsters } from "../src/entities.ts";
+import { makePlayer, spawnMonsters, attack } from "../src/entities.ts";
 import { generateMap } from "../src/map.ts";
 import { bfsDistances, MAP_W } from "../src/mapgen/common.ts";
 import { T } from "../src/tiles.ts";
@@ -31,6 +31,40 @@ describe("makePlayer", () => {
   it("assigns unique ids", () => {
     const ids = new Set([makePlayer(1, 1).id, makePlayer(2, 2).id, makePlayer(3, 3).id]);
     expect(ids.size).toBe(3);
+  });
+});
+
+describe("attack", () => {
+  it("damage = ATK - DEF + variance, minimum 1", () => {
+    const rng = new RNG(5);
+    const a = makePlayer(0, 0);
+    const d = makePlayer(1, 0);
+    for (let i = 0; i < 50; i++) {
+      const before = d.hp;
+      const dmg = attack(rng, a, d);
+      expect(dmg).toBeGreaterThanOrEqual(2);
+      expect(dmg).toBeLessThanOrEqual(4);
+      expect(d.hp).toBe(before - dmg);
+    }
+  });
+
+  it("weak attacker vs strong defender still deals 1", () => {
+    const rng = new RNG(6);
+    const a = makePlayer(0, 0);
+    a.atk = 1;
+    const d = makePlayer(1, 0);
+    d.def = 5;
+    for (let i = 0; i < 20; i++) expect(attack(rng, a, d)).toBe(1);
+  });
+
+  it("kills when HP reaches 0", () => {
+    const rng = new RNG(7);
+    const a = makePlayer(0, 0);
+    a.atk = 30;
+    const d = makePlayer(1, 0);
+    attack(rng, a, d);
+    expect(d.hp).toBe(0);
+    expect(d.alive).toBe(false);
   });
 });
 

@@ -2,7 +2,7 @@ import { T, TILE_SIZE } from "./tiles.ts";
 import { Tileset, drawScene, type CellView } from "./render.ts";
 import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
-import { makePlayer, spawnMonsters, type Entity } from "./entities.ts";
+import { makePlayer, spawnMonsters, attack, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 
 const VIEW_COLS = 30;
@@ -74,6 +74,7 @@ const MOVE_KEYS: Record<string, [number, number]> = {
 };
 
 const AI_RNG = new RNG(BASE_SEED + 999);
+const BATTLE_RNG = new RNG(BASE_SEED + 555);
 const DIRS4: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 function monsterStep(m: Entity): void {
@@ -111,6 +112,10 @@ function monstersAct(): void {
   }
 }
 
+function dropLoot(m: Entity): void {
+  map.items.push({ x: m.x, y: m.y, tile: BATTLE_RNG.next() < 0.3 ? T.Gold : T.Corpse });
+}
+
 function tryMove(dx: number, dy: number): boolean {
   const nx = player.x + dx;
   const ny = player.y + dy;
@@ -120,7 +125,12 @@ function tryMove(dx: number, dy: number): boolean {
     map.cells[ny]![nx] = "doorOpen";
     return true;
   }
-  if (monsters().some((m) => m.alive && m.x === nx && m.y === ny)) return false;
+  const target = monsters().find((m) => m.alive && m.x === nx && m.y === ny);
+  if (target) {
+    attack(BATTLE_RNG, player, target);
+    if (!target.alive) dropLoot(target);
+    return true;
+  }
   player.x = nx;
   player.y = ny;
   return true;
