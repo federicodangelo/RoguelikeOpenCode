@@ -222,13 +222,6 @@ async function main(): Promise<void> {
             skillPoints: game.player.skillPoints,
             adjacentDoorClosed: interact.doorClosed,
             adjacentTrap: interact.trap,
-            adjacentMonster: interact.monster
-              ? {
-                  name: interact.monster.name,
-                  archetype: interact.monster.archetype,
-                  range: interact.monster.range,
-                }
-              : null,
           }),
         );
       }

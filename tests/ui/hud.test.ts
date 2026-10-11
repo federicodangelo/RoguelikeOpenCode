@@ -74,10 +74,8 @@ describe("contextual hints", () => {
         skillPoints: 0,
         adjacentDoorClosed: true,
         adjacentTrap: true,
-        adjacentMonster: { name: "rat", archetype: "normal", range: 0 },
       }),
     ).toEqual([
-      { text: "bump: attack rat", icon: "monster" },
       { text: "bump: open door", icon: "door" },
       { text: "trap: danger", icon: "trap" },
     ]);
@@ -154,19 +152,17 @@ describe("contextual hints", () => {
       skillPoints: 1,
       adjacentDoorClosed: true,
       adjacentTrap: true,
-      adjacentMonster: { name: "rat", archetype: "normal", range: 0 },
     });
     expect(hints.length).toBe(4);
     expect(hints[0]).toEqual({ text: "g: pick up gold", icon: "item" });
-    expect(hints[2]).toEqual({ text: "bump: attack rat", icon: "monster" });
-    expect(hints[3]).toEqual({ text: "bump: open door", icon: "door" });
+    expect(hints[2]).toEqual({ text: "bump: open door", icon: "door" });
+    expect(hints[3]).toEqual({ text: "trap: danger", icon: "trap" });
   });
 });
 
 describe("hint icons", () => {
   it("uses readable colors for contextual hint icons", () => {
     expect(hintIconColor("item")).toBe("#ffd97a");
-    expect(hintIconColor("monster")).toBe("#ff6a6a");
     expect(hintIconColor("stairsUp")).toBe("#7ab8ff");
     expect(hintIconColor("potion")).toBe("#9be56f");
   });

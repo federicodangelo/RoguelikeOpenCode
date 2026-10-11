@@ -3,7 +3,7 @@ import { LOGICAL_H, LOGICAL_W, VIEW_COLS, VIEW_ROWS } from "../core/constants.ts
 import { drawPixelText, drawPixelTextRight, pixelTextWidth } from "./pixel-font.ts";
 import { drawIcon, type Iconset } from "./icons.ts";
 import { minimapRect } from "./minimap.ts";
-import type { Archetype, Entity, Status, StatusKind } from "../core/entities.ts";
+import type { Entity, Status, StatusKind } from "../core/entities.ts";
 import type { Inventory, ItemKind } from "../core/items.ts";
 import type { MessageLog } from "./menu.ts";
 
@@ -26,7 +26,6 @@ export type HintIcon =
   | "stairsUp"
   | "trap"
   | "door"
-  | "monster"
   | "potion"
   | "torch"
   | "skill";
@@ -48,8 +47,6 @@ export function hintIconColor(icon: HintIcon): string {
       return "#ff6a6a";
     case "door":
       return "#c98a4a";
-    case "monster":
-      return "#ff6a6a";
     case "potion":
       return "#9be56f";
     case "torch":
@@ -57,12 +54,6 @@ export function hintIconColor(icon: HintIcon): string {
     case "skill":
       return "#ffd97a";
   }
-}
-
-export interface MonsterHint {
-  name: string;
-  archetype: Archetype;
-  range: number;
 }
 
 export interface ContextualHintInput {
@@ -77,7 +68,6 @@ export interface ContextualHintInput {
   skillPoints: number;
   adjacentDoorClosed?: boolean;
   adjacentTrap?: boolean;
-  adjacentMonster?: MonsterHint | null;
 }
 
 export function contextualHints(input: ContextualHintInput): ContextualHint[] {
@@ -93,9 +83,6 @@ export function contextualHints(input: ContextualHintInput): ContextualHint[] {
   }
   if (input.cell === "stairsUp" && input.depth > 1) {
     hints.push({ text: ",: ascend stairs", icon: "stairsUp" });
-  }
-  if (input.adjacentMonster) {
-    hints.push({ text: `bump: attack ${input.adjacentMonster.name}`, icon: "monster" });
   }
   if (input.adjacentDoorClosed) {
     hints.push({ text: "bump: open door", icon: "door" });
