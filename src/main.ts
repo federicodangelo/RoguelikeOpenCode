@@ -143,6 +143,11 @@ let showInventory = false;
 let menuOpen = false;
 let menuIndex = 0;
 let menuPath: number[] = [];
+const menuSelMemory = new Map<string, number>();
+
+function menuKey(): string {
+  return menuPath.join(",");
+}
 
 interface MenuEntry {
   label: string;
@@ -169,8 +174,9 @@ function cycleScaling(): void {
 }
 
 function menuBack(): void {
+  menuSelMemory.set(menuKey(), menuIndex);
   menuPath.pop();
-  menuIndex = 0;
+  menuIndex = menuSelMemory.get(menuKey()) ?? 0;
   dirty = true;
 }
 
@@ -268,6 +274,7 @@ function resetGame(): void {
   menuOpen = false;
   menuIndex = 0;
   menuPath = [];
+  menuSelMemory.clear();
   map = getFloor(1);
   player = makePlayer(map.spawn.x, map.spawn.y);
   refreshFOV();
@@ -290,7 +297,7 @@ window.addEventListener("keydown", (e) => {
       menuOpen = !menuOpen;
       if (menuOpen) {
         menuPath = [];
-        menuIndex = 0;
+        menuIndex = menuSelMemory.get("") ?? 0;
       }
     }
     dirty = true;
@@ -313,8 +320,9 @@ window.addEventListener("keydown", (e) => {
       e.preventDefault();
       const entry = entries[menuIndex]!;
       if (entry.submenu) {
+        menuSelMemory.set(menuKey(), menuIndex);
         menuPath.push(menuIndex);
-        menuIndex = 0;
+        menuIndex = menuSelMemory.get(menuKey()) ?? 0;
         dirty = true;
       } else if (entry.action) {
         entry.action();
