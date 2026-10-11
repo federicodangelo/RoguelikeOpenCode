@@ -28,7 +28,7 @@ export function drawScene(
 }
 
 export class Tileset {
-  private constructor(private readonly img: HTMLImageElement) {}
+  private constructor(private readonly img: CanvasImageSource) {}
 
   static load(url: string): Promise<Tileset> {
     return new Promise((resolve, reject) => {
@@ -37,6 +37,10 @@ export class Tileset {
       img.onerror = () => reject(new Error(`Failed to load tileset: ${url}`));
       img.src = url;
     });
+  }
+
+  static fromImage(img: CanvasImageSource): Tileset {
+    return new Tileset(img);
   }
 
   drawTile(

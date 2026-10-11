@@ -718,7 +718,7 @@ function encodePNG(width: number, height: number, rgba: Buffer): Buffer {
   ]);
 }
 
-export { arts, encodePNG, GRID, TILE, COLS };
+export { arts, encodePNG, GRID, TILE, COLS, data as tileSheet, W as TILE_SHEET_W, H as TILE_SHEET_H };
 
 if (import.meta.main) {
   mkdirSync("public/assets", { recursive: true });
