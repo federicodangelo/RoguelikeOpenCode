@@ -8,6 +8,7 @@ export interface Settings {
   scalingMode: ScalingMode;
   soundEnabled: boolean;
   volume: number;
+  autosave: boolean;
 }
 
 export interface SettingsStorage {
@@ -16,7 +17,7 @@ export interface SettingsStorage {
 }
 
 export function defaultSettings(): Settings {
-  return { scalingMode: "fractional", soundEnabled: true, volume: 0.5 };
+  return { scalingMode: "fractional", soundEnabled: true, volume: 0.5, autosave: true };
 }
 
 export function loadSettings(storage: SettingsStorage): Settings {
@@ -29,6 +30,7 @@ export function loadSettings(storage: SettingsStorage): Settings {
       fractionalScaling?: boolean;
       soundEnabled?: boolean;
       volume?: number;
+      autosave?: boolean;
     };
 
     const scalingMode =
@@ -44,6 +46,7 @@ export function loadSettings(storage: SettingsStorage): Settings {
       scalingMode,
       soundEnabled: typeof s.soundEnabled === "boolean" ? s.soundEnabled : true,
       volume: typeof s.volume === "number" ? Math.max(0, Math.min(1, s.volume)) : 0.5,
+      autosave: typeof s.autosave === "boolean" ? s.autosave : true,
     };
   } catch {
     return defaultSettings();

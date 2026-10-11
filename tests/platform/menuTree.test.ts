@@ -5,18 +5,19 @@ import { buildMenuTree } from "../../src/platform/menuTree.ts";
 import { defaultSettings } from "../../src/platform/settings.ts";
 import { MenuNav } from "../../src/ui/menu.ts";
 
-function makeMenu(game: Game): MenuNav {
+function makeMenu(game: Game, settings = defaultSettings()): MenuNav {
   const actions = {
     cycleScaling: () => {},
     toggleSound: () => {},
     cycleVolume: () => {},
     setVolume: () => {},
+    toggleAutosave: () => {},
     save: () => {},
     load: () => {},
     reset: () => {},
     back: () => {},
   };
-  return new MenuNav(() => buildMenuTree(game, defaultSettings(), actions));
+  return new MenuNav(() => buildMenuTree(game, settings, actions));
 }
 
 describe("inventory menu", () => {
@@ -75,5 +76,29 @@ describe("inventory menu", () => {
 
     expect(game.inventory.torches).toBe(0);
     expect(game.lightTurns).toBe(TORCH_TURNS - 1);
+  });
+});
+
+describe("settings menu", () => {
+  it("hides save and load when autosave is on", () => {
+    const game = new Game();
+    const settings = defaultSettings();
+    settings.autosave = true;
+    const menu = makeMenu(game, settings);
+    menu.open();
+
+    expect(menu.entries().some((entry) => entry.label === "Save")).toBe(false);
+    expect(menu.entries().some((entry) => entry.label === "Load")).toBe(false);
+  });
+
+  it("shows save and load when autosave is off", () => {
+    const game = new Game();
+    const settings = defaultSettings();
+    settings.autosave = false;
+    const menu = makeMenu(game, settings);
+    menu.open();
+
+    expect(menu.entries().some((entry) => entry.label === "Save")).toBe(true);
+    expect(menu.entries().some((entry) => entry.label === "Load")).toBe(true);
   });
 });

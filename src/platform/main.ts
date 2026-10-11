@@ -106,6 +106,14 @@ function setVolumeSetting(volume: number): void {
   saveSettings(localStorage, settings);
 }
 
+function toggleAutosave(): void {
+  settings.autosave = !settings.autosave;
+  saveSettings(localStorage, settings);
+  if (settings.autosave && game.screen === "game" && !game.gameOver) {
+    saveRun(localStorage, game);
+  }
+}
+
 function resetGame(): void {
   game.reset();
   clearRun(localStorage);
@@ -144,6 +152,7 @@ menu = new MenuNav(() =>
     toggleSound,
     cycleVolume: cycleVolumeSetting,
     setVolume: setVolumeSetting,
+    toggleAutosave,
     save: () => saveRun(localStorage, game),
     load: () => {
       if (loadRun(localStorage, game)) {
@@ -170,7 +179,9 @@ window.addEventListener("keydown", (e) => {
   handleKeydown(e, { game, menu, audio, startGame, toggleSound, openInventory: openInventoryMenu });
   if (game.screen === "game" && !game.gameOver) {
     audio.setMusicContext(game.depth, game.danger());
-    saveRun(localStorage, game);
+    if (settings.autosave) {
+      saveRun(localStorage, game);
+    }
   } else if (game.gameOver) {
     clearRun(localStorage);
   }

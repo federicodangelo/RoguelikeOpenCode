@@ -7,6 +7,7 @@ export interface MenuTreeActions {
   toggleSound(): void;
   cycleVolume(): void;
   setVolume(value: number): void;
+  toggleAutosave(): void;
   save(): void;
   load(): void;
   reset(): void;
@@ -135,19 +136,32 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
             onChange: actions.setVolume,
           },
         },
+        {
+          label: `Autosave: ${settings.autosave ? "on" : "off"}`,
+          hint: [
+            "Enter: toggle autosave",
+            `Current autosave: ${settings.autosave ? "on" : "off"}`,
+            settings.autosave ? "Save/Load are disabled when autosave is on" : "Save/Load are available when autosave is off",
+          ],
+          action: actions.toggleAutosave,
+        },
         { label: "Back", hint: "Enter to return to the menu", action: actions.back },
       ],
     },
-    {
-      label: "Save",
-      hint: ["Enter to save now", "The game auto-saves after every move"],
-      action: actions.save,
-    },
-    {
-      label: "Load",
-      hint: ["Enter to load the latest auto-save", "Auto-save happens after every move"],
-      action: actions.load,
-    },
+    ...(settings.autosave
+      ? []
+      : [
+          {
+            label: "Save",
+            hint: ["Enter to save now", "Autosave is off"],
+            action: actions.save,
+          },
+          {
+            label: "Load",
+            hint: ["Enter to load the latest save", "Autosave is off"],
+            action: actions.load,
+          },
+        ]),
     {
       label: "Cheats",
       hint: "Enter to open cheats",
