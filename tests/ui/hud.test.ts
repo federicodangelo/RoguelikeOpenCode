@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { contextualHints, statusIndicatorColor } from "../../src/ui/hud.ts";
+import { contextualHints, hintIconColor, statusIndicatorColor } from "../../src/ui/hud.ts";
 
 describe("contextual hints", () => {
   it("shows pickup only for pickable items", () => {
@@ -160,6 +160,15 @@ describe("contextual hints", () => {
     expect(hints[0]).toEqual({ text: "g: pick up gold", icon: "item" });
     expect(hints[2]).toEqual({ text: "bump: attack rat", icon: "monster" });
     expect(hints[3]).toEqual({ text: "bump: open door", icon: "door" });
+  });
+});
+
+describe("hint icons", () => {
+  it("uses readable colors for contextual hint icons", () => {
+    expect(hintIconColor("item")).toBe("#ffd97a");
+    expect(hintIconColor("monster")).toBe("#ff6a6a");
+    expect(hintIconColor("stairsUp")).toBe("#7ab8ff");
+    expect(hintIconColor("potion")).toBe("#9be56f");
   });
 });
 

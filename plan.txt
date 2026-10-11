@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 11 in progress; next step 11.2
+STATUS: PHASE 11 complete; next step 12.1
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -150,14 +150,14 @@ PHASE 10 - Gameplay depth [DONE]
 [x] 10.6 Add deeper progression: skills, equipment slots, or consumables
 [x] 10.7 Add save/load or persistent run state
 
-PHASE 11 - UI/UX improvements [NEXT]
+PHASE 11 - UI/UX improvements [DONE]
 -----------------------------------
 [x] 11.1 Add a minimap or explored-area overview
 [x] 11.2 Add tooltips or richer contextual help for interactable objects
 [x] 11.3 Improve HUD readability: icons, spacing, status indicators
 [x] 11.4 Improve menu navigation: clearer submenu states and selection feedback
 [x] 11.5 Add sound/volume settings and a quick mute toggle
-[ ] 11.6 Polish contextual hints: avoid overlap, improve placement, add icons
+[x] 11.6 Polish contextual hints: avoid overlap, improve placement, add icons
 
 PHASE 12 - Audio polish [NEXT]
 ------------------------------

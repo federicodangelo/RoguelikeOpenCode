@@ -2,6 +2,7 @@ import { TILE_SIZE } from "../core/tiles.ts";
 import { LOGICAL_H, LOGICAL_W, VIEW_COLS, VIEW_ROWS } from "../core/constants.ts";
 import { drawPixelText, drawPixelTextRight, pixelTextWidth } from "./pixel-font.ts";
 import { drawIcon } from "./icons.ts";
+import { minimapRect } from "./minimap.ts";
 import type { Archetype, Entity, Status, StatusKind } from "../core/entities.ts";
 import type { Inventory, ItemKind } from "../core/items.ts";
 import type { MessageLog } from "./menu.ts";
@@ -34,6 +35,29 @@ export type HintIcon =
 export interface ContextualHint {
   text: string;
   icon: HintIcon;
+}
+
+export function hintIconColor(icon: HintIcon): string {
+  switch (icon) {
+    case "item":
+      return "#ffd97a";
+    case "stairs":
+      return "#ffd97a";
+    case "stairsUp":
+      return "#7ab8ff";
+    case "trap":
+      return "#ff6a6a";
+    case "door":
+      return "#c98a4a";
+    case "monster":
+      return "#ff6a6a";
+    case "potion":
+      return "#9be56f";
+    case "torch":
+      return "#ff9a4a";
+    case "skill":
+      return "#ffd97a";
+  }
 }
 
 export interface MonsterHint {
@@ -208,18 +232,46 @@ export function drawContextHints(
   const py = player.y - cam.y;
   if (px < 0 || px >= VIEW_COLS || py < 0 || py >= VIEW_ROWS) return;
 
-  const text = hints.map((hint) => hint.text).join("  ");
-  const w = pixelTextWidth(text, 2) + 12;
-  const h = 18;
-  let x = px * TILE_SIZE + TILE_SIZE / 2 - w / 2;
-  let y = py * TILE_SIZE - h - 2;
-  if (y < 0) y = py * TILE_SIZE + TILE_SIZE + 2;
-  x = Math.max(2, Math.min(LOGICAL_W - w - 2, x));
-  y = Math.max(2, Math.min(LOGICAL_H - 24 - h - 2, y));
+  const rowH = 18;
+  const rows = hints.map((hint) => ({
+    ...hint,
+    width: 8 + 6 + pixelTextWidth(hint.text, 2),
+  }));
+  const w = Math.max(...rows.map((row) => row.width)) + 12;
+  const h = rows.length * rowH + 8;
+  const centerX = px * TILE_SIZE + TILE_SIZE / 2;
+  const minimap = minimapRect();
+  const hudTop = LOGICAL_H - HUD_HEIGHT - 2;
 
-  bctx.fillStyle = "rgba(0,0,0,0.72)";
-  bctx.fillRect(x, y, w, h);
+  const clampX = (x: number): number => Math.max(2, Math.min(LOGICAL_W - w - 2, x));
+  const clampY = (y: number): number => Math.max(2, Math.min(hudTop - h, y));
+  const intersectsMinimap = (x: number, y: number): boolean =>
+    x < minimap.x + minimap.w && x + w > minimap.x && y < minimap.y + minimap.h && y + h > minimap.y;
+
+  const candidates = [
+    { x: clampX(centerX - w / 2), y: clampY(py * TILE_SIZE - h - 2) },
+    { x: clampX(centerX - w / 2), y: clampY(py * TILE_SIZE + TILE_SIZE + 2) },
+    { x: clampX(minimap.x - w - 4), y: clampY(py * TILE_SIZE - h / 2) },
+    { x: clampX(centerX - w / 2), y: clampY(minimap.y + minimap.h + 4) },
+    { x: clampX(centerX - w / 2), y: clampY(hudTop - h) },
+  ];
+
+  let chosen = candidates[0]!;
+  for (const candidate of candidates) {
+    if (!intersectsMinimap(candidate.x, candidate.y)) {
+      chosen = candidate;
+      break;
+    }
+  }
+
+  bctx.fillStyle = "rgba(0,0,0,0.78)";
+  bctx.fillRect(chosen.x, chosen.y, w, h);
   bctx.strokeStyle = "#5a544a";
-  bctx.strokeRect(x + 0.5, y + 0.5, w, h);
-  drawPixelText(bctx, text, x + 6, y + 4, "#ffd97a", 2);
+  bctx.strokeRect(chosen.x + 0.5, chosen.y + 0.5, w, h);
+
+  rows.forEach((row, i) => {
+    const rowY = chosen.y + 4 + i * rowH;
+    drawIcon(bctx, row.icon, chosen.x + 6, rowY, hintIconColor(row.icon));
+    drawPixelText(bctx, row.text, chosen.x + 20, rowY, "#e8e4da", 2);
+  });
 }
