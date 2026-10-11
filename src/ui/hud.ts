@@ -139,21 +139,36 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   bctx.strokeStyle = "#5a544a";
   bctx.strokeRect(barX + 0.5, barY + 0.5, barW, barH);
 
-  drawPixelText(bctx, `HP ${data.player.hp}/${data.player.maxHp}`, barX + barW + 8, row1Y, "#e8e4da", 2);
-  drawPixelText(bctx, `Lvl ${data.player.level}`, 240, row1Y, "#e8e4da", 2);
+  const hpText = `HP ${data.player.hp}/${data.player.maxHp}`;
+  const hpX = barX + barW + 8;
+  drawPixelText(bctx, hpText, hpX, row1Y, "#e8e4da", 2);
 
-  drawIcon(bctx, data.icons, "sword", 320, row1Y + 2);
-  drawPixelText(bctx, `Atk ${data.player.atk}`, 332, row1Y, "#e8e4da", 2);
+  const lvlText = `Lvl ${data.player.level}`;
+  const lvlX = hpX + pixelTextWidth(hpText, 2) + 12;
+  drawPixelText(bctx, lvlText, lvlX, row1Y, "#e8e4da", 2);
 
-  drawIcon(bctx, data.icons, "shield", 440, row1Y + 2);
-  drawPixelText(bctx, `Def ${data.player.def}`, 452, row1Y, "#e8e4da", 2);
+  const swordX = lvlX + pixelTextWidth(lvlText, 2) + 12;
+  drawIcon(bctx, data.icons, "sword", swordX, row1Y + 2);
+  const atkText = `Atk ${data.player.atk}`;
+  const atkX = swordX + 12;
+  drawPixelText(bctx, atkText, atkX, row1Y, "#e8e4da", 2);
 
-  drawIcon(bctx, data.icons, "gold", 560, row1Y + 2);
-  drawPixelText(bctx, `Gold ${data.inventory.gold}`, 572, row1Y, "#e8e4da", 2);
+  const shieldX = atkX + pixelTextWidth(atkText, 2) + 12;
+  drawIcon(bctx, data.icons, "shield", shieldX, row1Y + 2);
+  const defText = `Def ${data.player.def}`;
+  const defX = shieldX + 12;
+  drawPixelText(bctx, defText, defX, row1Y, "#e8e4da", 2);
+
+  const goldX = defX + pixelTextWidth(defText, 2) + 12;
+  drawIcon(bctx, data.icons, "gold", goldX, row1Y + 2);
+  const goldText = `Gold ${data.inventory.gold}`;
+  const goldTextX = goldX + 12;
+  drawPixelText(bctx, goldText, goldTextX, row1Y, "#e8e4da", 2);
 
   if (data.player.skillPoints > 0) {
-    drawIcon(bctx, data.icons, "skill", 680, row1Y + 2);
-    drawPixelText(bctx, `Skills ${data.player.skillPoints}`, 692, row1Y, "#ffd97a", 2);
+    const skillX = goldTextX + pixelTextWidth(goldText, 2) + 12;
+    drawIcon(bctx, data.icons, "skill", skillX, row1Y + 2);
+    drawPixelText(bctx, `Skills ${data.player.skillPoints}`, skillX + 12, row1Y, "#ffd97a", 2);
   }
 
   drawPixelTextRight(bctx, "esc menu", LOGICAL_W - 8, row1Y, "#9a958c", 2);
