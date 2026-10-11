@@ -199,6 +199,7 @@ window.addEventListener("keydown", (e) => {
   } else if (e.key === "i") {
     e.preventDefault();
     showInventory = !showInventory;
+    dirty = true;
   }
   if (acted) {
     monstersAct();
