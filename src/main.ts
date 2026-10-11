@@ -138,7 +138,13 @@ let AI_RNG = new RNG(BASE_SEED + 999);
 let BATTLE_RNG = new RNG(BASE_SEED + 555);
 let gameOver = false;
 let inventory = makeInventory();
-let message = "";
+const messageLog: string[] = [];
+
+function logMessage(msg: string): void {
+  if (!msg) return;
+  messageLog.push(msg);
+  if (messageLog.length > 4) messageLog.shift();
+}
 let showInventory = false;
 let menuOpen = false;
 let menuIndex = 0;
@@ -204,7 +210,9 @@ function monstersAct(): void {
   const dist = chaseDistances(map, player);
   for (const m of monsters()) {
     if (!m.alive) continue;
+    const before = player.hp;
     monsterStep(m, { player, map, rng: AI_RNG, dist, monsters: monsters() });
+    if (player.hp < before) logMessage(`The ${m.name} hits you for ${before - player.hp}.`);
     if (!player.alive) {
       gameOver = true;
       break;
@@ -227,11 +235,14 @@ function tryMove(dx: number, dy: number): boolean {
   }
   const target = monsters().find((m) => m.alive && m.x === nx && m.y === ny);
   if (target) {
-    attack(BATTLE_RNG, player, target);
-    if (!target.alive) {
+    const dmg = attack(BATTLE_RNG, player, target);
+    if (target.alive) {
+      logMessage(`You hit the ${target.name} for ${dmg}.`);
+    } else {
       dropLoot(target);
       const levels = gainXp(player, target.xpValue);
-      message = levels > 0 ? `Level up! You are now level ${player.level}.` : `You slay the ${target.name}.`;
+      logMessage(`You slay the ${target.name}.`);
+      if (levels > 0) logMessage(`Level up! You are now level ${player.level}.`);
     }
     return true;
   }
@@ -269,7 +280,7 @@ function resetGame(): void {
   BATTLE_RNG = new RNG(BASE_SEED + 555);
   gameOver = false;
   inventory = makeInventory();
-  message = "";
+  messageLog.length = 0;
   showInventory = false;
   menuOpen = false;
   menuIndex = 0;
@@ -348,7 +359,7 @@ window.addEventListener("keydown", (e) => {
       const msg = pickUp(player, inventory, map.items[idx]!.tile);
       if (msg) {
         map.items.splice(idx, 1);
-        message = msg;
+        logMessage(msg);
         acted = true;
       }
     }
@@ -356,7 +367,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
     const msg = usePotion(player, inventory);
     if (msg) {
-      message = msg;
+      logMessage(msg);
       acted = true;
     }
   } else if (e.key === "i") {
@@ -504,8 +515,12 @@ async function main(): Promise<void> {
     if (showInventory) {
       const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
       bctx.fillText(inv, 8, LOGICAL_H - 40);
-    } else if (message) {
-      bctx.fillText(message, 8, LOGICAL_H - 40);
+    } else {
+      const n = messageLog.length;
+      for (let i = 0; i < n; i++) {
+        bctx.fillStyle = i === n - 1 ? "#e8e4da" : "#9a958c";
+        bctx.fillText(messageLog[i]!, 8, LOGICAL_H - 40 - (n - 1 - i) * 16);
+      }
     }
   }
 
