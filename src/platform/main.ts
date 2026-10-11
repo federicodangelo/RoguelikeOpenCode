@@ -91,27 +91,62 @@ const menu = new MenuNav(() => menuTree());
 
 function menuTree(): MenuEntry[] {
   return [
-    { label: "Help", submenu: () => [{ label: "Back", action: () => menu.back() }] },
+    {
+      label: "Help",
+      hint: "Enter to open help",
+      submenu: () => [{ label: "Back", hint: "Enter to return to the menu", action: () => menu.back() }],
+    },
     {
       label: `Skills (${game.player.skillPoints})`,
+      hint: [`Enter to open skills`, `Skill points: ${game.player.skillPoints}`],
       submenu: () => [
-        { label: "+1 ATK", action: () => game.spendSkill("atk") },
-        { label: "+1 DEF", action: () => game.spendSkill("def") },
-        { label: "+2 Max HP", action: () => game.spendSkill("hp") },
-        { label: "Back", action: () => menu.back() },
+        {
+          label: "+1 ATK",
+          hint: ["Enter: spend 1 skill point", `Current ATK: ${game.player.atk}`],
+          action: () => game.spendSkill("atk"),
+        },
+        {
+          label: "+1 DEF",
+          hint: ["Enter: spend 1 skill point", `Current DEF: ${game.player.def}`],
+          action: () => game.spendSkill("def"),
+        },
+        {
+          label: "+2 Max HP",
+          hint: ["Enter: spend 1 skill point", `Current Max HP: ${game.player.maxHp}`],
+          action: () => game.spendSkill("hp"),
+        },
+        { label: "Back", hint: "Enter to return to the menu", action: () => menu.back() },
       ],
     },
     {
       label: "Settings",
+      hint: "Enter to open settings",
       submenu: () => [
-        { label: `Scaling mode: ${settings.scalingMode}`, action: cycleScaling },
-        { label: `Sound: ${settings.soundEnabled ? "on" : "off"}`, action: toggleSound },
-        { label: "Back", action: () => menu.back() },
+        {
+          label: `Scaling mode: ${settings.scalingMode}`,
+          hint: [
+            "Enter: cycle integer / fractional / smooth",
+            "Fractional snaps to 0.25 steps (1.25, 1.5, 1.75)",
+            `Current scaling: ${settings.scalingMode}`,
+          ],
+          action: cycleScaling,
+        },
+        {
+          label: `Sound: ${settings.soundEnabled ? "on" : "off"}`,
+          hint: ["Enter: toggle sound", `Current sound: ${settings.soundEnabled ? "on" : "off"}`],
+          action: toggleSound,
+        },
+        { label: "Back", hint: "Enter to return to the menu", action: () => menu.back() },
       ],
     },
-    { label: "Save", action: () => saveRun(localStorage, game) },
+    {
+      label: "Save",
+      hint: ["Enter to save now", "The game auto-saves after every move"],
+      action: () => saveRun(localStorage, game),
+    },
     {
       label: "Load",
+      hint: ["Enter to load the latest auto-save", "Auto-save happens after every move"],
       action: () => {
         if (loadRun(localStorage, game)) {
           if (settings.soundEnabled && game.screen === "game" && !game.gameOver) {
@@ -121,7 +156,7 @@ function menuTree(): MenuEntry[] {
         }
       },
     },
-    { label: "Restart", action: resetGame },
+    { label: "Restart", hint: "Enter to restart the run from depth 1", action: resetGame },
   ];
 }
 

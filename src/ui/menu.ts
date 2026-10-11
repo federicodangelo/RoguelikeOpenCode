@@ -35,6 +35,7 @@ export interface MenuEntry {
   label: string;
   submenu?: MenuEntry[] | (() => MenuEntry[]);
   action?: () => void;
+  hint?: string | string[];
 }
 
 export class MenuNav {
@@ -60,6 +61,19 @@ export class MenuNav {
       entries = typeof entry.submenu === "function" ? entry.submenu() : entry.submenu;
     }
     return entries;
+  }
+
+  labels(): string[] {
+    const labels: string[] = [];
+    let entries = this.root();
+    for (const idx of this.path) {
+      const entry = entries[idx];
+      if (!entry) break;
+      labels.push(entry.label);
+      if (!entry.submenu) break;
+      entries = typeof entry.submenu === "function" ? entry.submenu() : entry.submenu;
+    }
+    return labels;
   }
 
   open(): void {

@@ -58,22 +58,28 @@ export function drawGameOver(bctx: CanvasRenderingContext2D, stats: GameOverStat
 
 export function menuDetail(menu: MenuNav, scalingMode: ScalingMode): string[] {
   const entries = menu.entries();
-  const showHelp = menu.depth() === 1 && menu.path[0] === 0;
+  const labels = menu.labels();
+  const showHelp = menu.depth() === 1 && labels[0] === "Help";
   if (showHelp) return [];
 
+  const sel = entries[menu.index];
+  if (sel?.hint) return Array.isArray(sel.hint) ? sel.hint : [sel.hint];
+
   if (menu.depth() === 0) {
-    const sel = entries[menu.index];
-    if (sel?.label === "Help") return ["Enter to open help"];
-    if (sel?.label === "Settings") return ["Enter to open settings"];
+    if (sel?.submenu) return [`Enter to open ${sel.label}`];
     if (sel?.label === "Restart") return ["Enter to restart the run from depth 1"];
     return [];
   }
 
-  return [
-    "Enter: cycle integer / fractional / smooth",
-    "Fractional snaps to 0.25 steps (1.25, 1.5, 1.75)",
-    `Current scaling: ${scalingMode}`,
-  ];
+  if (labels[0] === "Settings") {
+    return [
+      "Enter: cycle integer / fractional / smooth",
+      "Fractional snaps to 0.25 steps (1.25, 1.5, 1.75)",
+      `Current scaling: ${scalingMode}`,
+    ];
+  }
+
+  return [];
 }
 
 export function drawMenu(
@@ -85,7 +91,8 @@ export function drawMenu(
   bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
 
   const entries = menu.entries();
-  const showHelp = menu.depth() === 1 && menu.path[0] === 0;
+  const labels = menu.labels();
+  const showHelp = menu.depth() === 1 && labels[0] === "Help";
   const detail = menuDetail(menu, scalingMode);
   const detailLines = showHelp ? [] : detail.flatMap((line) => wrapPixelText(line, MENU_WIDTH - 48, 2));
   const detailH = showHelp ? HELP_LINES.length * 24 : Math.max(1, detailLines.length) * 24;
@@ -98,14 +105,8 @@ export function drawMenu(
   bctx.strokeStyle = "#5a544a";
   bctx.strokeRect(x, y, MENU_WIDTH, h);
 
-  drawPixelText(
-    bctx,
-    menu.depth() === 0 ? "MENU" : menu.path[0] === 0 ? "MENU > Help" : "MENU > Settings",
-    x + 20,
-    y + 20,
-    "#e8e4da",
-    3,
-  );
+  const title = menu.depth() === 0 ? "MENU" : `MENU > ${labels.join(" > ")}`;
+  drawPixelText(bctx, title, x + 20, y + 20, "#e8e4da", 3);
 
   entries.forEach((it, i) => {
     const suffix = it.submenu ? "  >" : "";

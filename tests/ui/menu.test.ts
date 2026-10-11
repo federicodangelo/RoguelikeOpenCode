@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { MenuNav, MessageLog, type MenuEntry } from "../../src/ui/menu.ts";
+import { menuDetail } from "../../src/ui/screens.ts";
 import { computeScaling } from "../../src/ui/scaling.ts";
 
 describe("MessageLog", () => {
@@ -222,5 +223,52 @@ describe("MenuNav", () => {
     expect(nav.entries()[0]!.label).toBe("Scaling mode: fractional");
     mode = "smooth";
     expect(nav.entries()[0]!.label).toBe("Scaling mode: smooth");
+  });
+});
+
+describe("menuDetail", () => {
+  it("uses hints from the selected root entry", () => {
+    const nav = new MenuNav(
+      () =>
+        [
+          { label: "Save", hint: "auto-save", action: () => {} },
+          { label: "Load", hint: ["load latest", "auto-save"], action: () => {} },
+        ] as MenuEntry[],
+    );
+    nav.open();
+    expect(menuDetail(nav, "fractional")).toEqual(["auto-save"]);
+    nav.down();
+    expect(menuDetail(nav, "fractional")).toEqual(["load latest", "auto-save"]);
+  });
+
+  it("uses hints from submenu entries instead of parent fallbacks", () => {
+    const nav = new MenuNav(
+      () =>
+        [
+          { label: "Help", submenu: [{ label: "Back" }] },
+          { label: "Skills", submenu: [{ label: "+1 ATK", hint: "spend skill point" }] },
+          { label: "Settings", submenu: [{ label: "Scaling", hint: "cycle scaling" }] },
+        ] as MenuEntry[],
+    );
+    nav.open();
+    nav.index = 1;
+    nav.enter();
+    expect(menuDetail(nav, "fractional")).toEqual(["spend skill point"]);
+    nav.back();
+    nav.index = 2;
+    nav.enter();
+    expect(menuDetail(nav, "fractional")).toEqual(["cycle scaling"]);
+  });
+
+  it("does not treat the first submenu as Help by index", () => {
+    const nav = new MenuNav(
+      () =>
+        [
+          { label: "Skills", submenu: [{ label: "+1 ATK", hint: "spend skill point" }] },
+        ] as MenuEntry[],
+    );
+    nav.open();
+    nav.enter();
+    expect(menuDetail(nav, "fractional")).toEqual(["spend skill point"]);
   });
 });
