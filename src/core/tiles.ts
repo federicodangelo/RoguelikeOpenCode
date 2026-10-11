@@ -18,4 +18,12 @@ export const T = {
   Corpse: 13,
   StairsUp: 14,
   Black: 15,
+  Archer: 16,
+  Wolf: 17,
+  Ogre: 18,
+  Warlock: 19,
+  Demon: 20,
+  Trap: 21,
+  Torch: 22,
+  Projectile: 23,
 } as const;

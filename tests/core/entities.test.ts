@@ -1,15 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { RNG } from "../../src/core/rng.ts";
-import { makePlayer, spawnMonsters, attack, gainXp } from "../../src/core/entities.ts";
+import { attack, BOSS_KIND, gainXp, makePlayer, MONSTER_KINDS, spawnMonsters } from "../../src/core/entities.ts";
 import { generateMap } from "../../src/core/map.ts";
 import { bfsDistances, MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
 
-const BASE = {
-  rat: { hp: 4, atk: 2, def: 0 },
-  goblin: { hp: 8, atk: 3, def: 1 },
-  skeleton: { hp: 10, atk: 4, def: 2 },
-} as const;
+const KIND_BY_NAME = new Map([...MONSTER_KINDS, BOSS_KIND].map((kind) => [kind.name, kind]));
 
 describe("makePlayer", () => {
   it("has the documented stats", () => {
@@ -105,11 +101,14 @@ describe("spawnMonsters", () => {
           expect(map.cells[m.y]![m.x]).not.toBe("wall");
           expect(map.cells[m.y]![m.x]).not.toBe("doorClosed");
           expect(dist[m.y * MAP_W + m.x]).toBeGreaterThanOrEqual(6);
-          const base = BASE[m.name as keyof typeof BASE];
-          expect(base).toBeDefined();
-          expect(m.hp).toBe(base.hp + depth);
-          expect(m.atk).toBe(base.atk + Math.floor(depth / 2));
-          expect(m.def).toBe(base.def + Math.floor(depth / 3));
+          const kind = KIND_BY_NAME.get(m.name);
+          expect(kind).toBeDefined();
+          expect(m.hp).toBe(kind!.hp + depth);
+          expect(m.atk).toBe(kind!.atk + Math.floor(depth / 2));
+          expect(m.def).toBe(kind!.def + Math.floor(depth / 3));
+          expect(m.archetype).toBe(kind!.archetype);
+          expect(m.speed).toBe(kind!.speed ?? 1);
+          expect(m.range).toBe(kind!.range ?? 0);
           expect(m.isPlayer).toBe(false);
           expect(m.alive).toBe(true);
         }

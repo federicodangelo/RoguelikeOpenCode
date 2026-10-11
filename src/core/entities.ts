@@ -2,6 +2,8 @@ import { RNG } from "./rng.ts";
 import { T } from "./tiles.ts";
 import { bfsDistances, MAP_W, type GameMap } from "./mapgen/common.ts";
 
+export type Archetype = "normal" | "ranged" | "fast" | "tank" | "summoner" | "boss";
+
 export interface Entity {
   id: number;
   name: string;
@@ -17,6 +19,9 @@ export interface Entity {
   xp: number;
   level: number;
   xpValue: number;
+  archetype: Archetype;
+  speed: number;
+  range: number;
 }
 
 let nextId = 1;
@@ -29,13 +34,32 @@ interface Kind {
   def: number;
   minDepth: number;
   xp: number;
+  archetype: Archetype;
+  speed?: number;
+  range?: number;
 }
 
-const KINDS: Kind[] = [
-  { name: "rat", sprite: T.Rat, hp: 4, atk: 2, def: 0, minDepth: 1, xp: 2 },
-  { name: "goblin", sprite: T.Goblin, hp: 8, atk: 3, def: 1, minDepth: 2, xp: 4 },
-  { name: "skeleton", sprite: T.Skeleton, hp: 10, atk: 4, def: 2, minDepth: 3, xp: 6 },
+export const MONSTER_KINDS: Kind[] = [
+  { name: "rat", sprite: T.Rat, hp: 4, atk: 2, def: 0, minDepth: 1, xp: 2, archetype: "normal" },
+  { name: "goblin", sprite: T.Goblin, hp: 8, atk: 3, def: 1, minDepth: 2, xp: 4, archetype: "normal" },
+  { name: "skeleton", sprite: T.Skeleton, hp: 10, atk: 4, def: 2, minDepth: 3, xp: 6, archetype: "normal" },
+  { name: "archer", sprite: T.Archer, hp: 8, atk: 3, def: 1, minDepth: 4, xp: 7, archetype: "ranged", range: 5 },
+  { name: "wolf", sprite: T.Wolf, hp: 7, atk: 4, def: 0, minDepth: 4, xp: 7, archetype: "fast", speed: 2 },
+  { name: "ogre", sprite: T.Ogre, hp: 18, atk: 5, def: 4, minDepth: 5, xp: 12, archetype: "tank" },
+  { name: "warlock", sprite: T.Warlock, hp: 12, atk: 4, def: 2, minDepth: 6, xp: 14, archetype: "summoner" },
 ];
+
+export const BOSS_KIND: Kind = {
+  name: "demon",
+  sprite: T.Demon,
+  hp: 34,
+  atk: 7,
+  def: 4,
+  minDepth: 5,
+  xp: 30,
+  archetype: "boss",
+  speed: 1,
+};
 
 export function makePlayer(x: number, y: number): Entity {
   return {
@@ -53,6 +77,9 @@ export function makePlayer(x: number, y: number): Entity {
     xp: 0,
     level: 1,
     xpValue: 0,
+    archetype: "normal",
+    speed: 1,
+    range: 0,
   };
 }
 
@@ -82,6 +109,28 @@ export function gainXp(player: Entity, amount: number): number {
   return levels;
 }
 
+function makeMonster(kind: Kind, x: number, y: number, depth: number): Entity {
+  return {
+    id: nextId++,
+    name: kind.name,
+    x,
+    y,
+    hp: kind.hp + depth,
+    maxHp: kind.hp + depth,
+    atk: kind.atk + Math.floor(depth / 2),
+    def: kind.def + Math.floor(depth / 3),
+    sprite: kind.sprite,
+    isPlayer: false,
+    alive: true,
+    xp: 0,
+    level: 1,
+    xpValue: kind.xp,
+    archetype: kind.archetype,
+    speed: kind.speed ?? 1,
+    range: kind.range ?? 0,
+  };
+}
+
 export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
   const dist = bfsDistances(map.cells, map.spawn);
   const candidates: { x: number; y: number }[] = [];
@@ -98,28 +147,21 @@ export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
     [candidates[i], candidates[j]] = [candidates[j]!, candidates[i]!];
   }
 
-  const available = KINDS.filter((k) => k.minDepth <= depth);
+  const available = MONSTER_KINDS.filter((k) => k.minDepth <= depth);
   const count = Math.min(3 + depth, candidates.length);
   const monsters: Entity[] = [];
-  for (let i = 0; i < count; i++) {
+  let next = 0;
+
+  if (depth % 5 === 0 && candidates.length > 0) {
+    monsters.push(makeMonster(BOSS_KIND, candidates[next]!.x, candidates[next]!.y, depth));
+    next++;
+  }
+
+  while (monsters.length < count && next < candidates.length) {
     const kind = rng.pick(available);
-    const pos = candidates[i]!;
-    monsters.push({
-      id: nextId++,
-      name: kind.name,
-      x: pos.x,
-      y: pos.y,
-      hp: kind.hp + depth,
-      maxHp: kind.hp + depth,
-      atk: kind.atk + Math.floor(depth / 2),
-      def: kind.def + Math.floor(depth / 3),
-      sprite: kind.sprite,
-      isPlayer: false,
-      alive: true,
-      xp: 0,
-      level: 1,
-      xpValue: kind.xp,
-    });
+    const pos = candidates[next]!;
+    monsters.push(makeMonster(kind, pos.x, pos.y, depth));
+    next++;
   }
   return monsters;
 }

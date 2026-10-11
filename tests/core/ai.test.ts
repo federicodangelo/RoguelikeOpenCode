@@ -22,6 +22,9 @@ function monster(x: number, y: number): Entity {
     xp: 0,
     level: 1,
     xpValue: 2,
+    archetype: "normal",
+    speed: 1,
+    range: 0,
   };
 }
 

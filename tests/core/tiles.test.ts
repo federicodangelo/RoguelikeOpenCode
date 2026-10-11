@@ -7,11 +7,11 @@ describe("tiles", () => {
     expect(SHEET_COLS).toBe(8);
   });
 
-  it("defines 16 unique tile indices 0..15", () => {
+  it("defines 24 unique tile indices 0..23", () => {
     const values = Object.values(T);
-    expect(values.length).toBe(16);
-    expect(new Set(values).size).toBe(16);
+    expect(values.length).toBe(24);
+    expect(new Set(values).size).toBe(24);
     expect(Math.min(...values)).toBe(0);
-    expect(Math.max(...values)).toBe(15);
+    expect(Math.max(...values)).toBe(23);
   });
 });
