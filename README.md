@@ -1,6 +1,6 @@
 # roguelikeopencode
 
-A small browser roguelike built with Bun, TypeScript, and a custom Strata-style canvas engine.
+A small browser roguelike built with Bun, TypeScript, and a custom HTMLCanvas2D canvas engine.
 
 This project is also a small test for the capabilities of open source coding models, using:
 
