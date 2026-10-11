@@ -6,6 +6,7 @@ export interface MenuTreeActions {
   cycleScaling(): void;
   toggleSound(): void;
   cycleVolume(): void;
+  setVolume(value: number): void;
   toggleMute(): void;
   save(): void;
   load(): void;
@@ -123,11 +124,17 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
         {
           label: `Volume: ${Math.round(settings.volume * 100)}%`,
           hint: [
-            "Enter: cycle volume",
+            "Left/Right: adjust volume",
             `Current volume: ${Math.round(settings.volume * 100)}%`,
             "M: quick mute",
           ],
-          action: actions.cycleVolume,
+          slider: {
+            value: settings.volume,
+            min: 0,
+            max: 1,
+            step: 0.1,
+            onChange: actions.setVolume,
+          },
         },
         {
           label: `Mute: ${settings.muted ? "on" : "off"}`,

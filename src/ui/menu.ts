@@ -31,11 +31,20 @@ export class MessageLog {
   }
 }
 
+export interface MenuSlider {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange(value: number): void;
+}
+
 export interface MenuEntry {
   label: string;
   submenu?: MenuEntry[] | (() => MenuEntry[]);
   action?: () => void;
   hint?: string | string[];
+  slider?: MenuSlider;
 }
 
 export class MenuNav {
@@ -110,6 +119,16 @@ export class MenuNav {
       return "action";
     }
     return "none";
+  }
+
+  adjustSlider(delta: number): boolean {
+    const entry = this.entries()[this.index];
+    const slider = entry?.slider;
+    if (!slider) return false;
+    const next = Math.max(slider.min, Math.min(slider.max, slider.value + slider.step * delta));
+    if (next === slider.value) return true;
+    slider.onChange(next);
+    return true;
   }
 
   back(): boolean {

@@ -86,9 +86,13 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       menu.down();
       audio.sfx("menu");
       game.dirty = true;
-    } else if (e.key === "ArrowLeft" || e.key === "Backspace") {
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Backspace") {
       e.preventDefault();
-      if (menu.depth() > 0) {
+      const delta = e.key === "ArrowRight" ? 1 : -1;
+      if (menu.adjustSlider(delta)) {
+        audio.sfx("menu");
+        game.dirty = true;
+      } else if (e.key !== "ArrowRight" && menu.depth() > 0) {
         menu.back();
         audio.sfx("menu");
         game.dirty = true;

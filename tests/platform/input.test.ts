@@ -17,6 +17,7 @@ function makeMenu(game: Game): MenuNav {
     cycleScaling: () => {},
     toggleSound: () => {},
     cycleVolume: () => {},
+    setVolume: () => {},
     toggleMute: () => {},
     save: () => {},
     load: () => {},

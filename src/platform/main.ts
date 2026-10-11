@@ -100,6 +100,13 @@ function cycleVolumeSetting(): void {
   saveSettings(localStorage, settings);
 }
 
+function setVolumeSetting(volume: number): void {
+  settings.volume = Math.max(0, Math.min(1, volume));
+  applyAudioSettings();
+  startMusicIfAudible();
+  saveSettings(localStorage, settings);
+}
+
 function toggleMute(): void {
   settings.muted = !settings.muted;
   applyAudioSettings();
@@ -144,6 +151,7 @@ menu = new MenuNav(() =>
     cycleScaling,
     toggleSound,
     cycleVolume: cycleVolumeSetting,
+    setVolume: setVolumeSetting,
     toggleMute,
     save: () => saveRun(localStorage, game),
     load: () => {

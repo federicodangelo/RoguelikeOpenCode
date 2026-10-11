@@ -142,6 +142,20 @@ export function drawMenu(
       i === menu.index ? "#ffd97a" : "#e8e4da",
       2,
     );
+
+    if (it.slider) {
+      const range = it.slider.max - it.slider.min;
+      const ratio = range === 0 ? 0 : (it.slider.value - it.slider.min) / range;
+      const sliderX = x + MENU_WIDTH - 220;
+      const sliderW = 180;
+      const sliderY = rowY + 4;
+      bctx.fillStyle = "#3a352d";
+      bctx.fillRect(sliderX, sliderY, sliderW, 8);
+      bctx.fillStyle = i === menu.index ? "#ffd97a" : "#9a958c";
+      bctx.fillRect(sliderX, sliderY, Math.round(sliderW * ratio), 8);
+      bctx.strokeStyle = "#5a544a";
+      bctx.strokeRect(sliderX + 0.5, sliderY + 0.5, sliderW - 1, 7);
+    }
   });
 
   const dy = y + 64 + entries.length * 24 + 8;
