@@ -6,7 +6,7 @@ import { MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
 import { mkMap, openInterior } from "./helpers.ts";
 
-function monster(x: number, y: number): Entity {
+function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity {
   return {
     id: 1,
     name: "rat",
@@ -25,6 +25,7 @@ function monster(x: number, y: number): Entity {
     archetype: "normal",
     speed: 1,
     range: 0,
+    ...overrides,
   };
 }
 
@@ -76,6 +77,25 @@ describe("monsterStep", () => {
     const m = monster(14, 10);
     monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m, blocker] });
     expect(m.x).not.toBe(13);
+  });
+
+  it("shoots from range instead of closing distance", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(13, 10, { name: "archer", archetype: "ranged", range: 5, sprite: T.Archer });
+    monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
+    expect(player.hp).toBeLessThan(12);
+    expect(m.x).toBe(13);
+    expect(m.y).toBe(10);
+  });
+
+  it("fast monsters take multiple chase steps", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(14, 10, { name: "wolf", archetype: "fast", speed: 2, sprite: T.Wolf });
+    monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
+    expect(m.x).toBe(12);
+    expect(m.y).toBe(10);
   });
 
   it("wanders only into safe tiles when the player is out of sight", () => {

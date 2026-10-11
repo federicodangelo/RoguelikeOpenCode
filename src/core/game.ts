@@ -103,7 +103,8 @@ export class Game {
         monsters: this.monsters(),
       });
       if (this.player.hp < before) {
-        this.logMessage(`The ${m.name} hits you for ${before - this.player.hp}.`);
+        const verb = m.archetype === "ranged" ? "shoots" : "hits";
+        this.logMessage(`The ${m.name} ${verb} you for ${before - this.player.hp}.`);
         this.spawnEffect(this.player.x, this.player.y, `-${before - this.player.hp}`, "#ff6a6a");
         this.playerFlashUntil = performance.now() + 250;
         this.events.hurt?.();
