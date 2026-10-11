@@ -157,7 +157,6 @@ function renderGameplay(showMenu: boolean): Buffer {
         toggleSound: () => {},
         cycleVolume: () => {},
         setVolume: () => {},
-        toggleMute: () => {},
         save: () => {},
         load: () => {},
         reset: () => {},

@@ -87,7 +87,12 @@ function cycleScaling(): void {
 }
 
 function toggleSound(): void {
-  settings.soundEnabled = !settings.soundEnabled;
+  if (settings.soundEnabled && !settings.muted) {
+    settings.soundEnabled = false;
+  } else {
+    settings.soundEnabled = true;
+    settings.muted = false;
+  }
   applyAudioSettings();
   startMusicIfAudible();
   saveSettings(localStorage, settings);
@@ -152,7 +157,6 @@ menu = new MenuNav(() =>
     toggleSound,
     cycleVolume: cycleVolumeSetting,
     setVolume: setVolumeSetting,
-    toggleMute,
     save: () => saveRun(localStorage, game),
     load: () => {
       if (loadRun(localStorage, game)) {

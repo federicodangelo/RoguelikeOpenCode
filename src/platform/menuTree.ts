@@ -7,7 +7,6 @@ export interface MenuTreeActions {
   toggleSound(): void;
   cycleVolume(): void;
   setVolume(value: number): void;
-  toggleMute(): void;
   save(): void;
   load(): void;
   reset(): void;
@@ -117,8 +116,11 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           action: actions.cycleScaling,
         },
         {
-          label: `Sound: ${settings.soundEnabled ? "on" : "off"}`,
-          hint: ["Enter: toggle sound", `Current sound: ${settings.soundEnabled ? "on" : "off"}`],
+          label: `Sound: ${settings.soundEnabled && !settings.muted ? "on" : "off"}`,
+          hint: [
+            "Enter: toggle sound",
+            `Current sound: ${settings.soundEnabled && !settings.muted ? "on" : "off"}`,
+          ],
           action: actions.toggleSound,
         },
         {
@@ -135,15 +137,6 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
             step: 0.1,
             onChange: actions.setVolume,
           },
-        },
-        {
-          label: `Mute: ${settings.muted ? "on" : "off"}`,
-          hint: [
-            "Enter: toggle mute",
-            `Current mute: ${settings.muted ? "on" : "off"}`,
-            "M: quick mute",
-          ],
-          action: actions.toggleMute,
         },
         { label: "Back", hint: "Enter to return to the menu", action: actions.back },
       ],
