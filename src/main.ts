@@ -279,17 +279,22 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}   arrows move/bump attack   . down   , up   g pick up   u drink   i inventory`;
+    const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}`;
+    const help = "arrows move/attack   . down   , up   g pick up   u drink   i inventory";
     ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
     ctx.fillStyle = "#e8e4da";
     ctx.font = "14px monospace";
-    ctx.fillText(text, 8, canvas.height - 7);
+    ctx.fillText(stats, 8, canvas.height - 24);
+    ctx.fillStyle = "#9a958c";
+    ctx.fillText(help, 8, canvas.height - 8);
     if (showInventory) {
       const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
-      ctx.fillText(inv, 8, canvas.height - 40);
+      ctx.fillStyle = "#e8e4da";
+      ctx.fillText(inv, 8, canvas.height - 56);
     } else if (message) {
-      ctx.fillText(message, 8, canvas.height - 40);
+      ctx.fillStyle = "#e8e4da";
+      ctx.fillText(message, 8, canvas.height - 56);
     }
   }
 
