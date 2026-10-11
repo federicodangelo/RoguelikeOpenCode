@@ -342,12 +342,16 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}   esc menu`;
+    const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
     ctx.font = "14px monospace";
     ctx.fillText(stats, 8, canvas.height - 7);
+    ctx.fillStyle = "#9a958c";
+    ctx.textAlign = "right";
+    ctx.fillText("esc menu", canvas.width - 8, canvas.height - 7);
+    ctx.textAlign = "left";
     if (showInventory) {
       const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
       ctx.fillText(inv, 8, canvas.height - 40);
