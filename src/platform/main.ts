@@ -7,6 +7,7 @@ import { handleKeydown } from "./input.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
 import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
 import { drawEffects } from "../ui/effects.ts";
+import { drawMinimap } from "../ui/minimap.ts";
 import { LOGICAL_H, LOGICAL_W } from "../core/constants.ts";
 import { MenuNav } from "../ui/menu.ts";
 import { computeScaling } from "../ui/scaling.ts";
@@ -156,6 +157,7 @@ async function main(): Promise<void> {
     } else {
       const cam = game.camera();
       drawScene(bctx, tiles, game.buildScene());
+      drawMinimap(bctx, game);
       drawHUD(bctx, {
         player: game.player,
         inventory: game.inventory,

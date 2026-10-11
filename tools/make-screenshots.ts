@@ -5,6 +5,7 @@ import { Tileset, drawScene } from "../src/platform/render.ts";
 import { drawMenu, drawTitle } from "../src/ui/screens.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../src/ui/hud.ts";
 import { drawEffects } from "../src/ui/effects.ts";
+import { drawMinimap } from "../src/ui/minimap.ts";
 import { Game } from "../src/core/game.ts";
 import { MenuNav } from "../src/ui/menu.ts";
 import { buildMenuTree } from "../src/platform/menuTree.ts";
@@ -103,6 +104,7 @@ function renderGameplay(showMenu: boolean): Buffer {
   const cam = game.camera();
 
   drawScene(ctx, tiles, game.buildScene());
+  drawMinimap(ctx, game);
   drawHUD(ctx, {
     player: game.player,
     inventory: game.inventory,

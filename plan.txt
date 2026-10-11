@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 10 done; next phase TBD
+STATUS: PHASE 11 in progress; next step 11.2
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -152,7 +152,7 @@ PHASE 10 - Gameplay depth [DONE]
 
 PHASE 11 - UI/UX improvements [NEXT]
 -----------------------------------
-[ ] 11.1 Add a minimap or explored-area overview
+[x] 11.1 Add a minimap or explored-area overview
 [ ] 11.2 Add tooltips or richer contextual help for interactable objects
 [ ] 11.3 Improve HUD readability: icons, spacing, status indicators
 [ ] 11.4 Improve menu navigation: clearer submenu states and selection feedback
