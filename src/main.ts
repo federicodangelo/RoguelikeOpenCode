@@ -19,6 +19,8 @@ canvas.width = LOGICAL_W;
 canvas.height = LOGICAL_H;
 ctx.imageSmoothingEnabled = false;
 
+let dirty = true;
+
 function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
@@ -29,6 +31,7 @@ function fitCanvas(): void {
   canvas.style.height = `${Math.round(LOGICAL_H * scale)}px`;
   ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
   ctx.imageSmoothingEnabled = false;
+  dirty = true;
 }
 window.addEventListener("resize", fitCanvas);
 fitCanvas();
@@ -50,7 +53,6 @@ function getFloor(d: number, upAt?: { x: number; y: number }): GameMap {
 let depth = 1;
 let map: GameMap = getFloor(1);
 let player: Entity = makePlayer(map.spawn.x, map.spawn.y);
-let dirty = true;
 
 const exploredByFloor = new Map<number, Set<number>>();
 let visible = new Set<number>();
