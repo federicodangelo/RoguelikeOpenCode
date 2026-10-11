@@ -106,7 +106,7 @@ export function drawMenu(
   const detail = menuDetail(menu, scalingMode);
   const detailLines = showHelp ? [] : detail.flatMap((line) => wrapPixelText(line, MENU_WIDTH - 48, 2));
   const detailH = showHelp ? HELP_LINES.length * 24 : Math.max(1, detailLines.length) * 24;
-  const h = 64 + entries.length * 24 + 16 + detailH + 24;
+  const h = 64 + entries.length * 24 + 16 + detailH + 8;
   const x = (LOGICAL_W - MENU_WIDTH) / 2;
   const y = (LOGICAL_H - h) / 2;
 
@@ -158,10 +158,4 @@ export function drawMenu(
       drawPixelText(bctx, line, x + 24, dy + 20 + i * 24, "#9a958c", 2),
     );
   }
-
-  const footer =
-    menu.depth() === 0
-      ? "up/down move   enter open/select   esc close"
-      : "up/down move   enter select   back/esc back";
-  drawPixelTextCenter(bctx, footer, LOGICAL_W / 2, y + h - 20, "#9a958c", 2);
 }

@@ -102,7 +102,6 @@ function renderGameplay(showMenu: boolean): Buffer {
   const tiles = makeTileset();
   const game = createLoadedGame();
   const cam = game.camera();
-  const settings = defaultSettings();
 
   drawScene(ctx, tiles, game.buildScene());
   drawMinimap(ctx, game);
@@ -115,11 +114,6 @@ function renderGameplay(showMenu: boolean): Buffer {
     showInventory: game.showInventory,
     lightTurns: game.lightTurns,
     statuses: game.player.statuses,
-    soundLabel: settings.muted
-      ? "Muted"
-      : settings.soundEnabled
-        ? `Sound ${Math.round(settings.volume * 100)}%`
-        : "Sound off",
   });
 
   if (!game.gameOver && !game.menuOpen) {

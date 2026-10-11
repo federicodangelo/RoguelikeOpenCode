@@ -189,11 +189,6 @@ async function main(): Promise<void> {
         showInventory: game.showInventory,
         lightTurns: game.lightTurns,
         statuses: game.player.statuses,
-        soundLabel: settings.muted
-          ? "Muted"
-          : settings.soundEnabled
-            ? `Sound ${Math.round(settings.volume * 100)}%`
-            : "Sound off",
       });
 
       if (!game.gameOver && !game.menuOpen) {

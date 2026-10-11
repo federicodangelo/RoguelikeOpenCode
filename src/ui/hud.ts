@@ -18,7 +18,6 @@ export interface HudData {
   showInventory: boolean;
   lightTurns: number;
   statuses: Status[];
-  soundLabel: string;
 }
 
 export type HintIcon =
@@ -187,11 +186,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   drawIcon(bctx, "depth", 160, row2Y + 2, "#9a958c");
   drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 172, row2Y, "#e8e4da", 2);
 
-  const muted = data.soundLabel.startsWith("Muted");
-  drawIcon(bctx, muted ? "mute" : "sound", 360, row2Y + 2, muted ? "#ff6a6a" : "#9a958c");
-  drawPixelText(bctx, data.soundLabel, 372, row2Y, muted ? "#ff6a6a" : "#9a958c", 2);
-
-  let statusX = 520;
+  let statusX = 360;
   for (const status of data.statuses) {
     const color = statusIndicatorColor(status.kind);
     const text = `${status.kind} ${status.turns}`;
