@@ -496,6 +496,10 @@ function encodePNG(width: number, height: number, rgba: Buffer): Buffer {
   ]);
 }
 
-mkdirSync("public/assets", { recursive: true });
-writeFileSync("public/assets/tiles.png", encodePNG(W, H, data));
-console.log(`Wrote public/assets/tiles.png (${W}x${H}, ${arts.length} tiles)`);
+export { arts, encodePNG, GRID, TILE, COLS };
+
+if (import.meta.main) {
+  mkdirSync("public/assets", { recursive: true });
+  writeFileSync("public/assets/tiles.png", encodePNG(W, H, data));
+  console.log(`Wrote public/assets/tiles.png (${W}x${H}, ${arts.length} tiles)`);
+}
