@@ -502,12 +502,26 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}`;
     bctx.fillStyle = "rgba(0,0,0,0.65)";
     bctx.fillRect(0, LOGICAL_H - 24, LOGICAL_W, 24);
-    bctx.fillStyle = "#e8e4da";
+    const barX = 8;
+    const barY = LOGICAL_H - 18;
+    const barW = 120;
+    const barH = 12;
+    bctx.fillStyle = "#3a1a1a";
+    bctx.fillRect(barX, barY, barW, barH);
+    const pct = player.maxHp > 0 ? player.hp / player.maxHp : 0;
+    bctx.fillStyle = pct > 0.5 ? "#4caf50" : pct > 0.25 ? "#c9a227" : "#c0392b";
+    bctx.fillRect(barX, barY, Math.round(barW * pct), barH);
+    bctx.strokeStyle = "#5a544a";
+    bctx.strokeRect(barX + 0.5, barY + 0.5, barW, barH);
     bctx.font = "14px monospace";
-    bctx.fillText(stats, 8, LOGICAL_H - 7);
+    bctx.fillStyle = "#e8e4da";
+    bctx.fillText(`HP ${player.hp}/${player.maxHp}`, barX + barW + 10, LOGICAL_H - 7);
+    bctx.fillText(`Atk ${player.atk}  Def ${player.def}`, 250, LOGICAL_H - 7);
+    bctx.fillText(`Lvl ${player.level}`, 400, LOGICAL_H - 7);
+    bctx.fillText(`Gold ${inventory.gold}`, 490, LOGICAL_H - 7);
+    bctx.fillText(`Depth ${depth} (${map.algorithm})`, 600, LOGICAL_H - 7);
     bctx.fillStyle = "#9a958c";
     bctx.textAlign = "right";
     bctx.fillText("esc menu", LOGICAL_W - 8, LOGICAL_H - 7);
