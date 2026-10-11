@@ -9,11 +9,12 @@ import { drawEffects } from "../src/ui/effects.ts";
 import { drawMinimap } from "../src/ui/minimap.ts";
 import { Iconset } from "../src/ui/icons.ts";
 import { Game } from "../src/core/game.ts";
+import { MONSTER_KINDS, type Entity } from "../src/core/entities.ts";
 import { MenuNav } from "../src/ui/menu.ts";
 import { buildMenuTree } from "../src/platform/menuTree.ts";
 import { defaultSettings } from "../src/platform/settings.ts";
 import { loadRun, saveRun, type SaveStorage } from "../src/platform/save.ts";
-import { bfsDistances } from "../src/core/mapgen/common.ts";
+import { bfsDistances, nearestOpen, type GameMap, type Point } from "../src/core/mapgen/common.ts";
 import { MAP_H, MAP_W } from "../src/core/map.ts";
 import { LOGICAL_H, LOGICAL_W } from "../src/core/constants.ts";
 
@@ -43,6 +44,83 @@ function makeIconset(): Iconset {
   return Iconset.fromImage(image as unknown as CanvasImageSource);
 }
 
+function centerOfRoomNearMapCenter(map: GameMap): Point {
+  const center = { x: Math.floor(map.width / 2), y: Math.floor(map.height / 2) };
+
+  if (map.rooms.length > 0) {
+    const room = [...map.rooms].sort((a, b) => {
+      const da = Math.abs(a.cx - center.x) + Math.abs(a.cy - center.y);
+      const db = Math.abs(b.cx - center.x) + Math.abs(b.cy - center.y);
+      return da - db;
+    })[0]!;
+    const open = nearestOpen(map.cells, { x: room.cx, y: room.cy });
+    if (open) return open;
+  }
+
+  const open = nearestOpen(map.cells, center);
+  return open ?? map.spawn;
+}
+
+function makeScreenshotMonster(
+  kind: (typeof MONSTER_KINDS)[number],
+  x: number,
+  y: number,
+  depth: number,
+  id: number,
+): Entity {
+  return {
+    id,
+    name: kind.name,
+    x,
+    y,
+    hp: kind.hp + depth,
+    maxHp: kind.hp + depth,
+    atk: kind.atk + Math.floor(depth / 2),
+    def: kind.def + Math.floor(depth / 3),
+    sprite: kind.sprite,
+    isPlayer: false,
+    alive: true,
+    xp: 0,
+    level: 1,
+    xpValue: kind.xp,
+    skillPoints: 0,
+    archetype: kind.archetype,
+    speed: kind.speed ?? 1,
+    range: kind.range ?? 0,
+    statuses: [],
+  };
+}
+
+function placeScreenshotMonsters(game: Game): void {
+  const playerKey = game.player.y * MAP_W + game.player.x;
+  const occupied = new Set<number>([playerKey]);
+  for (const item of game.map.items) {
+    occupied.add(item.y * MAP_W + item.x);
+  }
+
+  const candidates: { x: number; y: number; dist: number }[] = [];
+  for (const key of game.visible) {
+    if (occupied.has(key)) continue;
+    const x = key % MAP_W;
+    const y = Math.floor(key / MAP_W);
+    if (game.map.cells[y]![x] !== "floor") continue;
+    const dist = Math.abs(x - game.player.x) + Math.abs(y - game.player.y);
+    if (dist < 2 || dist > 6) continue;
+    candidates.push({ x, y, dist });
+  }
+
+  candidates.sort((a, b) => a.dist - b.dist);
+  const kinds = [MONSTER_KINDS[0]!, MONSTER_KINDS[1]!, MONSTER_KINDS[2]!];
+  const monsters = kinds
+    .slice(0, Math.min(3, candidates.length))
+    .map((kind, index) => {
+      const cell = candidates[index]!;
+      return makeScreenshotMonster(kind, cell.x, cell.y, game.depth, 9000 + index);
+    });
+
+  game.monstersByFloor.set(game.depth, monsters);
+}
+
 function createLoadedGame(): Game {
   const storage = new MemoryStorage();
   const source = new Game();
@@ -59,8 +137,9 @@ function createLoadedGame(): Game {
   source.inventory.gold = 12;
   source.kills = 3;
   source.lightTurns = 18;
-  source.player.x = source.map.stairs.x;
-  source.player.y = source.map.stairs.y;
+  const playerCenter = centerOfRoomNearMapCenter(source.map);
+  source.player.x = playerCenter.x;
+  source.player.y = playerCenter.y;
   source.refreshFOV();
 
   const explored = source.exploredByFloor.get(source.depth)!;
@@ -85,6 +164,7 @@ function createLoadedGame(): Game {
   source.logMessage("You pick up some gold.");
   source.logMessage("The rat hits you for 1.");
   source.logMessage("You hit the rat for 3.");
+  placeScreenshotMonsters(source);
 
   saveRun(storage, source);
 
