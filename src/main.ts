@@ -5,9 +5,9 @@ import { RNG } from "./rng.ts";
 import { makePlayer, spawnMonsters, attack, gainXp, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
-import { makeInventory, pickUp, usePotion } from "./items.ts";
+import { kindOfTile, makeInventory, pickUp, usePotion } from "./items.ts";
 import { MenuNav, MessageLog, computeScaling, SCALING_MODES, type MenuEntry, type ScalingMode } from "./ui.ts";
-import { drawPixelText, drawPixelTextCenter, drawPixelTextRight, wrapPixelText } from "./pixel-font.ts";
+import { drawPixelText, drawPixelTextCenter, drawPixelTextRight, pixelTextWidth, wrapPixelText } from "./pixel-font.ts";
 import { GameAudio } from "./audio.ts";
 
 const VIEW_COLS = 30;
@@ -475,6 +475,7 @@ async function main(): Promise<void> {
     } else {
       drawScene(bctx, tiles, buildScene());
       drawHUD();
+      if (!gameOver && !menuOpen) drawContextHints();
       drawEffects();
       if (gameOver) drawGameOver();
       if (menuOpen) drawMenu();
@@ -605,6 +606,50 @@ async function main(): Promise<void> {
         );
       }
     }
+  }
+
+  function drawContextHints(): void {
+    const hints: string[] = [];
+    const cell = map.cells[player.y]![player.x]!;
+    if (
+      map.items.some((i) => {
+        if (i.x !== player.x || i.y !== player.y) return false;
+        const kind = kindOfTile(i.tile);
+        return kind !== null && kind !== "corpse";
+      })
+    ) {
+      hints.push("g: pick up");
+    }
+    if (cell === "stairs") {
+      hints.push(".: descend");
+    }
+    if (cell === "stairsUp" && depth > 1) {
+      hints.push(",: ascend");
+    }
+    if (inventory.potions > 0 && player.hp * 2 < player.maxHp) {
+      hints.push("u: drink");
+    }
+    if (hints.length === 0) return;
+
+    const cam = camera();
+    const px = player.x - cam.x;
+    const py = player.y - cam.y;
+    if (px < 0 || px >= VIEW_COLS || py < 0 || py >= VIEW_ROWS) return;
+
+    const text = hints.join("  ");
+    const w = pixelTextWidth(text, 2) + 12;
+    const h = 18;
+    let x = px * TILE_SIZE + TILE_SIZE / 2 - w / 2;
+    let y = py * TILE_SIZE - h - 2;
+    if (y < 0) y = py * TILE_SIZE + TILE_SIZE + 2;
+    x = Math.max(2, Math.min(LOGICAL_W - w - 2, x));
+    y = Math.max(2, Math.min(LOGICAL_H - 24 - h - 2, y));
+
+    bctx.fillStyle = "rgba(0,0,0,0.72)";
+    bctx.fillRect(x, y, w, h);
+    bctx.strokeStyle = "#5a544a";
+    bctx.strokeRect(x + 0.5, y + 0.5, w, h);
+    drawPixelText(bctx, text, x + 6, y + 4, "#ffd97a", 2);
   }
 
   function drawGameOver(): void {

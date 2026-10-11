@@ -42,7 +42,7 @@ Monsters include rats, goblins, and skeletons. Items include potions, swords, sh
 | `Esc` | Open or close menu |
 | `Enter` | Start game, confirm menu, or restart after death |
 
-The game has synthesized music and sound effects. Toggle them from the in-game menu under `Settings > Sound`.
+The game has synthesized music and sound effects. Toggle them from the in-game menu under `Settings > Sound`. Contextual key hints appear near the player for pickup, stairs, and drinking potions.
 
 ## Commands
 
