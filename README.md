@@ -4,7 +4,7 @@
 
 A small browser roguelike built with Bun, TypeScript, and a custom HTMLCanvas2D canvas engine.
 
-This project is also a small test for the capabilities of open source coding models, using:
+This project is also a small test for the capabilities of open source coding models, running locally, using:
 
 - Strata engine: https://github.com/Niko1221/Strata
 - qwen3.8-flash-next-iq3_xxs
