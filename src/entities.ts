@@ -14,6 +14,9 @@ export interface Entity {
   sprite: number;
   isPlayer: boolean;
   alive: boolean;
+  xp: number;
+  level: number;
+  xpValue: number;
 }
 
 let nextId = 1;
@@ -25,12 +28,13 @@ interface Kind {
   atk: number;
   def: number;
   minDepth: number;
+  xp: number;
 }
 
 const KINDS: Kind[] = [
-  { name: "rat", sprite: T.Rat, hp: 4, atk: 2, def: 0, minDepth: 1 },
-  { name: "goblin", sprite: T.Goblin, hp: 8, atk: 3, def: 1, minDepth: 2 },
-  { name: "skeleton", sprite: T.Skeleton, hp: 10, atk: 4, def: 2, minDepth: 3 },
+  { name: "rat", sprite: T.Rat, hp: 4, atk: 2, def: 0, minDepth: 1, xp: 2 },
+  { name: "goblin", sprite: T.Goblin, hp: 8, atk: 3, def: 1, minDepth: 2, xp: 4 },
+  { name: "skeleton", sprite: T.Skeleton, hp: 10, atk: 4, def: 2, minDepth: 3, xp: 6 },
 ];
 
 export function makePlayer(x: number, y: number): Entity {
@@ -46,6 +50,9 @@ export function makePlayer(x: number, y: number): Entity {
     sprite: T.Player,
     isPlayer: true,
     alive: true,
+    xp: 0,
+    level: 1,
+    xpValue: 0,
   };
 }
 
@@ -54,6 +61,25 @@ export function attack(rng: RNG, attacker: Entity, defender: Entity): number {
   defender.hp = Math.max(0, defender.hp - dmg);
   if (defender.hp === 0) defender.alive = false;
   return dmg;
+}
+
+export function xpNeeded(level: number): number {
+  return level * 5;
+}
+
+export function gainXp(player: Entity, amount: number): number {
+  player.xp += amount;
+  let levels = 0;
+  while (player.xp >= xpNeeded(player.level)) {
+    player.xp -= xpNeeded(player.level);
+    player.level += 1;
+    player.maxHp += 2;
+    player.hp = player.maxHp;
+    player.atk += 1;
+    player.def += 1;
+    levels += 1;
+  }
+  return levels;
 }
 
 export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
@@ -90,6 +116,9 @@ export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
       sprite: kind.sprite,
       isPlayer: false,
       alive: true,
+      xp: 0,
+      level: 1,
+      xpValue: kind.xp,
     });
   }
   return monsters;

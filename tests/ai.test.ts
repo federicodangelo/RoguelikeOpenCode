@@ -19,6 +19,9 @@ function monster(x: number, y: number): Entity {
     sprite: T.Rat,
     isPlayer: false,
     alive: true,
+    xp: 0,
+    level: 1,
+    xpValue: 2,
   };
 }
 

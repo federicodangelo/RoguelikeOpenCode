@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { RNG } from "../src/rng.ts";
-import { makePlayer, spawnMonsters, attack } from "../src/entities.ts";
+import { makePlayer, spawnMonsters, attack, gainXp } from "../src/entities.ts";
 import { generateMap } from "../src/map.ts";
 import { bfsDistances, MAP_W } from "../src/mapgen/common.ts";
 import { T } from "../src/tiles.ts";
@@ -67,6 +67,29 @@ describe("attack", () => {
     attack(rng, a, d);
     expect(d.hp).toBe(0);
     expect(d.alive).toBe(false);
+  });
+});
+
+describe("gainXp", () => {
+  it("levels up at threshold and carries leftover xp", () => {
+    const p = makePlayer(0, 0);
+    expect(gainXp(p, 4)).toBe(0);
+    expect(p.level).toBe(1);
+    expect(p.xp).toBe(4);
+    expect(gainXp(p, 3)).toBe(1);
+    expect(p.level).toBe(2);
+    expect(p.xp).toBe(2);
+    expect(p.maxHp).toBe(14);
+    expect(p.hp).toBe(14);
+    expect(p.atk).toBe(4);
+    expect(p.def).toBe(2);
+  });
+
+  it("grants multiple levels from one big award", () => {
+    const p = makePlayer(0, 0);
+    expect(gainXp(p, 20)).toBe(2);
+    expect(p.level).toBe(3);
+    expect(p.xp).toBe(5);
   });
 });
 

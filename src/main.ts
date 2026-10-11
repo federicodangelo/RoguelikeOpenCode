@@ -2,7 +2,7 @@ import { T, TILE_SIZE } from "./tiles.ts";
 import { Tileset, drawScene, type CellView } from "./render.ts";
 import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
-import { makePlayer, spawnMonsters, attack, type Entity } from "./entities.ts";
+import { makePlayer, spawnMonsters, attack, gainXp, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { makeInventory, pickUp, usePotion } from "./items.ts";
@@ -110,7 +110,11 @@ function tryMove(dx: number, dy: number): boolean {
   const target = monsters().find((m) => m.alive && m.x === nx && m.y === ny);
   if (target) {
     attack(BATTLE_RNG, player, target);
-    if (!target.alive) dropLoot(target);
+    if (!target.alive) {
+      dropLoot(target);
+      const levels = gainXp(player, target.xpValue);
+      message = levels > 0 ? `Level up! You are now level ${player.level}.` : `You slay the ${target.name}.`;
+    }
     return true;
   }
   player.x = nx;
@@ -275,7 +279,7 @@ async function main(): Promise<void> {
   }
 
   function drawHUD(): void {
-    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Gold ${inventory.gold}   Potions ${inventory.potions}   arrows move/bump attack   . down   , up   g pick up   u drink   i inventory`;
+    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}   arrows move/bump attack   . down   , up   g pick up   u drink   i inventory`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
