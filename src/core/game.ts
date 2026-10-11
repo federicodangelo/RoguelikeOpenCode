@@ -4,6 +4,7 @@ import { RNG } from "./rng.ts";
 import { makePlayer, spawnMonsters, attack, gainXp, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
+import { addStatus, hasStatus, tickStatuses } from "./status.ts";
 import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory } from "./items.ts";
 import { MessageLog } from "../ui/menu.ts";
 import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
@@ -64,6 +65,10 @@ export class Game {
     return this.monstersByFloor.get(this.depth)!;
   }
 
+  playerStunned(): boolean {
+    return hasStatus(this.player, "stun");
+  }
+
   refreshFOV(): void {
     const radius = this.lightTurns > 0 ? TORCH_RADIUS : undefined;
     this.visible = computeFOV(this.map, this.player.x, this.player.y, radius);
@@ -94,6 +99,22 @@ export class Game {
 
   monstersAct(): void {
     if (this.lightTurns > 0) this.lightTurns--;
+
+    for (const m of this.monsters()) {
+      if (!m.alive) continue;
+      if (m.hp * 3 < m.maxHp && !hasStatus(m, "fear")) addStatus(m, "fear", 3, 1);
+      const tick = tickStatuses(m);
+      if (tick.damage > 0) {
+        this.spawnEffect(m.x, m.y, `-${tick.damage}`, "#9be56f");
+        for (const msg of tick.messages) this.logMessage(msg);
+        if (!m.alive) {
+          this.dropLoot(m);
+          this.kills++;
+          this.logMessage(`The ${m.name} dies from status effects.`);
+        }
+      }
+    }
+
     const dist = chaseDistances(this.map, this.player);
     for (const m of this.monsters()) {
       if (!m.alive) continue;
@@ -111,12 +132,24 @@ export class Game {
         this.spawnEffect(this.player.x, this.player.y, `-${before - this.player.hp}`, "#ff6a6a");
         this.playerFlashUntil = performance.now() + 250;
         this.events.hurt?.();
+
+        if (m.archetype === "summoner") {
+          addStatus(this.player, "poison", 3, 1);
+          this.logMessage("You are poisoned.");
+        } else if (m.archetype === "boss") {
+          addStatus(this.player, "bleeding", 3, 1);
+          this.logMessage("You are bleeding.");
+        } else if (m.archetype === "tank" && this.battleRng.next() < 0.35) {
+          addStatus(this.player, "stun", 1, 1);
+          this.logMessage("You are stunned.");
+        }
       }
 
       const monsterCell = this.map.cells[m.y]?.[m.x];
       if (monsterCell === "trap") {
         const dmg = this.battleRng.int(1, 3);
         m.hp = Math.max(0, m.hp - dmg);
+        if (m.hp === 0) m.alive = false;
         this.map.cells[m.y]![m.x] = "floor";
         this.spawnEffect(m.x, m.y, `-${dmg}`, "#ff9a4a");
         if (m.alive) {
@@ -132,6 +165,20 @@ export class Game {
         this.gameOver = true;
         this.events.death?.();
         break;
+      }
+    }
+
+    if (this.player.alive) {
+      const playerTick = tickStatuses(this.player);
+      if (playerTick.damage > 0) {
+        this.spawnEffect(this.player.x, this.player.y, `-${playerTick.damage}`, "#9be56f");
+        for (const msg of playerTick.messages) this.logMessage(msg);
+        this.playerFlashUntil = performance.now() + 250;
+        this.events.hurt?.();
+        if (!this.player.alive) {
+          this.gameOver = true;
+          this.events.death?.();
+        }
       }
     }
   }

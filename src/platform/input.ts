@@ -84,6 +84,14 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
     return;
   }
 
+  if (game.playerStunned()) {
+    game.logMessage("You are stunned and cannot act.");
+    game.monstersAct();
+    game.refreshFOV();
+    game.dirty = true;
+    return;
+  }
+
   let acted = false;
   const move = MOVE_KEYS[e.key];
   if (move) {

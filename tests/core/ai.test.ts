@@ -25,6 +25,7 @@ function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity 
     archetype: "normal",
     speed: 1,
     range: 0,
+    statuses: [],
     ...overrides,
   };
 }
@@ -86,6 +87,34 @@ describe("monsterStep", () => {
     monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
     expect(player.hp).toBeLessThan(12);
     expect(m.x).toBe(13);
+    expect(m.y).toBe(10);
+  });
+
+  it("stunned monsters do not act", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(11, 10, { statuses: [{ kind: "stun", turns: 1, power: 1 }] });
+    monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
+    expect(player.hp).toBe(12);
+    expect(m.x).toBe(11);
+    expect(m.y).toBe(10);
+  });
+
+  it("feared monsters move away from the player", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(12, 10, { statuses: [{ kind: "fear", turns: 2, power: 1 }] });
+    monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
+    expect(m.x).toBe(13);
+    expect(m.y).toBe(10);
+  });
+
+  it("haste increases chase steps", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(14, 10, { statuses: [{ kind: "haste", turns: 2, power: 1 }] });
+    monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
+    expect(m.x).toBe(12);
     expect(m.y).toBe(10);
   });
 

@@ -13,6 +13,7 @@ export interface HudData {
   messages: MessageLog;
   showInventory: boolean;
   lightTurns: number;
+  statusText: string;
 }
 
 export interface ContextualHintInput {
@@ -83,6 +84,10 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
     drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 600, hudY, "#e8e4da", 2);
   }
   drawPixelTextRight(bctx, "esc menu", LOGICAL_W - 8, hudY, "#9a958c", 2);
+
+  if (data.statusText) {
+    drawPixelText(bctx, data.statusText, 8, LOGICAL_H - 60, "#9be56f", 2);
+  }
 
   if (data.showInventory) {
     const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Torches: ${data.inventory.torches}   Gold: ${data.inventory.gold}`;

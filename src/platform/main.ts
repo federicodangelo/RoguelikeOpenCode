@@ -121,6 +121,7 @@ async function main(): Promise<void> {
         messages: game.messages,
         showInventory: game.showInventory,
         lightTurns: game.lightTurns,
+        statusText: game.player.statuses.map((s) => `${s.kind} ${s.turns}`).join("  "),
       });
 
       if (!game.gameOver && !game.menuOpen) {

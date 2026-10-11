@@ -1,8 +1,17 @@
 import { RNG } from "./rng.ts";
 import { T } from "./tiles.ts";
 import { bfsDistances, MAP_W, type GameMap } from "./mapgen/common.ts";
+import { addStatus } from "./status.ts";
 
 export type Archetype = "normal" | "ranged" | "fast" | "tank" | "summoner" | "boss";
+
+export type StatusKind = "poison" | "bleeding" | "haste" | "stun" | "fear";
+
+export interface Status {
+  kind: StatusKind;
+  turns: number;
+  power: number;
+}
 
 export interface Entity {
   id: number;
@@ -22,6 +31,7 @@ export interface Entity {
   archetype: Archetype;
   speed: number;
   range: number;
+  statuses: Status[];
 }
 
 let nextId = 1;
@@ -80,6 +90,7 @@ export function makePlayer(x: number, y: number): Entity {
     archetype: "normal",
     speed: 1,
     range: 0,
+    statuses: [],
   };
 }
 
@@ -128,6 +139,7 @@ function makeMonster(kind: Kind, x: number, y: number, depth: number): Entity {
     archetype: kind.archetype,
     speed: kind.speed ?? 1,
     range: kind.range ?? 0,
+    statuses: [],
   };
 }
 
@@ -160,7 +172,9 @@ export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
   while (monsters.length < count && next < candidates.length) {
     const kind = rng.pick(available);
     const pos = candidates[next]!;
-    monsters.push(makeMonster(kind, pos.x, pos.y, depth));
+    const monster = makeMonster(kind, pos.x, pos.y, depth);
+    if (kind.archetype === "fast") addStatus(monster, "haste", 3, 1);
+    monsters.push(monster);
     next++;
   }
   return monsters;
