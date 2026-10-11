@@ -236,6 +236,7 @@ function renderGameplay(data: Buffer, showMenu: boolean): void {
       else if (cell === "stairsUp") drawTile(data, T.StairsUp, vx, vy);
       else if (cell === "doorClosed") drawTile(data, T.DoorClosed, vx, vy);
       else if (cell === "doorOpen") drawTile(data, T.DoorOpen, vx, vy);
+      else if (cell === "trap") drawTile(data, T.Trap, vx, vy);
 
       const item = map.items.find((i) => i.x === mx && i.y === my);
       if (item) drawTile(data, item.tile, vx, vy);

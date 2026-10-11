@@ -4,7 +4,7 @@ import { T } from "../tiles.ts";
 export const MAP_W = 40;
 export const MAP_H = 30;
 
-export type CellType = "wall" | "floor" | "stairs" | "stairsUp" | "doorClosed" | "doorOpen";
+export type CellType = "wall" | "floor" | "stairs" | "stairsUp" | "doorClosed" | "doorOpen" | "trap";
 
 export interface Point {
   x: number;
@@ -248,6 +248,32 @@ export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserve
   }
   const count = Math.min(rng.int(3, 5) + Math.min(depth, 3), floors.length);
   return floors.slice(0, count).map((p) => ({ x: p.x, y: p.y, tile: rng.pick(kinds) }));
+}
+
+export function placeTraps(
+  cells: CellType[][],
+  rng: RNG,
+  depth: number,
+  reserved: Point[],
+  items: PlacedItem[],
+): void {
+  const count = Math.min(rng.int(1, 2) + Math.floor(depth / 2), 6);
+  const floors: Point[] = [];
+  for (let y = 1; y < MAP_H - 1; y++) {
+    for (let x = 1; x < MAP_W - 1; x++) {
+      if (cells[y]![x] !== "floor") continue;
+      if (reserved.some((p) => p.x === x && p.y === y)) continue;
+      if (items.some((i) => i.x === x && i.y === y)) continue;
+      floors.push({ x, y });
+    }
+  }
+  for (let i = floors.length - 1; i > 0; i--) {
+    const j = rng.int(0, i);
+    [floors[i], floors[j]] = [floors[j]!, floors[i]!];
+  }
+  for (const p of floors.slice(0, count)) {
+    cells[p.y]![p.x] = "trap";
+  }
 }
 
 export function makeMap(

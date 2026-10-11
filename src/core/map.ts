@@ -1,5 +1,5 @@
 import { RNG } from "./rng.ts";
-import { nearestOpen, type CellType, type GameMap, type Point } from "./mapgen/common.ts";
+import { nearestOpen, placeTraps, type CellType, type GameMap, type Point } from "./mapgen/common.ts";
 import { generateBSP } from "./mapgen/bsp.ts";
 import { generateCellular } from "./mapgen/cellular.ts";
 import { generateDelaunay } from "./mapgen/delaunay.ts";
@@ -39,5 +39,7 @@ export function generateMap(rng: RNG, depth: number, opts: GenerateOptions = {})
       map.upStairs = at;
     }
   }
+
+  placeTraps(map.cells, rng, depth, [map.spawn, map.stairs, ...(map.upStairs ? [map.upStairs] : [])], map.items);
   return map;
 }

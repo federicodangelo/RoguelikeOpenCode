@@ -109,6 +109,22 @@ export class Game {
         this.playerFlashUntil = performance.now() + 250;
         this.events.hurt?.();
       }
+
+      const monsterCell = this.map.cells[m.y]?.[m.x];
+      if (monsterCell === "trap") {
+        const dmg = this.battleRng.int(1, 3);
+        m.hp = Math.max(0, m.hp - dmg);
+        this.map.cells[m.y]![m.x] = "floor";
+        this.spawnEffect(m.x, m.y, `-${dmg}`, "#ff9a4a");
+        if (m.alive) {
+          this.logMessage(`The ${m.name} triggers a trap.`);
+        } else {
+          this.dropLoot(m);
+          this.kills++;
+          this.logMessage(`The ${m.name} triggers a trap and dies.`);
+        }
+      }
+
       if (!this.player.alive) {
         this.gameOver = true;
         this.events.death?.();
@@ -159,6 +175,19 @@ export class Game {
 
     this.player.x = nx;
     this.player.y = ny;
+    if (cell === "trap") {
+      const dmg = this.battleRng.int(1, 3);
+      this.player.hp = Math.max(0, this.player.hp - dmg);
+      this.map.cells[ny]![nx] = "floor";
+      this.logMessage(`You trigger a trap and take ${dmg} damage.`);
+      this.spawnEffect(this.player.x, this.player.y, `-${dmg}`, "#ff9a4a");
+      this.playerFlashUntil = performance.now() + 250;
+      this.events.hurt?.();
+      if (!this.player.alive) {
+        this.gameOver = true;
+        this.events.death?.();
+      }
+    }
     return true;
   }
 
@@ -253,6 +282,7 @@ export class Game {
         else if (cell === "stairsUp") view.feature = T.StairsUp;
         else if (cell === "doorClosed") view.feature = T.DoorClosed;
         else if (cell === "doorOpen") view.feature = T.DoorOpen;
+        else if (cell === "trap") view.feature = T.Trap;
 
         const item = this.map.items.find((i) => i.x === mx && i.y === my);
         if (item) view.feature = item.tile;

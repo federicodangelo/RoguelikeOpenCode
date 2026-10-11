@@ -48,4 +48,22 @@ describe("generateMap", () => {
     const map = generateMap(new RNG(7), 1, { algorithm: "bsp" });
     expect(map.upStairs).toBeNull();
   });
+
+  it("places traps on reachable floor cells", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const map = generateMap(new RNG(seed * 313), 1, { algorithm: "bsp" });
+      let traps = 0;
+      for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+          if (map.cells[y]![x] !== "trap") continue;
+          traps++;
+          expect(x === map.spawn.x && y === map.spawn.y).toBe(false);
+          expect(x === map.stairs.x && y === map.stairs.y).toBe(false);
+          expect(map.items.some((i) => i.x === x && i.y === y)).toBe(false);
+        }
+      }
+      expect(traps).toBeGreaterThan(0);
+      expect(allReachable(map)).toBe(true);
+    }
+  });
 });
