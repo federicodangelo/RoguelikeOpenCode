@@ -154,7 +154,7 @@ PHASE 11 - UI/UX improvements [NEXT]
 -----------------------------------
 [x] 11.1 Add a minimap or explored-area overview
 [x] 11.2 Add tooltips or richer contextual help for interactable objects
-[ ] 11.3 Improve HUD readability: icons, spacing, status indicators
+[x] 11.3 Improve HUD readability: icons, spacing, status indicators
 [ ] 11.4 Improve menu navigation: clearer submenu states and selection feedback
 [ ] 11.5 Add sound/volume settings and a quick mute toggle
 [ ] 11.6 Polish contextual hints: avoid overlap, improve placement, add icons

@@ -113,7 +113,8 @@ function renderGameplay(showMenu: boolean): Buffer {
     messages: game.messages,
     showInventory: game.showInventory,
     lightTurns: game.lightTurns,
-    statusText: game.player.statuses.map((s) => `${s.kind} ${s.turns}`).join("  "),
+    statuses: game.player.statuses,
+    soundLabel: defaultSettings().soundEnabled ? "Sound on" : "Sound off",
   });
 
   if (!game.gameOver && !game.menuOpen) {

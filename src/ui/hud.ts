@@ -1,9 +1,12 @@
 import { TILE_SIZE } from "../core/tiles.ts";
 import { LOGICAL_H, LOGICAL_W, VIEW_COLS, VIEW_ROWS } from "../core/constants.ts";
 import { drawPixelText, drawPixelTextRight, pixelTextWidth } from "./pixel-font.ts";
-import type { Archetype, Entity } from "../core/entities.ts";
+import { drawIcon } from "./icons.ts";
+import type { Archetype, Entity, Status, StatusKind } from "../core/entities.ts";
 import type { Inventory, ItemKind } from "../core/items.ts";
 import type { MessageLog } from "./menu.ts";
+
+export const HUD_HEIGHT = 52;
 
 export interface HudData {
   player: Entity;
@@ -13,7 +16,8 @@ export interface HudData {
   messages: MessageLog;
   showInventory: boolean;
   lightTurns: number;
-  statusText: string;
+  statuses: Status[];
+  soundLabel: string;
 }
 
 export type HintIcon =
@@ -89,14 +93,33 @@ export function contextualHints(input: ContextualHintInput): ContextualHint[] {
   return hints.slice(0, 4);
 }
 
-export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
-  bctx.fillStyle = "rgba(0,0,0,0.65)";
-  bctx.fillRect(0, LOGICAL_H - 24, LOGICAL_W, 24);
+export function statusIndicatorColor(kind: StatusKind): string {
+  switch (kind) {
+    case "poison":
+      return "#9be56f";
+    case "bleeding":
+      return "#ff6a6a";
+    case "haste":
+      return "#7ab8ff";
+    case "stun":
+      return "#ffd97a";
+    case "fear":
+      return "#c58fff";
+  }
+}
 
-  const barX = 8;
-  const barY = LOGICAL_H - 18;
+export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
+  const panelY = LOGICAL_H - HUD_HEIGHT;
+  bctx.fillStyle = "rgba(0,0,0,0.72)";
+  bctx.fillRect(0, panelY, LOGICAL_W, HUD_HEIGHT);
+
+  const row1Y = panelY + 6;
+  const barX = 20;
+  const barY = row1Y;
   const barW = 120;
   const barH = 12;
+
+  drawIcon(bctx, "heart", 8, row1Y + 2, "#ff6a6a");
   bctx.fillStyle = "#3a1a1a";
   bctx.fillRect(barX, barY, barW, barH);
 
@@ -106,33 +129,58 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   bctx.strokeStyle = "#5a544a";
   bctx.strokeRect(barX + 0.5, barY + 0.5, barW, barH);
 
-  const hudY = LOGICAL_H - 18;
+  drawPixelText(bctx, `HP ${data.player.hp}/${data.player.maxHp}`, barX + barW + 8, row1Y, "#e8e4da", 2);
+  drawPixelText(bctx, `Lvl ${data.player.level}`, 240, row1Y, "#e8e4da", 2);
+
+  drawIcon(bctx, "sword", 320, row1Y + 2, "#d8d8d8");
+  drawPixelText(bctx, `Atk ${data.player.atk}`, 332, row1Y, "#e8e4da", 2);
+
+  drawIcon(bctx, "shield", 440, row1Y + 2, "#7ab8ff");
+  drawPixelText(bctx, `Def ${data.player.def}`, 452, row1Y, "#e8e4da", 2);
+
+  drawIcon(bctx, "gold", 560, row1Y + 2, "#ffd97a");
+  drawPixelText(bctx, `Gold ${data.inventory.gold}`, 572, row1Y, "#e8e4da", 2);
+
+  if (data.player.skillPoints > 0) {
+    drawIcon(bctx, "skill", 680, row1Y + 2, "#ffd97a");
+    drawPixelText(bctx, `Skills ${data.player.skillPoints}`, 692, row1Y, "#ffd97a", 2);
+  }
+
+  drawPixelTextRight(bctx, "esc menu", LOGICAL_W - 8, row1Y, "#9a958c", 2);
+
+  const row2Y = panelY + 28;
+  const lightColor = data.lightTurns > 0 ? "#ffd97a" : "#5a544a";
+  drawIcon(bctx, "light", 8, row2Y + 2, lightColor);
   drawPixelText(
     bctx,
-    `HP ${data.player.hp}/${data.player.maxHp}`,
-    barX + barW + 10,
-    hudY,
-    "#e8e4da",
+    data.lightTurns > 0 ? `Light ${data.lightTurns}` : "Light off",
+    20,
+    row2Y,
+    lightColor,
     2,
   );
-  drawPixelText(bctx, `Atk ${data.player.atk}  Def ${data.player.def}`, 250, hudY, "#e8e4da", 2);
-  drawPixelText(bctx, `Lvl ${data.player.level}`, 400, hudY, "#e8e4da", 2);
-  drawPixelText(bctx, `Gold ${data.inventory.gold}`, 490, hudY, "#e8e4da", 2);
-  if (data.lightTurns > 0) {
-    drawPixelText(bctx, `Light ${data.lightTurns}`, 600, hudY, "#ffd97a", 2);
-    drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 700, hudY, "#e8e4da", 2);
-  } else {
-    drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 600, hudY, "#e8e4da", 2);
-  }
-  drawPixelTextRight(bctx, "esc menu", LOGICAL_W - 8, hudY, "#9a958c", 2);
 
-  if (data.statusText) {
-    drawPixelText(bctx, data.statusText, 8, LOGICAL_H - 60, "#9be56f", 2);
+  drawIcon(bctx, "depth", 160, row2Y + 2, "#9a958c");
+  drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 172, row2Y, "#e8e4da", 2);
+
+  const muted = data.soundLabel.startsWith("Muted");
+  drawIcon(bctx, muted ? "mute" : "sound", 360, row2Y + 2, muted ? "#ff6a6a" : "#9a958c");
+  drawPixelText(bctx, data.soundLabel, 372, row2Y, muted ? "#ff6a6a" : "#9a958c", 2);
+
+  let statusX = 520;
+  for (const status of data.statuses) {
+    const color = statusIndicatorColor(status.kind);
+    const text = `${status.kind} ${status.turns}`;
+    if (statusX > LOGICAL_W - 80) break;
+    bctx.fillStyle = color;
+    bctx.fillRect(statusX, row2Y + 2, 8, 8);
+    drawPixelText(bctx, text, statusX + 12, row2Y, color, 2);
+    statusX += 12 + pixelTextWidth(text, 2) + 12;
   }
 
   if (data.showInventory) {
     const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Torches: ${data.inventory.torches}   Gold: ${data.inventory.gold}   Skill Points: ${data.player.skillPoints}`;
-    drawPixelText(bctx, inv, 8, LOGICAL_H - 42, "#e8e4da", 2);
+    drawPixelText(bctx, inv, 8, panelY - 16, "#e8e4da", 2);
   } else {
     const n = data.messages.length;
     for (let i = 0; i < n; i++) {
@@ -140,7 +188,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
         bctx,
         data.messages.at(i),
         8,
-        LOGICAL_H - 42 - (n - 1 - i) * 16,
+        panelY - 16 - (n - 1 - i) * 16,
         i === n - 1 ? "#e8e4da" : "#9a958c",
         2,
       );

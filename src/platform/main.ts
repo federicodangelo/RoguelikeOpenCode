@@ -166,7 +166,8 @@ async function main(): Promise<void> {
         messages: game.messages,
         showInventory: game.showInventory,
         lightTurns: game.lightTurns,
-        statusText: game.player.statuses.map((s) => `${s.kind} ${s.turns}`).join("  "),
+        statuses: game.player.statuses,
+        soundLabel: settings.soundEnabled ? "Sound on" : "Sound off",
       });
 
       if (!game.gameOver && !game.menuOpen) {
