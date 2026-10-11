@@ -172,5 +172,4 @@ PHASE 13 - Tech, CI, and tooling [NEXT]
 [ ] 13.1 Add CI workflow for typecheck, build, verify, and tests
 [ ] 13.2 Add lint/format tooling if compatible with Bun workflow
 [ ] 13.3 Add screenshot regeneration checks or visual smoke tests
-[ ] 13.4 Add performance checks for rendering and FOV on larger maps
-[ ] 13.5 Add documentation for module boundaries and contribution workflow
+[ ] 13.4 Add documentation for module boundaries and contribution workflow
