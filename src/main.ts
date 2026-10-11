@@ -7,6 +7,7 @@ import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { makeInventory, pickUp, usePotion } from "./items.ts";
 import { MenuNav, MessageLog, computeScaling, SCALING_MODES, type MenuEntry, type ScalingMode } from "./ui.ts";
+import { drawPixelText, drawPixelTextCenter, drawPixelTextRight, wrapPixelText } from "./pixel-font.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -434,16 +435,21 @@ async function main(): Promise<void> {
   function drawTitle(): void {
     bctx.fillStyle = "#111";
     bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-    bctx.textAlign = "center";
-    bctx.fillStyle = "#e8e4da";
-    bctx.font = "bold 40px monospace";
-    bctx.fillText("ROGUELIKE", LOGICAL_W / 2, 220);
-    bctx.font = "16px monospace";
-    bctx.fillStyle = "#9a958c";
-    bctx.fillText("arrows to move - bump to attack - . to descend - , to ascend", LOGICAL_W / 2, 260);
-    bctx.fillStyle = "#ffd97a";
-    bctx.fillText("Press Enter to start", LOGICAL_W / 2, 320);
-    bctx.textAlign = "left";
+
+    drawPixelTextCenter(bctx, "ROGUELIKE", LOGICAL_W / 2, 170, "#e8e4da", 6);
+    drawPixelTextCenter(
+      bctx,
+      "ARROWS MOVE - BUMP ATTACK - . DESCEND - , ASCEND",
+      LOGICAL_W / 2,
+      260,
+      "#9a958c",
+      2,
+    );
+    drawPixelTextCenter(bctx, "PRESS ENTER TO START", LOGICAL_W / 2, 320, "#ffd97a", 3);
+
+    const icons = [T.Player, T.Rat, T.Goblin, T.Skeleton, T.Potion, T.Sword, T.Shield, T.Gold];
+    const startTile = Math.floor((VIEW_COLS - icons.length) / 2);
+    icons.forEach((idx, i) => tiles.drawTile(bctx, idx, startTile + i, 12));
   }
 
   function drawMenu(): void {
@@ -463,23 +469,34 @@ async function main(): Promise<void> {
         detail.push("Fractional snaps to 0.25 steps (1.25, 1.5, 1.75)");
       }
     }
-    const w = 560;
-    const detailH = showHelp ? HELP_LINES.length * 24 : Math.max(1, detail.length) * 24;
-    const h = 64 + entries.length * 24 + 16 + detailH + 30;
+    const w = 640;
+    const detailLines = showHelp ? [] : detail.flatMap((line) => wrapPixelText(line, w - 48, 2));
+    const detailH = showHelp ? HELP_LINES.length * 24 : Math.max(1, detailLines.length) * 24;
+    const h = 64 + entries.length * 24 + 16 + detailH + 24;
     const x = (LOGICAL_W - w) / 2;
     const y = (LOGICAL_H - h) / 2;
     bctx.fillStyle = "#17150f";
     bctx.fillRect(x, y, w, h);
     bctx.strokeStyle = "#5a544a";
     bctx.strokeRect(x, y, w, h);
-    bctx.fillStyle = "#e8e4da";
-    bctx.font = "bold 20px monospace";
-    bctx.fillText(menu.depth() === 0 ? "MENU" : menu.path[0] === 0 ? "MENU > Help" : "MENU > Settings", x + 20, y + 34);
-    bctx.font = "16px monospace";
+    drawPixelText(
+      bctx,
+      menu.depth() === 0 ? "MENU" : menu.path[0] === 0 ? "MENU > Help" : "MENU > Settings",
+      x + 20,
+      y + 20,
+      "#e8e4da",
+      3,
+    );
     entries.forEach((it, i) => {
-      bctx.fillStyle = i === menu.index ? "#ffd97a" : "#9a958c";
       const suffix = it.submenu ? "  >" : "";
-      bctx.fillText(`${i === menu.index ? ">" : " "} ${it.label}${suffix}`, x + 20, y + 64 + i * 24);
+      drawPixelText(
+        bctx,
+        `${i === menu.index ? ">" : " "} ${it.label}${suffix}`,
+        x + 20,
+        y + 60 + i * 24,
+        i === menu.index ? "#ffd97a" : "#9a958c",
+        2,
+      );
     });
     const dy = y + 64 + entries.length * 24 + 8;
     bctx.strokeStyle = "#3a352d";
@@ -489,17 +506,13 @@ async function main(): Promise<void> {
     bctx.stroke();
     if (showHelp) {
       HELP_LINES.forEach(([k, v], i) => {
-        bctx.fillStyle = "#e8e4da";
-        bctx.fillText(k, x + 24, dy + 24 + i * 24);
-        bctx.fillStyle = "#9a958c";
-        bctx.fillText(v, x + 280, dy + 24 + i * 24);
+        drawPixelText(bctx, k, x + 24, dy + 20 + i * 24, "#e8e4da", 2);
+        drawPixelText(bctx, v, x + 300, dy + 20 + i * 24, "#9a958c", 2);
       });
     } else {
-      bctx.fillStyle = "#9a958c";
-      detail.forEach((line, i) => bctx.fillText(line, x + 24, dy + 24 + i * 24));
+      detailLines.forEach((line, i) => drawPixelText(bctx, line, x + 24, dy + 20 + i * 24, "#9a958c", 2));
     }
-    bctx.fillStyle = "#6a655c";
-    bctx.fillText("arrows: navigate   enter: select   esc: back/close", x + 24, y + h - 12);
+
   }
 
   function drawHUD(): void {
@@ -516,25 +529,27 @@ async function main(): Promise<void> {
     bctx.fillRect(barX, barY, Math.round(barW * pct), barH);
     bctx.strokeStyle = "#5a544a";
     bctx.strokeRect(barX + 0.5, barY + 0.5, barW, barH);
-    bctx.font = "14px monospace";
-    bctx.fillStyle = "#e8e4da";
-    bctx.fillText(`HP ${player.hp}/${player.maxHp}`, barX + barW + 10, LOGICAL_H - 7);
-    bctx.fillText(`Atk ${player.atk}  Def ${player.def}`, 250, LOGICAL_H - 7);
-    bctx.fillText(`Lvl ${player.level}`, 400, LOGICAL_H - 7);
-    bctx.fillText(`Gold ${inventory.gold}`, 490, LOGICAL_H - 7);
-    bctx.fillText(`Depth ${depth} (${map.algorithm})`, 600, LOGICAL_H - 7);
-    bctx.fillStyle = "#9a958c";
-    bctx.textAlign = "right";
-    bctx.fillText("esc menu", LOGICAL_W - 8, LOGICAL_H - 7);
-    bctx.textAlign = "left";
+    const hudY = LOGICAL_H - 18;
+    drawPixelText(bctx, `HP ${player.hp}/${player.maxHp}`, barX + barW + 10, hudY, "#e8e4da", 2);
+    drawPixelText(bctx, `Atk ${player.atk}  Def ${player.def}`, 250, hudY, "#e8e4da", 2);
+    drawPixelText(bctx, `Lvl ${player.level}`, 400, hudY, "#e8e4da", 2);
+    drawPixelText(bctx, `Gold ${inventory.gold}`, 490, hudY, "#e8e4da", 2);
+    drawPixelText(bctx, `Depth ${depth} (${map.algorithm})`, 600, hudY, "#e8e4da", 2);
+    drawPixelTextRight(bctx, "esc menu", LOGICAL_W - 8, hudY, "#9a958c", 2);
     if (showInventory) {
       const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
-      bctx.fillText(inv, 8, LOGICAL_H - 40);
+      drawPixelText(bctx, inv, 8, LOGICAL_H - 42, "#e8e4da", 2);
     } else {
       const n = messageLog.length;
       for (let i = 0; i < n; i++) {
-        bctx.fillStyle = i === n - 1 ? "#e8e4da" : "#9a958c";
-        bctx.fillText(messageLog.at(i), 8, LOGICAL_H - 40 - (n - 1 - i) * 16);
+        drawPixelText(
+          bctx,
+          messageLog.at(i),
+          8,
+          LOGICAL_H - 42 - (n - 1 - i) * 16,
+          i === n - 1 ? "#e8e4da" : "#9a958c",
+          2,
+        );
       }
     }
   }
@@ -542,16 +557,16 @@ async function main(): Promise<void> {
   function drawGameOver(): void {
     bctx.fillStyle = "rgba(0,0,0,0.72)";
     bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-    bctx.fillStyle = "#e8e4da";
-    bctx.textAlign = "center";
-    bctx.font = "bold 32px monospace";
-    bctx.fillText("You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 40);
-    bctx.font = "16px monospace";
-    bctx.fillStyle = "#9a958c";
-    bctx.fillText(`Depth ${depth}   Level ${player.level}   Gold ${inventory.gold}   Kills ${kills}`, LOGICAL_W / 2, LOGICAL_H / 2);
-    bctx.fillStyle = "#ffd97a";
-    bctx.fillText("Press Enter for the title screen", LOGICAL_W / 2, LOGICAL_H / 2 + 40);
-    bctx.textAlign = "left";
+    drawPixelTextCenter(bctx, "You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 70, "#e8e4da", 4);
+    drawPixelTextCenter(
+      bctx,
+      `Depth ${depth}   Level ${player.level}   Gold ${inventory.gold}   Kills ${kills}`,
+      LOGICAL_W / 2,
+      LOGICAL_H / 2 - 10,
+      "#9a958c",
+      2,
+    );
+    drawPixelTextCenter(bctx, "Press Enter for the title screen", LOGICAL_W / 2, LOGICAL_H / 2 + 30, "#ffd97a", 2);
   }
 
   function drawEffects(): void {
@@ -566,15 +581,14 @@ async function main(): Promise<void> {
       }
       const t = age / 800;
       bctx.globalAlpha = 1 - t;
-      bctx.fillStyle = e.color;
-      bctx.font = "bold 16px monospace";
-      bctx.textAlign = "center";
-      bctx.fillText(
+      drawPixelTextCenter(
+        bctx,
         e.text,
         (e.x - cam.x) * TILE_SIZE + TILE_SIZE / 2,
-        (e.y - cam.y) * TILE_SIZE + 12 - t * 20,
+        (e.y - cam.y) * TILE_SIZE + 2 - t * 20,
+        e.color,
+        2,
       );
-      bctx.textAlign = "left";
       bctx.globalAlpha = 1;
     }
     if (now < playerFlashUntil) {
