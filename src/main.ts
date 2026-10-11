@@ -137,6 +137,8 @@ const MOVE_KEYS: Record<string, [number, number]> = {
 let AI_RNG = new RNG(BASE_SEED + 999);
 let BATTLE_RNG = new RNG(BASE_SEED + 555);
 let gameOver = false;
+let screen: "title" | "game" = "title";
+let kills = 0;
 let inventory = makeInventory();
 const messageLog: string[] = [];
 
@@ -170,7 +172,7 @@ const HELP_LINES: [string, string][] = [
   ["u", "drink potion"],
   ["i", "toggle inventory"],
   ["esc", "open/close menu"],
-  ["enter", "restart (when dead)"],
+  ["enter", "start / title (when dead)"],
 ];
 
 function cycleScaling(): void {
@@ -240,6 +242,7 @@ function tryMove(dx: number, dy: number): boolean {
       logMessage(`You hit the ${target.name} for ${dmg}.`);
     } else {
       dropLoot(target);
+      kills++;
       const levels = gainXp(player, target.xpValue);
       logMessage(`You slay the ${target.name}.`);
       if (levels > 0) logMessage(`Level up! You are now level ${player.level}.`);
@@ -273,6 +276,7 @@ function ascend(): boolean {
 
 function resetGame(): void {
   depth = 1;
+  kills = 0;
   floors.clear();
   monstersByFloor.clear();
   exploredByFloor.clear();
@@ -293,10 +297,19 @@ function resetGame(): void {
 }
 
 window.addEventListener("keydown", (e) => {
-  if (gameOver) {
+  if (screen === "title") {
     if (e.key === "Enter") {
       e.preventDefault();
       resetGame();
+      screen = "game";
+    }
+    return;
+  }
+  if (gameOver) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      screen = "title";
+      dirty = true;
     }
     return;
   }
@@ -435,14 +448,33 @@ async function main(): Promise<void> {
   const tiles = await Tileset.load("assets/tiles.png");
 
   function draw(): void {
-    drawScene(bctx, tiles, buildScene());
-    drawHUD();
-    if (gameOver) drawGameOver();
-    if (menuOpen) drawMenu();
+    if (screen === "title") {
+      drawTitle();
+    } else {
+      drawScene(bctx, tiles, buildScene());
+      drawHUD();
+      if (gameOver) drawGameOver();
+      if (menuOpen) drawMenu();
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = scalingMode === "smooth";
     ctx.drawImage(buffer, 0, 0, LOGICAL_W, LOGICAL_H, 0, 0, canvas.width, canvas.height);
     dirty = false;
+  }
+
+  function drawTitle(): void {
+    bctx.fillStyle = "#111";
+    bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+    bctx.textAlign = "center";
+    bctx.fillStyle = "#e8e4da";
+    bctx.font = "bold 40px monospace";
+    bctx.fillText("ROGUELIKE", LOGICAL_W / 2, 220);
+    bctx.font = "16px monospace";
+    bctx.fillStyle = "#9a958c";
+    bctx.fillText("arrows to move - bump to attack - . to descend - , to ascend", LOGICAL_W / 2, 260);
+    bctx.fillStyle = "#ffd97a";
+    bctx.fillText("Press Enter to start", LOGICAL_W / 2, 320);
+    bctx.textAlign = "left";
   }
 
   function drawMenu(): void {
@@ -544,9 +576,12 @@ async function main(): Promise<void> {
     bctx.fillStyle = "#e8e4da";
     bctx.textAlign = "center";
     bctx.font = "bold 32px monospace";
-    bctx.fillText("You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 10);
+    bctx.fillText("You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 40);
     bctx.font = "16px monospace";
-    bctx.fillText("Press Enter to restart", LOGICAL_W / 2, LOGICAL_H / 2 + 24);
+    bctx.fillStyle = "#9a958c";
+    bctx.fillText(`Depth ${depth}   Level ${player.level}   Gold ${inventory.gold}   Kills ${kills}`, LOGICAL_W / 2, LOGICAL_H / 2);
+    bctx.fillStyle = "#ffd97a";
+    bctx.fillText("Press Enter for the title screen", LOGICAL_W / 2, LOGICAL_H / 2 + 40);
     bctx.textAlign = "left";
   }
 
