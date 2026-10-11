@@ -162,7 +162,7 @@ PHASE 11 - UI/UX improvements [DONE]
 PHASE 12 - Audio polish [NEXT]
 ------------------------------
 [x] 12.1 Improve Web Audio scheduling with lookahead instead of setInterval
-[ ] 12.2 Add richer SFX variations for hit, hurt, kill, pickup, stairs, death
+[x] 12.2 Add richer SFX variations for hit, hurt, kill, pickup, stairs, death
 [ ] 12.3 Add music variations by depth or danger state
 [ ] 12.4 Add volume slider and mute hotkey
 [ ] 12.5 Add tests or safe fallbacks for audio behavior
