@@ -24,6 +24,7 @@ export interface ContextualHintInput {
   torches: number;
   hp: number;
   maxHp: number;
+  skillPoints: number;
 }
 
 export function contextualHints(input: ContextualHintInput): string[] {
@@ -43,6 +44,9 @@ export function contextualHints(input: ContextualHintInput): string[] {
   }
   if (input.torches > 0) {
     hints.push("t: torch");
+  }
+  if (input.skillPoints > 0) {
+    hints.push(`esc: skills (${input.skillPoints})`);
   }
 
   return hints;

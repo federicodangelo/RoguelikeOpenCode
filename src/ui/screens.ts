@@ -14,7 +14,7 @@ export interface GameOverStats {
   kills: number;
 }
 
-export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset): void {
+export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset, hasSave: boolean): void {
   bctx.fillStyle = "#111";
   bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
 
@@ -27,7 +27,14 @@ export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset): void 
     "#9a958c",
     2,
   );
-  drawPixelTextCenter(bctx, "PRESS ENTER TO START", LOGICAL_W / 2, 320, "#ffd97a", 3);
+  drawPixelTextCenter(
+    bctx,
+    hasSave ? "PRESS ENTER TO CONTINUE" : "PRESS ENTER TO START",
+    LOGICAL_W / 2,
+    320,
+    "#ffd97a",
+    3,
+  );
 
   const icons = [T.Player, T.Rat, T.Goblin, T.Skeleton, T.Potion, T.Sword, T.Shield, T.Gold];
   const startTile = Math.floor((VIEW_COLS - icons.length) / 2);

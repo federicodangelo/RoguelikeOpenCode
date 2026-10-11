@@ -17,7 +17,7 @@ export interface InputContext {
   game: Game;
   menu: MenuNav;
   audio: GameAudio;
-  resetGame(): void;
+  startGame(): void;
 }
 
 export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
@@ -28,8 +28,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       e.preventDefault();
       audio.unlock();
       audio.sfx("select");
-      ctx.resetGame();
-      game.screen = "game";
+      ctx.startGame();
     }
     return;
   }

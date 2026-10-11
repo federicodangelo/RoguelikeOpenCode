@@ -12,6 +12,7 @@ describe("contextual hints", () => {
         torches: 0,
         hp: 10,
         maxHp: 10,
+        skillPoints: 0,
       }),
     ).toEqual(["g: pick up"]);
   });
@@ -26,6 +27,7 @@ describe("contextual hints", () => {
         torches: 0,
         hp: 10,
         maxHp: 10,
+        skillPoints: 0,
       }),
     ).toEqual([".: descend"]);
 
@@ -38,6 +40,7 @@ describe("contextual hints", () => {
         torches: 0,
         hp: 10,
         maxHp: 10,
+        skillPoints: 0,
       }),
     ).toEqual([",: ascend"]);
   });
@@ -52,6 +55,7 @@ describe("contextual hints", () => {
         torches: 0,
         hp: 7,
         maxHp: 14,
+        skillPoints: 0,
       }),
     ).toEqual([]);
 
@@ -64,6 +68,7 @@ describe("contextual hints", () => {
         torches: 0,
         hp: 6,
         maxHp: 14,
+        skillPoints: 0,
       }),
     ).toEqual(["u: drink"]);
   });
@@ -78,7 +83,23 @@ describe("contextual hints", () => {
         torches: 1,
         hp: 10,
         maxHp: 10,
+        skillPoints: 0,
       }),
     ).toEqual(["t: torch"]);
+  });
+
+  it("shows skills hint when skill points are available", () => {
+    expect(
+      contextualHints({
+        hasPickableItem: false,
+        cell: "floor",
+        depth: 1,
+        potions: 0,
+        torches: 0,
+        hp: 10,
+        maxHp: 10,
+        skillPoints: 2,
+      }),
+    ).toEqual(["esc: skills (2)"]);
   });
 });

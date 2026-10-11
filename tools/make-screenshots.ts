@@ -161,14 +161,21 @@ function drawHUD(
 function drawMenu(data: Buffer): void {
   fillRect(data, 0, 0, LOGICAL_W, LOGICAL_H, C(0, 0, 0, 184));
   const w = 640;
-  const h = 160;
+  const h = 220;
   const x = Math.round((LOGICAL_W - w) / 2);
   const y = Math.round((LOGICAL_H - h) / 2);
   fillRect(data, x, y, w, h, C(23, 21, 15, 255));
   strokeRect(data, x, y, w, h, C(90, 84, 74, 255));
 
   drawText(data, "MENU", x + 20, y + 20, C(232, 228, 218, 255), 3);
-  const entries = ["> Help  >", "  Settings  >", "  Restart"];
+  const entries = [
+    "> Help  >",
+    "  Skills (1)  >",
+    "  Settings  >",
+    "  Save",
+    "  Load",
+    "  Restart",
+  ];
   entries.forEach((label, i) => {
     const color = i === 0 ? C(255, 217, 122, 255) : C(154, 149, 140, 255);
     drawText(data, label, x + 20, y + 60 + i * 24, color, 2);

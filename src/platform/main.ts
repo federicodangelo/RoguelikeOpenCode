@@ -2,7 +2,7 @@ import { Tileset, drawScene } from "./render.ts";
 import { Game } from "../core/game.ts";
 import { GameAudio } from "./audio.ts";
 import { cycleScalingMode, loadSettings, saveSettings } from "./settings.ts";
-import { clearRun, loadRun, saveRun } from "./save.ts";
+import { clearRun, hasSavedRun, loadRun, saveRun } from "./save.ts";
 import { handleKeydown } from "./input.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
 import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
@@ -45,9 +45,10 @@ game.events = {
 if (loadRun(localStorage, game)) {
   if (game.gameOver) {
     clearRun(localStorage);
-    game.screen = "title";
-    game.dirty = true;
+    game.reset();
   }
+  game.screen = "title";
+  game.dirty = true;
 }
 
 function fitCanvas(): void {
@@ -85,6 +86,28 @@ function resetGame(): void {
   audio.unlock();
   if (settings.soundEnabled) audio.startMusic();
   game.dirty = true;
+}
+
+function resumeGame(): void {
+  if (!loadRun(localStorage, game) || game.gameOver) {
+    resetGame();
+    game.screen = "game";
+    return;
+  }
+  game.screen = "game";
+  audio.setEnabled(settings.soundEnabled);
+  audio.unlock();
+  if (settings.soundEnabled) audio.startMusic();
+  game.dirty = true;
+}
+
+function startGame(): void {
+  if (hasSavedRun(localStorage)) {
+    resumeGame();
+  } else {
+    resetGame();
+    game.screen = "game";
+  }
 }
 
 const menu = new MenuNav(() => menuTree());
@@ -162,7 +185,7 @@ function menuTree(): MenuEntry[] {
 
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
-  handleKeydown(e, { game, menu, audio, resetGame });
+  handleKeydown(e, { game, menu, audio, startGame });
   if (game.screen === "game" && !game.gameOver) {
     saveRun(localStorage, game);
   } else if (game.gameOver) {
@@ -181,7 +204,7 @@ async function main(): Promise<void> {
 
   function draw(): void {
     if (game.screen === "title") {
-      drawTitle(bctx, tiles);
+      drawTitle(bctx, tiles, hasSavedRun(localStorage));
     } else {
       const cam = game.camera();
       drawScene(bctx, tiles, game.buildScene());
@@ -209,6 +232,7 @@ async function main(): Promise<void> {
             torches: game.inventory.torches,
             hp: game.player.hp,
             maxHp: game.player.maxHp,
+            skillPoints: game.player.skillPoints,
           }),
         );
       }
