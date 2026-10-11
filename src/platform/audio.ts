@@ -12,6 +12,9 @@ export type SfxName =
 
 const MELODY: number[] = [220, 261.63, 329.63, 261.63, 392, 329.63, 261.63, 220];
 const BASS: number[] = [110, 110, 130.81, 130.81, 164.81, 164.81, 130.81, 110];
+const MUSIC_STEP_SECONDS = 0.32;
+const MUSIC_LOOKAHEAD_SECONDS = 0.25;
+const MUSIC_SCHEDULER_MS = 100;
 
 export class GameAudio {
   enabled = true;
@@ -23,6 +26,7 @@ export class GameAudio {
   private master: GainNode | null = null;
   private musicTimer: number | null = null;
   private musicStep = 0;
+  private nextMusicTime = 0;
 
   private get audible(): boolean {
     return this.enabled && !this.muted && this.volume > 0;
@@ -42,6 +46,7 @@ export class GameAudio {
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
+    if (!this.audible) this.stopMusic();
     this.applyGain();
   }
 
@@ -71,13 +76,13 @@ export class GameAudio {
     this.unlock();
     if (!this.ctx || this.musicTimer !== null) return;
     this.musicStep = 0;
-    this.musicTick();
-    this.musicTimer = window.setInterval(() => this.musicTick(), 320);
+    this.nextMusicTime = this.ctx.currentTime + 0.05;
+    this.scheduleMusic();
   }
 
   stopMusic(): void {
     if (this.musicTimer !== null && typeof window !== "undefined") {
-      window.clearInterval(this.musicTimer);
+      window.clearTimeout(this.musicTimer);
     }
     this.musicTimer = null;
   }
@@ -129,14 +134,29 @@ export class GameAudio {
     }
   }
 
-  private musicTick(): void {
-    if (!this.ctx || !this.audible) return;
+  private scheduleMusic(): void {
+    if (typeof window === "undefined" || !this.ctx || !this.audible) {
+      this.musicTimer = null;
+      return;
+    }
+
+    const lookaheadEnd = this.ctx.currentTime + MUSIC_LOOKAHEAD_SECONDS;
+    while (this.nextMusicTime < lookaheadEnd) {
+      this.musicTick(this.nextMusicTime);
+      this.nextMusicTime += MUSIC_STEP_SECONDS;
+    }
+
+    this.musicTimer = window.setTimeout(() => this.scheduleMusic(), MUSIC_SCHEDULER_MS);
+  }
+
+  private musicTick(time: number): void {
+    if (!this.ctx) return;
     const step = this.musicStep++ % MELODY.length;
     const melody = MELODY[step];
     const bass = BASS[step];
-    if (melody !== undefined) this.tone(melody, 0.28, "triangle", 0.09);
-    if (step % 2 === 0 && bass !== undefined) this.tone(bass, 0.55, "sine", 0.07);
-    if (step === 0) this.tone(440, 0.12, "square", 0.03);
+    if (melody !== undefined) this.toneAt(melody, 0.28, "triangle", 0.09, time);
+    if (step % 2 === 0 && bass !== undefined) this.toneAt(bass, 0.55, "sine", 0.07, time);
+    if (step === 0) this.toneAt(440, 0.12, "square", 0.03, time);
   }
 
   private tone(
@@ -147,8 +167,20 @@ export class GameAudio {
     delay = 0,
     slideTo?: number,
   ): void {
+    if (!this.ctx) return;
+    this.toneAt(freq, dur, type, peak, this.ctx.currentTime + delay, slideTo);
+  }
+
+  private toneAt(
+    freq: number,
+    dur: number,
+    type: OscillatorType,
+    peak: number,
+    startTime: number,
+    slideTo?: number,
+  ): void {
     if (!this.ctx || !this.master) return;
-    const t = this.ctx.currentTime + delay;
+    const t = Math.max(this.ctx.currentTime, startTime);
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
