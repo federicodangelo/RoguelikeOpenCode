@@ -1,4 +1,4 @@
-# roguelikeopencode
+# Roguelike OpenCode
 
 [Build status](https://github.com/federicodangelo/RoguelikeOpenCode/actions/workflows/ci.yml) · [Play on GitHub Pages](https://federicodangelo.github.io/RoguelikeOpenCode/)
 
