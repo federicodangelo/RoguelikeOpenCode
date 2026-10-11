@@ -48,12 +48,14 @@ function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
   if (fractionalScaling) {
-    const factor = fit * dpr;
-    canvas.width = Math.round(LOGICAL_W * factor);
-    canvas.height = Math.round(LOGICAL_H * factor);
-    canvas.style.width = `${Math.round(LOGICAL_W * fit)}px`;
-    canvas.style.height = `${Math.round(LOGICAL_H * fit)}px`;
-    ctx.setTransform(factor, 0, 0, factor, 0, 0);
+    const cssW = Math.round(LOGICAL_W * fit);
+    const cssH = Math.round(LOGICAL_H * fit);
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+    ctx.setTransform(canvas.width / LOGICAL_W, 0, 0, canvas.height / LOGICAL_H, 0, 0);
+    ctx.imageSmoothingEnabled = true;
   } else {
     const factor = Math.max(1, Math.floor(fit * dpr));
     canvas.width = LOGICAL_W * factor;
@@ -61,8 +63,8 @@ function fitCanvas(): void {
     canvas.style.width = `${(LOGICAL_W * factor) / dpr}px`;
     canvas.style.height = `${(LOGICAL_H * factor) / dpr}px`;
     ctx.setTransform(factor, 0, 0, factor, 0, 0);
+    ctx.imageSmoothingEnabled = false;
   }
-  ctx.imageSmoothingEnabled = false;
   dirty = true;
 }
 window.addEventListener("resize", fitCanvas);
