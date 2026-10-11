@@ -1,7 +1,7 @@
 import { T } from "./tiles.ts";
 import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
-import { makePlayer, spawnMonsters, attack, gainXp, type Entity } from "./entities.ts";
+import { makePlayer, spawnMonsters, attack, gainXp, xpNeeded, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { addStatus, hasStatus, tickStatuses } from "./status.ts";
@@ -41,6 +41,7 @@ export class Game {
   effects: Effect[] = [];
   playerFlashUntil = 0;
   lightTurns = 0;
+  godMode = false;
   showInventory = false;
   menuOpen = false;
   dirty = true;
@@ -85,6 +86,14 @@ export class Game {
     this.messages.push(msg);
   }
 
+  private protectPlayer(): void {
+    if (!this.godMode) return;
+    if (!this.player.alive || this.player.hp <= 0) {
+      this.player.alive = true;
+      this.player.hp = Math.max(1, this.player.hp);
+    }
+  }
+
   spawnEffect(x: number, y: number, text: string, color: string): void {
     spawnEffect(this.effects, x, y, text, color, performance.now());
     this.dirty = true;
@@ -127,6 +136,7 @@ export class Game {
         dist,
         monsters: this.monsters(),
       });
+      this.protectPlayer();
       if (this.player.hp < before) {
         const verb = m.archetype === "ranged" ? "shoots" : "hits";
         this.logMessage(`The ${m.name} ${verb} you for ${before - this.player.hp}.`);
@@ -171,6 +181,7 @@ export class Game {
 
     if (this.player.alive) {
       const playerTick = tickStatuses(this.player);
+      this.protectPlayer();
       if (playerTick.damage > 0) {
         this.spawnEffect(this.player.x, this.player.y, `-${playerTick.damage}`, "#9be56f");
         for (const msg of playerTick.messages) this.logMessage(msg);
@@ -229,6 +240,7 @@ export class Game {
     if (cell === "trap") {
       const dmg = this.battleRng.int(1, 3);
       this.player.hp = Math.max(0, this.player.hp - dmg);
+      this.protectPlayer();
       this.map.cells[ny]![nx] = "floor";
       this.logMessage(`You trigger a trap and take ${dmg} damage.`);
       this.spawnEffect(this.player.x, this.player.y, `-${dmg}`, "#ff9a4a");
@@ -309,7 +321,37 @@ export class Game {
     return true;
   }
 
+  toggleGodMode(): boolean {
+    this.godMode = !this.godMode;
+    this.logMessage(this.godMode ? "God mode enabled." : "God mode disabled.");
+    this.dirty = true;
+    return this.godMode;
+  }
+
+  cheatLevelUp(): void {
+    const levels = gainXp(this.player, xpNeeded(this.player.level));
+    if (levels > 0) {
+      this.logMessage(`Cheated level up! You are now level ${this.player.level}.`);
+      this.events.level?.();
+    }
+    this.dirty = true;
+  }
+
+  cheatNextDepth(): void {
+    const from = this.map.stairs;
+    this.depth++;
+    this.map = this.getFloor(this.depth, from);
+    const target = this.map.upStairs ?? this.map.spawn;
+    this.player.x = target.x;
+    this.player.y = target.y;
+    this.logMessage(`Cheated to depth ${this.depth}.`);
+    this.events.stairs?.();
+    this.refreshFOV();
+    this.dirty = true;
+  }
+
   reset(): void {
+    this.godMode = false;
     this.depth = 1;
     this.kills = 0;
     this.floors.clear();
@@ -341,6 +383,7 @@ export class Game {
       player: this.player,
       inventory: this.inventory,
       lightTurns: this.lightTurns,
+      godMode: this.godMode,
       aiRng: this.aiRng.getState(),
       battleRng: this.battleRng.getState(),
       floors: [...this.floors.entries()].map(([depth, map]) => ({
@@ -361,6 +404,7 @@ export class Game {
     this.player = saved.player;
     this.inventory = saved.inventory;
     this.lightTurns = saved.lightTurns;
+    this.godMode = saved.godMode;
     this.aiRng.setState(saved.aiRng);
     this.battleRng.setState(saved.battleRng);
 

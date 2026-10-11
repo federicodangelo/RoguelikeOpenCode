@@ -174,6 +174,7 @@ function drawMenu(data: Buffer): void {
     "  Settings  >",
     "  Save",
     "  Load",
+    "  Cheats  >",
     "  Restart",
   ];
   entries.forEach((label, i) => {

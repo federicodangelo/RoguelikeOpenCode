@@ -20,6 +20,7 @@ export interface SavedRun {
   player: Entity;
   inventory: Inventory;
   lightTurns: number;
+  godMode: boolean;
   aiRng: number;
   battleRng: number;
   floors: SavedFloor[];
@@ -40,6 +41,7 @@ export function isSavedRun(value: unknown): value is SavedRun {
     typeof v.inventory === "object" &&
     v.inventory !== null &&
     typeof v.lightTurns === "number" &&
+    typeof v.godMode === "boolean" &&
     typeof v.aiRng === "number" &&
     typeof v.battleRng === "number" &&
     Array.isArray(v.floors) &&

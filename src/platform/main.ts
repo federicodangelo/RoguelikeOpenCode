@@ -179,6 +179,28 @@ function menuTree(): MenuEntry[] {
         }
       },
     },
+    {
+      label: "Cheats",
+      hint: "Enter to open cheats",
+      submenu: () => [
+        {
+          label: `God mode: ${game.godMode ? "on" : "off"}`,
+          hint: ["Enter: toggle invulnerability", `Current god mode: ${game.godMode ? "on" : "off"}`],
+          action: () => game.toggleGodMode(),
+        },
+        {
+          label: "Level up",
+          hint: ["Enter: gain a level", `Current level: ${game.player.level}`],
+          action: () => game.cheatLevelUp(),
+        },
+        {
+          label: "Next depth",
+          hint: ["Enter: descend without stairs", `Current depth: ${game.depth}`],
+          action: () => game.cheatNextDepth(),
+        },
+        { label: "Back", hint: "Enter to return to the menu", action: () => menu.back() },
+      ],
+    },
     { label: "Restart", hint: "Enter to restart the run from depth 1", action: resetGame },
   ];
 }

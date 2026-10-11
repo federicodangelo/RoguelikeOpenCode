@@ -48,3 +48,45 @@ describe("Game skills", () => {
     expect(game.player.maxHp).toBe(maxHp);
   });
 });
+
+describe("Game cheats", () => {
+  it("god mode prevents death from traps", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.godMode = true;
+    game.player.hp = 1;
+    game.map.cells[game.player.y + 1]![game.player.x] = "trap";
+
+    expect(game.tryMove(0, 1)).toBe(true);
+    expect(game.player.alive).toBe(true);
+    expect(game.player.hp).toBe(1);
+    expect(game.gameOver).toBe(false);
+  });
+
+  it("god mode prevents death from status effects", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.godMode = true;
+    game.player.hp = 1;
+    addStatus(game.player, "poison", 1, 10);
+
+    game.monstersAct();
+    expect(game.player.alive).toBe(true);
+    expect(game.player.hp).toBe(1);
+    expect(game.gameOver).toBe(false);
+  });
+
+  it("level up cheat increases level and grants a skill point", () => {
+    const game = new Game();
+    game.cheatLevelUp();
+    expect(game.player.level).toBe(2);
+    expect(game.player.skillPoints).toBe(1);
+  });
+
+  it("next depth cheat descends without stairs", () => {
+    const game = new Game();
+    game.cheatNextDepth();
+    expect(game.depth).toBe(2);
+    expect(game.map).toBe(game.floors.get(2)!);
+  });
+});

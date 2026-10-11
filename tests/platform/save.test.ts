@@ -29,6 +29,7 @@ describe("save/load", () => {
     game.kills = 4;
     game.inventory.gold = 7;
     game.player.hp = 5;
+    game.godMode = true;
     game.logMessage("saved message");
 
     saveRun(storage, game);
@@ -39,6 +40,7 @@ describe("save/load", () => {
     expect(loaded.kills).toBe(4);
     expect(loaded.inventory.gold).toBe(7);
     expect(loaded.player.hp).toBe(5);
+    expect(loaded.godMode).toBe(true);
     expect(loaded.messages.at(loaded.messages.length - 1)).toBe("saved message");
     expect(loaded.map).toBe(loaded.floors.get(2)!);
   });
