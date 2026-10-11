@@ -10,19 +10,25 @@ import { makeInventory, pickUp, usePotion } from "./items.ts";
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
 
+const LOGICAL_W = VIEW_COLS * TILE_SIZE;
+const LOGICAL_H = VIEW_ROWS * TILE_SIZE;
+
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
-canvas.width = VIEW_COLS * TILE_SIZE;
-canvas.height = VIEW_ROWS * TILE_SIZE;
+canvas.width = LOGICAL_W;
+canvas.height = LOGICAL_H;
 ctx.imageSmoothingEnabled = false;
 
 function fitCanvas(): void {
-  const scale = Math.min(
-    window.innerWidth / canvas.width,
-    window.innerHeight / canvas.height,
-  );
-  canvas.style.width = `${Math.floor(canvas.width * scale)}px`;
-  canvas.style.height = `${Math.floor(canvas.height * scale)}px`;
+  const dpr = window.devicePixelRatio || 1;
+  const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
+  const scale = fit >= 1 ? Math.floor(fit) : fit;
+  canvas.width = Math.round(LOGICAL_W * scale * dpr);
+  canvas.height = Math.round(LOGICAL_H * scale * dpr);
+  canvas.style.width = `${Math.round(LOGICAL_W * scale)}px`;
+  canvas.style.height = `${Math.round(LOGICAL_H * scale)}px`;
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener("resize", fitCanvas);
 fitCanvas();
@@ -310,11 +316,11 @@ async function main(): Promise<void> {
 
   function drawMenu(): void {
     ctx.fillStyle = "rgba(0,0,0,0.72)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
     const w = 460;
     const h = 380;
-    const x = (canvas.width - w) / 2;
-    const y = (canvas.height - h) / 2;
+    const x = (LOGICAL_W - w) / 2;
+    const y = (LOGICAL_H - h) / 2;
     ctx.fillStyle = "#17150f";
     ctx.fillRect(x, y, w, h);
     ctx.strokeStyle = "#5a544a";
@@ -344,31 +350,31 @@ async function main(): Promise<void> {
   function drawHUD(): void {
     const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
+    ctx.fillRect(0, LOGICAL_H - 24, LOGICAL_W, 24);
     ctx.fillStyle = "#e8e4da";
     ctx.font = "14px monospace";
-    ctx.fillText(stats, 8, canvas.height - 7);
+    ctx.fillText(stats, 8, LOGICAL_H - 7);
     ctx.fillStyle = "#9a958c";
     ctx.textAlign = "right";
-    ctx.fillText("esc menu", canvas.width - 8, canvas.height - 7);
+    ctx.fillText("esc menu", LOGICAL_W - 8, LOGICAL_H - 7);
     ctx.textAlign = "left";
     if (showInventory) {
       const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
-      ctx.fillText(inv, 8, canvas.height - 40);
+      ctx.fillText(inv, 8, LOGICAL_H - 40);
     } else if (message) {
-      ctx.fillText(message, 8, canvas.height - 40);
+      ctx.fillText(message, 8, LOGICAL_H - 40);
     }
   }
 
   function drawGameOver(): void {
     ctx.fillStyle = "rgba(0,0,0,0.72)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
     ctx.fillStyle = "#e8e4da";
     ctx.textAlign = "center";
     ctx.font = "bold 32px monospace";
-    ctx.fillText("You died!", canvas.width / 2, canvas.height / 2 - 10);
+    ctx.fillText("You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 10);
     ctx.font = "16px monospace";
-    ctx.fillText("Press Enter to restart", canvas.width / 2, canvas.height / 2 + 24);
+    ctx.fillText("Press Enter to restart", LOGICAL_W / 2, LOGICAL_H / 2 + 24);
     ctx.textAlign = "left";
   }
 
