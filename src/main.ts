@@ -4,6 +4,7 @@ import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
 import { makePlayer, spawnMonsters, attack, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
+import { chaseDistances, monsterStep } from "./ai.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -75,40 +76,12 @@ const MOVE_KEYS: Record<string, [number, number]> = {
 
 const AI_RNG = new RNG(BASE_SEED + 999);
 const BATTLE_RNG = new RNG(BASE_SEED + 555);
-const DIRS4: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-
-function monsterStep(m: Entity): void {
-  const dx = player.x - m.x;
-  const dy = player.y - m.y;
-  const dist = Math.abs(dx) + Math.abs(dy);
-  const steps: [number, number][] = [];
-
-  if (dist <= 6) {
-    const ax: [number, number] = [Math.sign(dx), 0];
-    const ay: [number, number] = [0, Math.sign(dy)];
-    if (Math.abs(dx) >= Math.abs(dy)) steps.push(ax, ay);
-    else steps.push(ay, ax);
-  } else if (AI_RNG.next() < 0.5) {
-    steps.push(AI_RNG.pick(DIRS4));
-  }
-
-  for (const [sx, sy] of steps) {
-    if (sx === 0 && sy === 0) continue;
-    const nx = m.x + sx;
-    const ny = m.y + sy;
-    const cell = map.cells[ny]?.[nx];
-    if (!cell || cell === "wall" || cell === "doorClosed") continue;
-    if (nx === player.x && ny === player.y) continue;
-    if (monsters().some((o) => o !== m && o.alive && o.x === nx && o.y === ny)) continue;
-    m.x = nx;
-    m.y = ny;
-    return;
-  }
-}
 
 function monstersAct(): void {
+  const dist = chaseDistances(map, player);
   for (const m of monsters()) {
-    if (m.alive) monsterStep(m);
+    if (!m.alive) continue;
+    monsterStep(m, { player, map, rng: AI_RNG, dist, monsters: monsters() });
   }
 }
 

@@ -142,7 +142,11 @@ export function bfsFarthest(cells: CellType[][], start: Point): Point {
   return { x: far % MAP_W, y: Math.floor(far / MAP_W) };
 }
 
-export function bfsDistances(cells: CellType[][], start: Point): Int32Array {
+export function bfsDistances(
+  cells: CellType[][],
+  start: Point,
+  blocked?: (c: CellType) => boolean,
+): Int32Array {
   const dist = new Int32Array(MAP_W * MAP_H).fill(-1);
   const startK = start.y * MAP_W + start.x;
   const queue: number[] = [startK];
@@ -155,7 +159,8 @@ export function bfsDistances(cells: CellType[][], start: Point): Int32Array {
       const nx = x + dx;
       const ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) continue;
-      if (cells[ny]![nx] === "wall") continue;
+      const c = cells[ny]![nx]!;
+      if (c === "wall" || (blocked !== undefined && blocked(c))) continue;
       const nk = ny * MAP_W + nx;
       if (dist[nk] !== -1) continue;
       dist[nk] = dist[k]! + 1;
