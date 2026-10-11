@@ -20,6 +20,7 @@ export const HELP_LINES: [string, string][] = [
   ["u", "drink potion"],
   ["t", "light torch"],
   ["i", "toggle inventory"],
+  ["m", "toggle mute"],
   ["esc", "open/close menu"],
   ["enter", "start / title (when dead)"],
 ];

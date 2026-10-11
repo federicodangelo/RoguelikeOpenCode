@@ -1,7 +1,7 @@
 import { Tileset, drawScene } from "./render.ts";
 import { Game } from "../core/game.ts";
 import { GameAudio } from "./audio.ts";
-import { cycleScalingMode, loadSettings, saveSettings } from "./settings.ts";
+import { cycleScalingMode, cycleVolume, loadSettings, saveSettings } from "./settings.ts";
 import { clearRun, hasSavedRun, loadRun, saveRun } from "./save.ts";
 import { handleKeydown } from "./input.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
@@ -27,7 +27,21 @@ bctx.imageSmoothingEnabled = false;
 
 const settings = loadSettings(localStorage);
 const audio = new GameAudio();
-audio.setEnabled(settings.soundEnabled);
+
+function applyAudioSettings(): void {
+  audio.setEnabled(settings.soundEnabled);
+  audio.setVolume(settings.volume);
+  audio.setMuted(settings.muted);
+}
+
+function startMusicIfAudible(): void {
+  if (settings.soundEnabled && !settings.muted && settings.volume > 0 && game.screen === "game" && !game.gameOver) {
+    audio.unlock();
+    audio.startMusic();
+  }
+}
+
+applyAudioSettings();
 
 const game = new Game();
 game.events = {
@@ -72,11 +86,22 @@ function cycleScaling(): void {
 
 function toggleSound(): void {
   settings.soundEnabled = !settings.soundEnabled;
-  audio.setEnabled(settings.soundEnabled);
-  if (settings.soundEnabled && game.screen === "game" && !game.gameOver) {
-    audio.unlock();
-    audio.startMusic();
-  }
+  applyAudioSettings();
+  startMusicIfAudible();
+  saveSettings(localStorage, settings);
+}
+
+function cycleVolumeSetting(): void {
+  settings.volume = cycleVolume(settings.volume);
+  applyAudioSettings();
+  startMusicIfAudible();
+  saveSettings(localStorage, settings);
+}
+
+function toggleMute(): void {
+  settings.muted = !settings.muted;
+  applyAudioSettings();
+  startMusicIfAudible();
   saveSettings(localStorage, settings);
 }
 
@@ -84,9 +109,8 @@ function resetGame(): void {
   game.reset();
   clearRun(localStorage);
   saveRun(localStorage, game);
-  audio.setEnabled(settings.soundEnabled);
-  audio.unlock();
-  if (settings.soundEnabled) audio.startMusic();
+  applyAudioSettings();
+  startMusicIfAudible();
   game.dirty = true;
 }
 
@@ -97,9 +121,8 @@ function resumeGame(): void {
     return;
   }
   game.screen = "game";
-  audio.setEnabled(settings.soundEnabled);
-  audio.unlock();
-  if (settings.soundEnabled) audio.startMusic();
+  applyAudioSettings();
+  startMusicIfAudible();
   game.dirty = true;
 }
 
@@ -118,13 +141,12 @@ menu = new MenuNav(() =>
   buildMenuTree(game, settings, {
     cycleScaling,
     toggleSound,
+    cycleVolume: cycleVolumeSetting,
+    toggleMute,
     save: () => saveRun(localStorage, game),
     load: () => {
       if (loadRun(localStorage, game)) {
-        if (settings.soundEnabled && game.screen === "game" && !game.gameOver) {
-          audio.unlock();
-          audio.startMusic();
-        }
+        startMusicIfAudible();
       }
     },
     reset: resetGame,
@@ -134,7 +156,7 @@ menu = new MenuNav(() =>
 
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
-  handleKeydown(e, { game, menu, audio, startGame });
+  handleKeydown(e, { game, menu, audio, startGame, toggleMute });
   if (game.screen === "game" && !game.gameOver) {
     saveRun(localStorage, game);
   } else if (game.gameOver) {
@@ -143,7 +165,7 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("pointerdown", () => {
   audio.unlock();
-  if (settings.soundEnabled && game.screen === "game" && !game.gameOver) audio.startMusic();
+  startMusicIfAudible();
 });
 
 fitCanvas();
@@ -167,7 +189,11 @@ async function main(): Promise<void> {
         showInventory: game.showInventory,
         lightTurns: game.lightTurns,
         statuses: game.player.statuses,
-        soundLabel: settings.soundEnabled ? "Sound on" : "Sound off",
+        soundLabel: settings.muted
+          ? "Muted"
+          : settings.soundEnabled
+            ? `Sound ${Math.round(settings.volume * 100)}%`
+            : "Sound off",
       });
 
       if (!game.gameOver && !game.menuOpen) {

@@ -17,4 +17,16 @@ describe("game audio", () => {
     audio.setEnabled(false);
     expect(audio.enabled).toBe(false);
   });
+
+  it("stores volume and mute state", () => {
+    const audio = new GameAudio();
+    audio.setVolume(1.5);
+    expect(audio.volume).toBe(1);
+    audio.setVolume(-1);
+    expect(audio.volume).toBe(0);
+    audio.setMuted(true);
+    expect(audio.muted).toBe(true);
+    audio.startMusic();
+    expect(audio.muted).toBe(true);
+  });
 });

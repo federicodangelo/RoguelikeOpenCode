@@ -18,10 +18,11 @@ export interface InputContext {
   menu: MenuNav;
   audio: GameAudio;
   startGame(): void;
+  toggleMute(): void;
 }
 
 export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
-  const { game, menu, audio } = ctx;
+  const { game, menu, audio, toggleMute } = ctx;
 
   if (game.screen === "title") {
     if (e.key === "Enter") {
@@ -40,6 +41,13 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       game.screen = "title";
       game.dirty = true;
     }
+    return;
+  }
+
+  if (e.key === "m") {
+    e.preventDefault();
+    toggleMute();
+    game.dirty = true;
     return;
   }
 

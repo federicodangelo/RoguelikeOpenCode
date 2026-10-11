@@ -1,5 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { cycleScalingMode, defaultSettings, loadSettings, saveSettings } from "../../src/platform/settings.ts";
+import {
+  cycleScalingMode,
+  cycleVolume,
+  defaultSettings,
+  loadSettings,
+  saveSettings,
+} from "../../src/platform/settings.ts";
 
 function fakeStorage(initial: Record<string, string> = {}) {
   const data = new Map(Object.entries(initial));
@@ -21,9 +27,19 @@ describe("settings", () => {
 
   it("loads persisted scaling and sound settings", () => {
     const storage = fakeStorage({
-      "roguelike.settings": JSON.stringify({ scalingMode: "smooth", soundEnabled: false }),
+      "roguelike.settings": JSON.stringify({
+        scalingMode: "smooth",
+        soundEnabled: false,
+        volume: 0.75,
+        muted: true,
+      }),
     });
-    expect(loadSettings(storage)).toEqual({ scalingMode: "smooth", soundEnabled: false });
+    expect(loadSettings(storage)).toEqual({
+      scalingMode: "smooth",
+      soundEnabled: false,
+      volume: 0.75,
+      muted: true,
+    });
   });
 
   it("migrates legacy fractionalScaling boolean", () => {
@@ -35,10 +51,12 @@ describe("settings", () => {
 
   it("saves settings to storage", () => {
     const storage = fakeStorage();
-    saveSettings(storage, { scalingMode: "integer", soundEnabled: false });
+    saveSettings(storage, { scalingMode: "integer", soundEnabled: false, volume: 0.25, muted: true });
     expect(JSON.parse(storage.data.get("roguelike.settings") ?? "{}")).toEqual({
       scalingMode: "integer",
       soundEnabled: false,
+      volume: 0.25,
+      muted: true,
     });
   });
 
@@ -46,5 +64,12 @@ describe("settings", () => {
     expect(cycleScalingMode("integer")).toBe("fractional");
     expect(cycleScalingMode("fractional")).toBe("smooth");
     expect(cycleScalingMode("smooth")).toBe("integer");
+  });
+
+  it("cycles volume through fixed steps", () => {
+    expect(cycleVolume(0.5)).toBe(0.75);
+    expect(cycleVolume(1)).toBe(0);
+    expect(cycleVolume(0)).toBe(0.25);
+    expect(cycleVolume(0.6)).toBe(0.75);
   });
 });

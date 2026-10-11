@@ -15,15 +15,40 @@ const BASS: number[] = [110, 110, 130.81, 130.81, 164.81, 164.81, 130.81, 110];
 
 export class GameAudio {
   enabled = true;
+  volume = 0.5;
+  muted = false;
 
+  private readonly baseGain = 0.45;
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private musicTimer: number | null = null;
   private musicStep = 0;
 
+  private get audible(): boolean {
+    return this.enabled && !this.muted && this.volume > 0;
+  }
+
+  private applyGain(): void {
+    if (this.master) {
+      this.master.gain.value = this.audible ? this.volume * this.baseGain : 0;
+    }
+  }
+
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     if (!enabled) this.stopMusic();
+    this.applyGain();
+  }
+
+  setVolume(volume: number): void {
+    this.volume = Math.max(0, Math.min(1, volume));
+    this.applyGain();
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    if (muted) this.stopMusic();
+    this.applyGain();
   }
 
   unlock(): void {
@@ -35,14 +60,14 @@ export class GameAudio {
       if (!ctor) return;
       this.ctx = new ctor();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.45;
+      this.master.gain.value = this.audible ? this.volume * this.baseGain : 0;
       this.master.connect(this.ctx.destination);
     }
     if (this.ctx.state !== "running") void this.ctx.resume();
   }
 
   startMusic(): void {
-    if (!this.enabled || typeof window === "undefined") return;
+    if (!this.audible || typeof window === "undefined") return;
     this.unlock();
     if (!this.ctx || this.musicTimer !== null) return;
     this.musicStep = 0;
@@ -58,7 +83,7 @@ export class GameAudio {
   }
 
   sfx(name: SfxName): void {
-    if (!this.enabled) return;
+    if (!this.audible) return;
     this.unlock();
     if (!this.ctx) return;
 
@@ -105,7 +130,7 @@ export class GameAudio {
   }
 
   private musicTick(): void {
-    if (!this.ctx || !this.enabled) return;
+    if (!this.ctx || !this.audible) return;
     const step = this.musicStep++ % MELODY.length;
     const melody = MELODY[step];
     const bass = BASS[step];

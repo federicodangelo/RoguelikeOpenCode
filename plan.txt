@@ -156,7 +156,7 @@ PHASE 11 - UI/UX improvements [NEXT]
 [x] 11.2 Add tooltips or richer contextual help for interactable objects
 [x] 11.3 Improve HUD readability: icons, spacing, status indicators
 [x] 11.4 Improve menu navigation: clearer submenu states and selection feedback
-[ ] 11.5 Add sound/volume settings and a quick mute toggle
+[x] 11.5 Add sound/volume settings and a quick mute toggle
 [ ] 11.6 Polish contextual hints: avoid overlap, improve placement, add icons
 
 PHASE 12 - Audio polish [NEXT]

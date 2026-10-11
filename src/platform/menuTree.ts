@@ -5,6 +5,8 @@ import type { Settings } from "./settings.ts";
 export interface MenuTreeActions {
   cycleScaling(): void;
   toggleSound(): void;
+  cycleVolume(): void;
+  toggleMute(): void;
   save(): void;
   load(): void;
   reset(): void;
@@ -57,6 +59,24 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           label: `Sound: ${settings.soundEnabled ? "on" : "off"}`,
           hint: ["Enter: toggle sound", `Current sound: ${settings.soundEnabled ? "on" : "off"}`],
           action: actions.toggleSound,
+        },
+        {
+          label: `Volume: ${Math.round(settings.volume * 100)}%`,
+          hint: [
+            "Enter: cycle volume",
+            `Current volume: ${Math.round(settings.volume * 100)}%`,
+            "M: quick mute",
+          ],
+          action: actions.cycleVolume,
+        },
+        {
+          label: `Mute: ${settings.muted ? "on" : "off"}`,
+          hint: [
+            "Enter: toggle mute",
+            `Current mute: ${settings.muted ? "on" : "off"}`,
+            "M: quick mute",
+          ],
+          action: actions.toggleMute,
         },
         { label: "Back", hint: "Enter to return to the menu", action: actions.back },
       ],
