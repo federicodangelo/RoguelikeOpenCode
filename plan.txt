@@ -92,6 +92,8 @@ PHASE 6 - UI & polish
 ---------------------
 [x] 6.0 In-game menu (ESC): Help section with key bindings + Restart;
     HUD help line removed (stats-only bar)
+[x] 6.0b Settings menu: fractional scaling on/off (on by default),
+    persisted in localStorage
 [ ] 6.1 Message log panel (combat feedback)
 [ ] 6.2 HUD: HP bar, ATK/DEF, gold, depth level
 [ ] 6.3 Title screen, game-over screen, restart flow
