@@ -38,7 +38,7 @@ Monsters include rats, goblins, and skeletons. Items include potions, swords, sh
 | `,` | Ascend stairs |
 | `g` | Pick up item |
 | `u` | Drink potion |
-| `i` | Toggle inventory |
+| `i` | Open inventory menu |
 | `Esc` | Open or close menu |
 | `Enter` | Start game, confirm menu, or restart after death |
 

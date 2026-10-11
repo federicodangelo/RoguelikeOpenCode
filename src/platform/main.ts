@@ -155,9 +155,19 @@ menu = new MenuNav(() =>
   }),
 );
 
+function openInventoryMenu(): void {
+  game.menuOpen = true;
+  menu.open();
+  const idx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+  if (idx >= 0) {
+    menu.index = idx;
+    menu.enter();
+  }
+}
+
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
-  handleKeydown(e, { game, menu, audio, startGame, toggleMute });
+  handleKeydown(e, { game, menu, audio, startGame, toggleMute, openInventory: openInventoryMenu });
   if (game.screen === "game" && !game.gameOver) {
     saveRun(localStorage, game);
   } else if (game.gameOver) {
@@ -188,7 +198,6 @@ async function main(): Promise<void> {
         depth: game.depth,
         algorithm: game.map.algorithm,
         messages: game.messages,
-        showInventory: game.showInventory,
         lightTurns: game.lightTurns,
         statuses: game.player.statuses,
         icons,

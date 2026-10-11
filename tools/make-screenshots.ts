@@ -119,7 +119,6 @@ function renderGameplay(showMenu: boolean): Buffer {
     depth: game.depth,
     algorithm: game.map.algorithm,
     messages: game.messages,
-    showInventory: game.showInventory,
     lightTurns: game.lightTurns,
     statuses: game.player.statuses,
     icons,

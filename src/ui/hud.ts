@@ -15,7 +15,6 @@ export interface HudData {
   depth: number;
   algorithm: string;
   messages: MessageLog;
-  showInventory: boolean;
   lightTurns: number;
   statuses: Status[];
   icons: Iconset;
@@ -204,21 +203,16 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
     statusX += 12 + pixelTextWidth(text, 2) + 12;
   }
 
-  if (data.showInventory) {
-    const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Torches: ${data.inventory.torches}   Gold: ${data.inventory.gold}   Skill Points: ${data.player.skillPoints}`;
-    drawPixelText(bctx, inv, 8, panelY - 16, "#e8e4da", 2);
-  } else {
-    const n = data.messages.length;
-    for (let i = 0; i < n; i++) {
-      drawPixelText(
-        bctx,
-        data.messages.at(i),
-        8,
-        panelY - 16 - (n - 1 - i) * 16,
-        i === n - 1 ? "#e8e4da" : "#9a958c",
-        2,
-      );
-    }
+  const n = data.messages.length;
+  for (let i = 0; i < n; i++) {
+    drawPixelText(
+      bctx,
+      data.messages.at(i),
+      8,
+      panelY - 16 - (n - 1 - i) * 16,
+      i === n - 1 ? "#e8e4da" : "#9a958c",
+      2,
+    );
   }
 }
 

@@ -50,7 +50,6 @@ export class Game {
   playerFlashUntil = 0;
   lightTurns = 0;
   godMode = false;
-  showInventory = false;
   menuOpen = false;
   dirty = true;
   events: GameEvents = {};
@@ -414,7 +413,6 @@ export class Game {
     this.effects.length = 0;
     this.playerFlashUntil = 0;
     this.lightTurns = 0;
-    this.showInventory = false;
     this.menuOpen = false;
     this.map = this.getFloor(1);
     this.player = makePlayer(this.map.spawn.x, this.map.spawn.y);
@@ -471,7 +469,6 @@ export class Game {
     this.messages.restore(saved.messages);
     this.effects.length = 0;
     this.playerFlashUntil = 0;
-    this.showInventory = false;
     this.menuOpen = false;
     this.refreshFOV();
     this.dirty = true;

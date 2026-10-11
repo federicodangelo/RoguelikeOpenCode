@@ -19,10 +19,11 @@ export interface InputContext {
   audio: GameAudio;
   startGame(): void;
   toggleMute(): void;
+  openInventory(): void;
 }
 
 export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
-  const { game, menu, audio, toggleMute } = ctx;
+  const { game, menu, audio, toggleMute, openInventory } = ctx;
 
   if (game.screen === "title") {
     if (e.key === "Enter") {
@@ -60,6 +61,18 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       game.menuOpen = !game.menuOpen;
       if (game.menuOpen) menu.open();
     }
+    game.dirty = true;
+    return;
+  }
+
+  if (e.key === "i") {
+    e.preventDefault();
+    if (game.menuOpen && menu.labels()[0] === "Inventory") {
+      game.menuOpen = false;
+    } else {
+      openInventory();
+    }
+    audio.sfx("menu");
     game.dirty = true;
     return;
   }
@@ -119,11 +132,6 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
   } else if (e.key === "t") {
     e.preventDefault();
     acted = game.useTorch();
-  } else if (e.key === "i") {
-    e.preventDefault();
-    game.showInventory = !game.showInventory;
-    audio.sfx("menu");
-    game.dirty = true;
   }
 
   if (acted) {
