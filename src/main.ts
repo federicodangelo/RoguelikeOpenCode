@@ -47,13 +47,21 @@ function saveSettings(): void {
 function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
-  const scale = fractionalScaling ? fit : Math.max(1, Math.floor(fit));
-  const factor = fractionalScaling ? scale * dpr : Math.max(1, Math.round(scale * dpr));
-  canvas.width = Math.round(LOGICAL_W * factor);
-  canvas.height = Math.round(LOGICAL_H * factor);
-  canvas.style.width = `${Math.round(LOGICAL_W * scale)}px`;
-  canvas.style.height = `${Math.round(LOGICAL_H * scale)}px`;
-  ctx.setTransform(factor, 0, 0, factor, 0, 0);
+  if (fractionalScaling) {
+    const factor = fit * dpr;
+    canvas.width = Math.round(LOGICAL_W * factor);
+    canvas.height = Math.round(LOGICAL_H * factor);
+    canvas.style.width = `${Math.round(LOGICAL_W * fit)}px`;
+    canvas.style.height = `${Math.round(LOGICAL_H * fit)}px`;
+    ctx.setTransform(factor, 0, 0, factor, 0, 0);
+  } else {
+    const factor = Math.max(1, Math.floor(fit * dpr));
+    canvas.width = LOGICAL_W * factor;
+    canvas.height = LOGICAL_H * factor;
+    canvas.style.width = `${(LOGICAL_W * factor) / dpr}px`;
+    canvas.style.height = `${(LOGICAL_H * factor) / dpr}px`;
+    ctx.setTransform(factor, 0, 0, factor, 0, 0);
+  }
   ctx.imageSmoothingEnabled = false;
   dirty = true;
 }
