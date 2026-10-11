@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { makePlayer } from "../src/entities.ts";
-import { makeInventory, kindOfTile, pickUp, usePotion } from "../src/items.ts";
-import { T } from "../src/tiles.ts";
+import { makePlayer } from "../../src/core/entities.ts";
+import { makeInventory, kindOfTile, pickUp, usePotion } from "../../src/core/items.ts";
+import { T } from "../../src/core/tiles.ts";
 
 describe("kindOfTile", () => {
   it("maps item tiles to kinds", () => {

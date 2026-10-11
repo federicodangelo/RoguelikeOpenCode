@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { computeFOV, FOV_RADIUS } from "../src/fov.ts";
-import { MAP_W } from "../src/mapgen/common.ts";
+import { computeFOV, FOV_RADIUS } from "../../src/core/fov.ts";
+import { MAP_W } from "../../src/core/mapgen/common.ts";
 import { mkMap, openInterior } from "./helpers.ts";
 
 const k = (x: number, y: number) => y * MAP_W + x;

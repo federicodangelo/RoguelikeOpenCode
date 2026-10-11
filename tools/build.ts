@@ -3,7 +3,7 @@ import { cpSync, rmSync } from "node:fs";
 rmSync("dist", { recursive: true, force: true });
 
 const result = await Bun.build({
-  entrypoints: ["src/main.ts"],
+  entrypoints: ["src/platform/main.ts"],
   outdir: "dist",
   target: "browser",
   minify: true,

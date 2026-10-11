@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { MenuNav, MessageLog, computeScaling, type MenuEntry } from "../src/ui.ts";
+import { MenuNav, MessageLog, type MenuEntry } from "../../src/ui/menu.ts";
+import { computeScaling } from "../../src/ui/scaling.ts";
 
 describe("MessageLog", () => {
   it("skips empty messages", () => {

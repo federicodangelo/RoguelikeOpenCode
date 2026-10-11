@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { GameAudio } from "../src/audio.ts";
+import { GameAudio } from "../../src/platform/audio.ts";
 
 describe("game audio", () => {
   it("is safe when Web Audio is unavailable", () => {

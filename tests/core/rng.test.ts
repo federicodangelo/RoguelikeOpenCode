@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { RNG } from "../src/rng.ts";
+import { RNG } from "../../src/core/rng.ts";
 
 describe("RNG", () => {
   it("is deterministic for the same seed", () => {

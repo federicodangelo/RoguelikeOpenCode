@@ -27,7 +27,7 @@ const server = Bun.serve({
     }
     if (url.pathname === "/main.js") {
       const result = await Bun.build({
-        entrypoints: ["src/main.ts"],
+        entrypoints: ["src/platform/main.ts"],
         target: "browser",
       });
       if (!result.success) {

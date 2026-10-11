@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { SHEET_COLS, T, TILE_SIZE } from "../src/tiles.ts";
+import { SHEET_COLS, T, TILE_SIZE } from "../../src/core/tiles.ts";
 
 describe("tiles", () => {
   it("has 32px tiles and 8 sheet columns", () => {

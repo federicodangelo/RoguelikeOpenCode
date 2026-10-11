@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { RNG } from "../src/rng.ts";
-import { T } from "../src/tiles.ts";
+import { RNG } from "../../src/core/rng.ts";
+import { T } from "../../src/core/tiles.ts";
 import {
   bfsDistances,
   bfsFarthest,
@@ -18,7 +18,7 @@ import {
   placeItems,
   type CellType,
   type Room,
-} from "../src/mapgen/common.ts";
+} from "../../src/core/mapgen/common.ts";
 import { openInterior } from "./helpers.ts";
 
 describe("emptyCells", () => {

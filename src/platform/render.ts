@@ -1,4 +1,4 @@
-import { SHEET_COLS, TILE_SIZE } from "./tiles.ts";
+import { SHEET_COLS, TILE_SIZE } from "../core/tiles.ts";
 
 export interface CellView {
   floor: number;

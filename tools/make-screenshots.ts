@@ -1,12 +1,12 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { arts, encodePNG, GRID, TILE } from "./make-tiles.ts";
-import { generateMap, MAP_H, MAP_W } from "../src/map.ts";
-import { RNG } from "../src/rng.ts";
-import { makePlayer, spawnMonsters, type Entity } from "../src/entities.ts";
-import { computeFOV } from "../src/fov.ts";
-import { bfsDistances } from "../src/mapgen/common.ts";
-import { FONT } from "../src/pixel-font.ts";
-import { T } from "../src/tiles.ts";
+import { generateMap, MAP_H, MAP_W } from "../src/core/map.ts";
+import { RNG } from "../src/core/rng.ts";
+import { makePlayer, spawnMonsters, type Entity } from "../src/core/entities.ts";
+import { computeFOV } from "../src/core/fov.ts";
+import { bfsDistances } from "../src/core/mapgen/common.ts";
+import { FONT } from "../src/ui/pixel-font.ts";
+import { T } from "../src/core/tiles.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;

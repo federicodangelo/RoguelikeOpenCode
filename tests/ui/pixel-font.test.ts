@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { FONT, pixelTextWidth, wrapPixelText } from "../src/pixel-font.ts";
+import { FONT, pixelTextWidth, wrapPixelText } from "../../src/ui/pixel-font.ts";
 
 describe("pixel font", () => {
   it("includes lowercase and UI punctuation glyphs", () => {

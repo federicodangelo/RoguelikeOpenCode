@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { drawScene, Tileset, type CellView } from "../src/render.ts";
-import { TILE_SIZE } from "../src/tiles.ts";
+import { drawScene, Tileset, type CellView } from "../../src/platform/render.ts";
+import { TILE_SIZE } from "../../src/core/tiles.ts";
 
 describe("drawScene", () => {
   it("draws floor, then feature, then entity, then dim overlay", () => {

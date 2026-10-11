@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { RNG } from "../src/rng.ts";
-import { generateMap, MAP_ALGORITHMS, pickAlgorithm } from "../src/map.ts";
+import { RNG } from "../../src/core/rng.ts";
+import { generateMap, MAP_ALGORITHMS, pickAlgorithm } from "../../src/core/map.ts";
 import { allReachable } from "./helpers.ts";
 
 describe("pickAlgorithm", () => {

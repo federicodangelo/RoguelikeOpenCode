@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { RNG } from "../src/rng.ts";
-import { chaseDistances, monsterStep } from "../src/ai.ts";
-import { makePlayer, type Entity } from "../src/entities.ts";
-import { MAP_W } from "../src/mapgen/common.ts";
-import { T } from "../src/tiles.ts";
+import { RNG } from "../../src/core/rng.ts";
+import { chaseDistances, monsterStep } from "../../src/core/ai.ts";
+import { makePlayer, type Entity } from "../../src/core/entities.ts";
+import { MAP_W } from "../../src/core/mapgen/common.ts";
+import { T } from "../../src/core/tiles.ts";
 import { mkMap, openInterior } from "./helpers.ts";
 
 function monster(x: number, y: number): Entity {

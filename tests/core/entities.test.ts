@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { RNG } from "../src/rng.ts";
-import { makePlayer, spawnMonsters, attack, gainXp } from "../src/entities.ts";
-import { generateMap } from "../src/map.ts";
-import { bfsDistances, MAP_W } from "../src/mapgen/common.ts";
-import { T } from "../src/tiles.ts";
+import { RNG } from "../../src/core/rng.ts";
+import { makePlayer, spawnMonsters, attack, gainXp } from "../../src/core/entities.ts";
+import { generateMap } from "../../src/core/map.ts";
+import { bfsDistances, MAP_W } from "../../src/core/mapgen/common.ts";
+import { T } from "../../src/core/tiles.ts";
 
 const BASE = {
   rat: { hp: 4, atk: 2, def: 0 },

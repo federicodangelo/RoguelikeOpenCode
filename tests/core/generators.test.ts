@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { RNG } from "../src/rng.ts";
-import { MAP_H, MAP_W } from "../src/mapgen/common.ts";
-import { generateBSP } from "../src/mapgen/bsp.ts";
-import { generateCellular } from "../src/mapgen/cellular.ts";
-import { generateDelaunay } from "../src/mapgen/delaunay.ts";
-import { generateWalk } from "../src/mapgen/walk.ts";
+import { RNG } from "../../src/core/rng.ts";
+import { MAP_H, MAP_W } from "../../src/core/mapgen/common.ts";
+import { generateBSP } from "../../src/core/mapgen/bsp.ts";
+import { generateCellular } from "../../src/core/mapgen/cellular.ts";
+import { generateDelaunay } from "../../src/core/mapgen/delaunay.ts";
+import { generateWalk } from "../../src/core/mapgen/walk.ts";
 import { allReachable, countOpen } from "./helpers.ts";
 
 describe("generateBSP", () => {

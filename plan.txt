@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 8 done; PHASE 9 next
+STATUS: PHASE 9 done; PHASE 10 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -121,21 +121,24 @@ MILESTONES (each = one commit)
 [x] M5: items + UI + game over loop
 [x] M6: polished tileset + build script
 [x] M7: README screenshots, pixel font, synthesized audio, contextual hints
+[x] M8: main.ts refactor into game/input/hud/screens/effects/settings modules
 
-PHASE 9 - Code quality refactor [NEXT]
+PHASE 9 - Code quality refactor [DONE]
 -------------------------------------
-[ ] 9.1 Split src/main.ts into smaller modules:
+[x] 9.1 Split src/main.ts into smaller modules:
     - src/game.ts: game state, turn flow, floor cache, reset flow
     - src/input.ts: keyboard handling and action dispatch
     - src/hud.ts: HUD, message log, contextual hints
     - src/screens.ts: title, game-over, menu rendering
     - src/effects.ts: floating damage/effect state and rendering
     - src/settings.ts: localStorage settings load/save
-[ ] 9.2 Extract contextual hint logic into a pure helper with unit tests
-[ ] 9.3 Reduce global mutable state by introducing a GameContext or GameState
-[ ] 9.4 Keep behavior unchanged while moving rendering/input/UI out of main.ts
-[ ] 9.5 Add focused tests for settings persistence and contextual hints
-[ ] 9.6 Verify typecheck, build, dist verification, and tests after refactor
+[x] 9.2 Extract contextual hint logic into a pure helper with unit tests
+[x] 9.3 Reduce global mutable state by introducing a GameContext or GameState
+[x] 9.4 Keep behavior unchanged while moving rendering/input/UI out of main.ts
+[x] 9.5 Add focused tests for settings persistence and contextual hints
+[x] 9.6 Verify typecheck, build, dist verification, and tests after refactor
+[x] 9.7 Organize src into core/ui/platform folders and update imports
+[x] 9.8 Mirror test structure into tests/core, tests/ui, and tests/platform
 
 PHASE 10 - Gameplay depth [NEXT]
 --------------------------------

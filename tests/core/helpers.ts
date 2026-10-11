@@ -1,4 +1,4 @@
-import { bfsDistances, MAP_H, MAP_W, type CellType, type GameMap } from "../src/mapgen/common.ts";
+import { bfsDistances, MAP_H, MAP_W, type CellType, type GameMap } from "../../src/core/mapgen/common.ts";
 
 export function mkMap(cells: CellType[][], spawn = { x: 1, y: 1 }, stairs = { x: 1, y: 1 }): GameMap {
   return {
