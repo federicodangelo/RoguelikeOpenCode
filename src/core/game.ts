@@ -5,15 +5,7 @@ import { makePlayer, spawnMonsters, attack, gainXp, xpNeeded, type Entity } from
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { addStatus, hasStatus, tickStatuses } from "./status.ts";
-import {
-  kindOfTile,
-  makeInventory,
-  pickUp,
-  usePotion,
-  useTorch,
-  type Inventory,
-  type ItemKind,
-} from "./items.ts";
+import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory, type ItemKind } from "./items.ts";
 import { MessageLog } from "../ui/menu.ts";
 import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
 import { spawnEffect, type Effect } from "../ui/effects.ts";
@@ -141,9 +133,7 @@ export class Game {
       if (visible && cell === "trap") trap = true;
 
       if (!monster) {
-        const target = this.monsters().find(
-          (m) => m.alive && m.x === nx && m.y === ny && visible,
-        );
+        const target = this.monsters().find((m) => m.alive && m.x === nx && m.y === ny && visible);
         if (target) monster = target;
       }
     }

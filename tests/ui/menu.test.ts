@@ -103,10 +103,7 @@ function testTree(): { entries: MenuEntry[]; actions: string[] } {
     { label: "Help", submenu: [{ label: "Back" }] },
     {
       label: "Settings",
-      submenu: [
-        { label: "Scaling", action: () => actions.push("cycle") },
-        { label: "Back" },
-      ],
+      submenu: [{ label: "Scaling", action: () => actions.push("cycle") }, { label: "Back" }],
     },
     { label: "Restart", action: () => actions.push("restart") },
   ];
@@ -298,10 +295,7 @@ describe("menuDetail", () => {
 
   it("falls back to selection feedback when an entry has no hint", () => {
     const nav = new MenuNav(
-      () =>
-        [
-          { label: "Cheats", submenu: [{ label: "God mode", action: () => {} }] },
-        ] as MenuEntry[],
+      () => [{ label: "Cheats", submenu: [{ label: "God mode", action: () => {} }] }] as MenuEntry[],
     );
     nav.open();
     expect(menuDetail(nav, "fractional")).toEqual(["Enter to open Cheats"]);
@@ -311,10 +305,7 @@ describe("menuDetail", () => {
 
   it("does not treat the first submenu as Help by index", () => {
     const nav = new MenuNav(
-      () =>
-        [
-          { label: "Skills", submenu: [{ label: "+1 ATK", hint: "spend skill point" }] },
-        ] as MenuEntry[],
+      () => [{ label: "Skills", submenu: [{ label: "+1 ATK", hint: "spend skill point" }] }] as MenuEntry[],
     );
     nav.open();
     nav.enter();

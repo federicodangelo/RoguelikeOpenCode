@@ -28,12 +28,7 @@ function inCircumcircle(a: Point, b: Point, c: Point, p: Point): boolean {
 }
 
 function triangulate(points: Point[]): [number, number][] {
-  const pts: Point[] = [
-    { x: -500, y: -500 },
-    { x: 1500, y: -500 },
-    { x: 500, y: 1500 },
-    ...points,
-  ];
+  const pts: Point[] = [{ x: -500, y: -500 }, { x: 1500, y: -500 }, { x: 500, y: 1500 }, ...points];
   let tris: [number, number, number][] = [[0, 1, 2]];
 
   const edgesOf = (t: [number, number, number]): [number, number][] => [

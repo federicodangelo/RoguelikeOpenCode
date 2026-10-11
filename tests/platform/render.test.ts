@@ -10,8 +10,7 @@ describe("drawScene", () => {
       fillRect: (x: number, y: number) => calls.push(`dim:${x},${y}`),
     } as unknown as CanvasRenderingContext2D;
     const tileset = {
-      drawTile: (_c: CanvasRenderingContext2D, idx: number, x: number, y: number) =>
-        calls.push(`${idx}@${x},${y}`),
+      drawTile: (_c: CanvasRenderingContext2D, idx: number, x: number, y: number) => calls.push(`${idx}@${x},${y}`),
     } as unknown as Tileset;
     const scene: CellView[][] = [[{ floor: 0, feature: 1, entity: 5, dim: true }]];
     drawScene(ctx, tileset, scene);

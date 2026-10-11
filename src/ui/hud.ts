@@ -20,15 +20,7 @@ export interface HudData {
   icons: Iconset;
 }
 
-export type HintIcon =
-  | "item"
-  | "stairs"
-  | "stairsUp"
-  | "trap"
-  | "door"
-  | "potion"
-  | "torch"
-  | "skill";
+export type HintIcon = "item" | "stairs" | "stairsUp" | "trap" | "door" | "potion" | "torch" | "skill";
 
 export interface ContextualHint {
   text: string;
@@ -182,14 +174,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
     drawIcon(bctx, data.icons, "light", 8, row2Y + 2);
     bctx.globalAlpha = 1;
   }
-  drawPixelText(
-    bctx,
-    data.lightTurns > 0 ? `Light ${data.lightTurns}` : "Light off",
-    20,
-    row2Y,
-    lightColor,
-    2,
-  );
+  drawPixelText(bctx, data.lightTurns > 0 ? `Light ${data.lightTurns}` : "Light off", 20, row2Y, lightColor, 2);
 
   drawIcon(bctx, data.icons, "depth", 160, row2Y + 2);
   drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 172, row2Y, "#e8e4da", 2);
@@ -207,14 +192,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
 
   const n = data.messages.length;
   for (let i = 0; i < n; i++) {
-    drawPixelText(
-      bctx,
-      data.messages.at(i),
-      8,
-      panelY - 16 - (n - 1 - i) * 16,
-      i === n - 1 ? "#e8e4da" : "#9a958c",
-      2,
-    );
+    drawPixelText(bctx, data.messages.at(i), 8, panelY - 16 - (n - 1 - i) * 16, i === n - 1 ? "#e8e4da" : "#9a958c", 2);
   }
 }
 

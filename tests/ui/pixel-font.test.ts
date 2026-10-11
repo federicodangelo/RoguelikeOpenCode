@@ -9,7 +9,7 @@ describe("pixel font", () => {
   });
 
   it("keeps every glyph 7 rows by 5 columns", () => {
-    for (const [ch, rows] of Object.entries(FONT)) {
+    for (const rows of Object.values(FONT)) {
       expect(rows.length).toBe(7);
       for (const row of rows) {
         expect(row.length).toBe(5);

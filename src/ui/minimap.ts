@@ -109,12 +109,7 @@ export function drawMinimap(bctx: CanvasRenderingContext2D, game: Game): Minimap
   for (const monster of game.monsters()) {
     if (!monster.alive || !game.visible.has(monster.y * MAP_W + monster.x)) continue;
     bctx.fillStyle = "#ff6a6a";
-    bctx.fillRect(
-      mapX + monster.x * MINIMAP_SCALE,
-      mapY + monster.y * MINIMAP_SCALE,
-      MINIMAP_SCALE,
-      MINIMAP_SCALE,
-    );
+    bctx.fillRect(mapX + monster.x * MINIMAP_SCALE, mapY + monster.y * MINIMAP_SCALE, MINIMAP_SCALE, MINIMAP_SCALE);
   }
 
   bctx.fillStyle = "#e8e4da";

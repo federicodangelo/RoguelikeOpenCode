@@ -4,7 +4,12 @@ import { bfsDistances, MAP_W, type GameMap } from "./mapgen/common.ts";
 import { computeFOV } from "./fov.ts";
 import { effectiveSpeed, hasStatus } from "./status.ts";
 
-const DIRS4: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const DIRS4: [number, number][] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
 
 export function chaseDistances(map: GameMap, player: Entity): Int32Array {
   return bfsDistances(map.cells, { x: player.x, y: player.y }, (c) => c === "doorClosed");

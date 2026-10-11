@@ -27,7 +27,11 @@ function clampByte(n: number): number {
 function parseColor(value: string): RGBA {
   if (value.startsWith("#")) {
     let hex = value.slice(1);
-    if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("");
+    if (hex.length === 3)
+      hex = hex
+        .split("")
+        .map((c) => c + c)
+        .join("");
     if (hex.length === 6) {
       return [
         clampByte(parseInt(hex.slice(0, 2), 16)),
@@ -276,7 +280,10 @@ class ShimContext {
   setTransform(): void {}
 }
 
-export function createCanvas(width: number, height: number): {
+export function createCanvas(
+  width: number,
+  height: number,
+): {
   canvas: ShimCanvas;
   ctx: CanvasRenderingContext2D;
 } {

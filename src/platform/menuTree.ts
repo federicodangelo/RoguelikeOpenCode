@@ -141,7 +141,9 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           hint: [
             "Enter: toggle autosave",
             `Current autosave: ${settings.autosave ? "on" : "off"}`,
-            settings.autosave ? "Save/Load are disabled when autosave is on" : "Save/Load are available when autosave is off",
+            settings.autosave
+              ? "Save/Load are disabled when autosave is on"
+              : "Save/Load are available when autosave is off",
           ],
           action: actions.toggleAutosave,
         },

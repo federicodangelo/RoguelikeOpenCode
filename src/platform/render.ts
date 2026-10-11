@@ -7,11 +7,7 @@ export interface CellView {
   dim?: boolean;
 }
 
-export function drawScene(
-  ctx: CanvasRenderingContext2D,
-  tileset: Tileset,
-  scene: CellView[][],
-): void {
+export function drawScene(ctx: CanvasRenderingContext2D, tileset: Tileset, scene: CellView[][]): void {
   for (let y = 0; y < scene.length; y++) {
     const row = scene[y]!;
     for (let x = 0; x < row.length; x++) {
@@ -43,24 +39,9 @@ export class Tileset {
     return new Tileset(img);
   }
 
-  drawTile(
-    ctx: CanvasRenderingContext2D,
-    index: number,
-    col: number,
-    row: number,
-  ): void {
+  drawTile(ctx: CanvasRenderingContext2D, index: number, col: number, row: number): void {
     const sx = (index % SHEET_COLS) * TILE_SIZE;
     const sy = Math.floor(index / SHEET_COLS) * TILE_SIZE;
-    ctx.drawImage(
-      this.img,
-      sx,
-      sy,
-      TILE_SIZE,
-      TILE_SIZE,
-      col * TILE_SIZE,
-      row * TILE_SIZE,
-      TILE_SIZE,
-      TILE_SIZE,
-    );
+    ctx.drawImage(this.img, sx, sy, TILE_SIZE, TILE_SIZE, col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
 }

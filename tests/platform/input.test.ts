@@ -44,12 +44,7 @@ function makeContext(game: Game, menu: MenuNav): InputContext {
 
 describe("input", () => {
   it("only exposes orthogonal movement keys", () => {
-    expect(Object.keys(MOVE_KEYS).sort()).toEqual([
-      "ArrowDown",
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-    ]);
+    expect(Object.keys(MOVE_KEYS).sort()).toEqual(["ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp"]);
   });
 
   it("does not move diagonally", () => {

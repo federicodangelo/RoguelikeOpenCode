@@ -62,26 +62,10 @@ export class Iconset {
 
     const sx = (index % ICON_COLS) * ICON_SIZE;
     const sy = Math.floor(index / ICON_COLS) * ICON_SIZE;
-    ctx.drawImage(
-      this.img,
-      sx,
-      sy,
-      ICON_SIZE,
-      ICON_SIZE,
-      x,
-      y,
-      ICON_SIZE,
-      ICON_SIZE,
-    );
+    ctx.drawImage(this.img, sx, sy, ICON_SIZE, ICON_SIZE, x, y, ICON_SIZE, ICON_SIZE);
   }
 }
 
-export function drawIcon(
-  ctx: CanvasRenderingContext2D,
-  icons: Iconset,
-  name: IconName,
-  x: number,
-  y: number,
-): void {
+export function drawIcon(ctx: CanvasRenderingContext2D, icons: Iconset, name: IconName, x: number, y: number): void {
   icons.draw(ctx, name, x, y);
 }

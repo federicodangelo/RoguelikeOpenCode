@@ -111,12 +111,10 @@ function placeScreenshotMonsters(game: Game): void {
 
   candidates.sort((a, b) => a.dist - b.dist);
   const kinds = [MONSTER_KINDS[0]!, MONSTER_KINDS[1]!, MONSTER_KINDS[2]!];
-  const monsters = kinds
-    .slice(0, Math.min(3, candidates.length))
-    .map((kind, index) => {
-      const cell = candidates[index]!;
-      return makeScreenshotMonster(kind, cell.x, cell.y, game.depth, 9000 + index);
-    });
+  const monsters = kinds.slice(0, Math.min(3, candidates.length)).map((kind, index) => {
+    const cell = candidates[index]!;
+    return makeScreenshotMonster(kind, cell.x, cell.y, game.depth, 9000 + index);
+  });
 
   game.monstersByFloor.set(game.depth, monsters);
 }
@@ -175,6 +173,8 @@ function createLoadedGame(): Game {
 
   loaded.screen = "game";
   loaded.spawnEffect(loaded.player.x, loaded.player.y, "-3", "#ffd97a");
+  if (loaded.effects[0]) loaded.effects[0].born = 0;
+  loaded.playerFlashUntil = 0;
   return loaded;
 }
 
@@ -227,7 +227,7 @@ function renderGameplay(showMenu: boolean): Buffer {
     );
   }
 
-  drawEffects(ctx, game.effects, cam, game.playerFlashUntil, performance.now());
+  drawEffects(ctx, game.effects, cam, game.playerFlashUntil, 0);
 
   if (showMenu) {
     const settings = defaultSettings();
@@ -249,6 +249,14 @@ function renderGameplay(showMenu: boolean): Buffer {
   }
 
   return canvas.data;
+}
+
+export function renderTitlePNG(hasSave: boolean): Buffer {
+  return encodePNG(LOGICAL_W, LOGICAL_H, renderTitle(hasSave));
+}
+
+export function renderGameplayPNG(showMenu: boolean): Buffer {
+  return encodePNG(LOGICAL_W, LOGICAL_H, renderGameplay(showMenu));
 }
 
 function saveScreenshot(name: string, data: Buffer): void {

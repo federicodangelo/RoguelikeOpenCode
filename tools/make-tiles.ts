@@ -685,7 +685,7 @@ for (let n = 0; n < 256; n++) {
 function crc32(bytes: Buffer): number {
   let c = ~0;
   for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]!) & 0xff]! ^ (c >>> 8);
-  return (~c >>> 0);
+  return ~c >>> 0;
 }
 
 function chunk(type: string, payload: Buffer): Buffer {

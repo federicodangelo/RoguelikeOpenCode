@@ -76,6 +76,6 @@ export function cycleVolume(volume: number): number {
       best = distance;
     }
   }
-  const idx = VOLUME_STEPS.findIndex((step) => step === nearest);
+  const idx = VOLUME_STEPS.indexOf(nearest as (typeof VOLUME_STEPS)[number]);
   return VOLUME_STEPS[(idx + 1) % VOLUME_STEPS.length] ?? 0.5;
 }

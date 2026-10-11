@@ -42,7 +42,12 @@ export function emptyCells(): CellType[][] {
   return Array.from({ length: MAP_H }, () => Array<CellType>(MAP_W).fill("wall"));
 }
 
-const DIRS: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const DIRS: [number, number][] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
 
 export function overlaps(a: Room, b: Room): boolean {
   return a.x <= b.x + b.w && b.x <= a.x + a.w && a.y <= b.y + b.h && b.y <= a.y + a.h;
@@ -142,11 +147,7 @@ export function bfsFarthest(cells: CellType[][], start: Point): Point {
   return { x: far % MAP_W, y: Math.floor(far / MAP_W) };
 }
 
-export function bfsDistances(
-  cells: CellType[][],
-  start: Point,
-  blocked?: (c: CellType) => boolean,
-): Int32Array {
+export function bfsDistances(cells: CellType[][], start: Point, blocked?: (c: CellType) => boolean): Int32Array {
   const dist = new Int32Array(MAP_W * MAP_H).fill(-1);
   const startK = start.y * MAP_W + start.x;
   const queue: number[] = [startK];
@@ -160,7 +161,7 @@ export function bfsDistances(
       const ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) continue;
       const c = cells[ny]![nx]!;
-      if (c === "wall" || (blocked !== undefined && blocked(c))) continue;
+      if (c === "wall" || blocked?.(c)) continue;
       const nk = ny * MAP_W + nx;
       if (dist[nk] !== -1) continue;
       dist[nk] = dist[k]! + 1;
@@ -250,13 +251,7 @@ export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserve
   return floors.slice(0, count).map((p) => ({ x: p.x, y: p.y, tile: rng.pick(kinds) }));
 }
 
-export function placeTraps(
-  cells: CellType[][],
-  rng: RNG,
-  depth: number,
-  reserved: Point[],
-  items: PlacedItem[],
-): void {
+export function placeTraps(cells: CellType[][], rng: RNG, depth: number, reserved: Point[], items: PlacedItem[]): void {
   const count = Math.min(rng.int(1, 2) + Math.floor(depth / 2), 6);
   const floors: Point[] = [];
   for (let y = 1; y < MAP_H - 1; y++) {

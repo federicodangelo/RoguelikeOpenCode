@@ -1,14 +1,4 @@
-export type SfxName =
-  | "menu"
-  | "select"
-  | "hit"
-  | "hurt"
-  | "kill"
-  | "pickup"
-  | "potion"
-  | "level"
-  | "stairs"
-  | "death";
+export type SfxName = "menu" | "select" | "hit" | "hurt" | "kill" | "pickup" | "potion" | "level" | "stairs" | "death";
 
 const MELODIES: number[][] = [
   [220, 261.63, 329.63, 261.63, 392, 329.63, 261.63, 220],
@@ -77,8 +67,7 @@ export class GameAudio {
     if (typeof window === "undefined") return;
     if (!this.ctx) {
       const ctor =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!ctor) return;
       this.ctx = new ctor();
       this.master = this.ctx.createGain();
@@ -278,14 +267,7 @@ export class GameAudio {
     source.stop(t + dur + 0.02);
   }
 
-  private tone(
-    freq: number,
-    dur: number,
-    type: OscillatorType,
-    peak: number,
-    delay = 0,
-    slideTo?: number,
-  ): void {
+  private tone(freq: number, dur: number, type: OscillatorType, peak: number, delay = 0, slideTo?: number): void {
     if (!this.ctx) return;
     this.toneAt(freq, dur, type, peak, this.ctx.currentTime + delay, slideTo);
   }

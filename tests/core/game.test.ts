@@ -88,11 +88,7 @@ describe("Game interactables", () => {
       statuses: [],
     });
 
-    game.visible = new Set([
-      y * MAP_W + (x - 1),
-      (y + 1) * MAP_W + x,
-      y * MAP_W + (x + 1),
-    ]);
+    game.visible = new Set([y * MAP_W + (x - 1), (y + 1) * MAP_W + x, y * MAP_W + (x + 1)]);
 
     const adjacent = game.adjacentInteractables();
     expect(adjacent.doorClosed).toBe(true);

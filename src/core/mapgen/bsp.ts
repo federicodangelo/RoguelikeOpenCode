@@ -35,13 +35,7 @@ function makeRoom(rect: Rect, rng: RNG): Room | null {
   return { x, y, w, h, cx: x + (w >> 1), cy: y + (h >> 1) };
 }
 
-function build(
-  cells: ReturnType<typeof emptyCells>,
-  rect: Rect,
-  rng: RNG,
-  depth: number,
-  rooms: Room[],
-): Tree {
+function build(cells: ReturnType<typeof emptyCells>, rect: Rect, rng: RNG, depth: number, rooms: Room[]): Tree {
   const canH = rect.h >= 10;
   const canV = rect.w >= 10;
   const isLeaf = depth >= 5 || (!canH && !canV) || (depth >= 3 && rng.next() < 0.3);

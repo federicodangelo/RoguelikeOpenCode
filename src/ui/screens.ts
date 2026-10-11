@@ -20,14 +20,7 @@ export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset, hasSav
   bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
 
   drawPixelTextCenter(bctx, "ROGUELIKE", LOGICAL_W / 2, 170, "#e8e4da", 6);
-  drawPixelTextCenter(
-    bctx,
-    "ARROWS MOVE - BUMP ATTACK - . DESCEND - , ASCEND",
-    LOGICAL_W / 2,
-    260,
-    "#9a958c",
-    2,
-  );
+  drawPixelTextCenter(bctx, "ARROWS MOVE - BUMP ATTACK - . DESCEND - , ASCEND", LOGICAL_W / 2, 260, "#9a958c", 2);
   drawPixelTextCenter(
     bctx,
     hasSave ? "PRESS ENTER TO CONTINUE" : "PRESS ENTER TO START",
@@ -39,7 +32,9 @@ export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset, hasSav
 
   const icons = [T.Player, T.Rat, T.Goblin, T.Skeleton, T.Potion, T.Sword, T.Shield, T.Gold];
   const startTile = Math.floor((VIEW_COLS - icons.length) / 2);
-  icons.forEach((idx, i) => tiles.drawTile(bctx, idx, startTile + i, 12));
+  icons.forEach((idx, i) => {
+    tiles.drawTile(bctx, idx, startTile + i, 12);
+  });
 }
 
 export function drawGameOver(bctx: CanvasRenderingContext2D, stats: GameOverStats): void {
@@ -54,18 +49,10 @@ export function drawGameOver(bctx: CanvasRenderingContext2D, stats: GameOverStat
     "#9a958c",
     2,
   );
-  drawPixelTextCenter(
-    bctx,
-    "Press Enter for the title screen",
-    LOGICAL_W / 2,
-    LOGICAL_H / 2 + 30,
-    "#ffd97a",
-    2,
-  );
+  drawPixelTextCenter(bctx, "Press Enter for the title screen", LOGICAL_W / 2, LOGICAL_H / 2 + 30, "#ffd97a", 2);
 }
 
 export function menuDetail(menu: MenuNav, scalingMode: ScalingMode): string[] {
-  const entries = menu.entries();
   const labels = menu.labels();
   const showHelp = menu.depth() === 1 && labels[0] === "Help";
   if (showHelp) return [];
@@ -93,11 +80,7 @@ export function menuDetail(menu: MenuNav, scalingMode: ScalingMode): string[] {
   return [];
 }
 
-export function drawMenu(
-  bctx: CanvasRenderingContext2D,
-  menu: MenuNav,
-  scalingMode: ScalingMode,
-): void {
+export function drawMenu(bctx: CanvasRenderingContext2D, menu: MenuNav, scalingMode: ScalingMode): void {
   bctx.fillStyle = "rgba(0,0,0,0.72)";
   bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
 
@@ -171,8 +154,8 @@ export function drawMenu(
       drawPixelText(bctx, v, x + 300, dy + 20 + i * 24, "#9a958c", 2);
     });
   } else {
-    detailLines.forEach((line, i) =>
-      drawPixelText(bctx, line, x + 24, dy + 20 + i * 24, "#9a958c", 2),
-    );
+    detailLines.forEach((line, i) => {
+      drawPixelText(bctx, line, x + 24, dy + 20 + i * 24, "#9a958c", 2);
+    });
   }
 }
