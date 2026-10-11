@@ -187,11 +187,36 @@ function renderGameplay(data: Buffer, showMenu: boolean): void {
   player.def = 2;
 
   const dist = bfsDistances(map.cells, map.spawn);
+  const visible = computeFOV(map, player.x, player.y);
   const explored = new Set<number>();
   for (let i = 0; i < dist.length; i++) {
     if (dist[i] !== -1) explored.add(i);
   }
-  const visible = computeFOV(map, player.x, player.y);
+  for (const k of visible) explored.add(k);
+
+  const knownFloors = [...explored];
+  for (const k of knownFloors) {
+    const x = k % MAP_W;
+    const y = Math.floor(k / MAP_W);
+    if (map.cells[y]?.[x] !== "floor") continue;
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ] as [number, number][]) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) continue;
+      const nk = ny * MAP_W + nx;
+      if (map.cells[ny]![nx] !== "floor") explored.add(nk);
+    }
+  }
+
   const cam = camera(player);
 
   for (let vy = 0; vy < VIEW_ROWS; vy++) {
