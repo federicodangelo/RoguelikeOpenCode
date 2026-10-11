@@ -3,7 +3,7 @@ import { FONT, pixelTextWidth, wrapPixelText } from "../../src/ui/pixel-font.ts"
 
 describe("pixel font", () => {
   it("includes lowercase and UI punctuation glyphs", () => {
-    for (const ch of "abcdefghijklmnopqrstuvwxyz+:/(),.-*") {
+    for (const ch of "abcdefghijklmnopqrstuvwxyz+:/(),.-*%") {
       expect(FONT[ch]).toBeDefined();
     }
   });
