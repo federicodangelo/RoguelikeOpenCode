@@ -291,6 +291,23 @@ export class Game {
     return true;
   }
 
+  spendSkill(stat: "atk" | "def" | "hp"): boolean {
+    if (this.player.skillPoints <= 0) return false;
+    this.player.skillPoints--;
+    if (stat === "atk") {
+      this.player.atk += 1;
+      this.logMessage("You spend a skill point on ATK.");
+    } else if (stat === "def") {
+      this.player.def += 1;
+      this.logMessage("You spend a skill point on DEF.");
+    } else {
+      this.player.maxHp += 2;
+      this.player.hp += 2;
+      this.logMessage("You spend a skill point on Max HP.");
+    }
+    return true;
+  }
+
   reset(): void {
     this.depth = 1;
     this.kills = 0;

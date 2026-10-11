@@ -82,6 +82,15 @@ function menuTree(): MenuEntry[] {
   return [
     { label: "Help", submenu: () => [{ label: "Back", action: () => menu.back() }] },
     {
+      label: `Skills (${game.player.skillPoints})`,
+      submenu: () => [
+        { label: "+1 ATK", action: () => game.spendSkill("atk") },
+        { label: "+1 DEF", action: () => game.spendSkill("def") },
+        { label: "+2 Max HP", action: () => game.spendSkill("hp") },
+        { label: "Back", action: () => menu.back() },
+      ],
+    },
+    {
       label: "Settings",
       submenu: () => [
         { label: `Scaling mode: ${settings.scalingMode}`, action: cycleScaling },

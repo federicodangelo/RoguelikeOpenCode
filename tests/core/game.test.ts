@@ -31,3 +31,20 @@ describe("Game status effects", () => {
     expect(game.playerStunned()).toBe(true);
   });
 });
+
+describe("Game skills", () => {
+  it("spends skill points on stats", () => {
+    const game = new Game();
+    game.player.skillPoints = 2;
+    const atk = game.player.atk;
+    const def = game.player.def;
+    const maxHp = game.player.maxHp;
+
+    expect(game.spendSkill("atk")).toBe(true);
+    expect(game.player.atk).toBe(atk + 1);
+    expect(game.spendSkill("def")).toBe(true);
+    expect(game.player.def).toBe(def + 1);
+    expect(game.spendSkill("hp")).toBe(false);
+    expect(game.player.maxHp).toBe(maxHp);
+  });
+});

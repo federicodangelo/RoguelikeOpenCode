@@ -79,6 +79,7 @@ describe("gainXp", () => {
     expect(p.hp).toBe(14);
     expect(p.atk).toBe(4);
     expect(p.def).toBe(2);
+    expect(p.skillPoints).toBe(1);
   });
 
   it("grants multiple levels from one big award", () => {

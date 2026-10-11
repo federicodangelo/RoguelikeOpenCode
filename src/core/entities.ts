@@ -28,6 +28,7 @@ export interface Entity {
   xp: number;
   level: number;
   xpValue: number;
+  skillPoints: number;
   archetype: Archetype;
   speed: number;
   range: number;
@@ -87,6 +88,7 @@ export function makePlayer(x: number, y: number): Entity {
     xp: 0,
     level: 1,
     xpValue: 0,
+    skillPoints: 0,
     archetype: "normal",
     speed: 1,
     range: 0,
@@ -115,6 +117,7 @@ export function gainXp(player: Entity, amount: number): number {
     player.hp = player.maxHp;
     player.atk += 1;
     player.def += 1;
+    player.skillPoints += 1;
     levels += 1;
   }
   return levels;
@@ -136,6 +139,7 @@ function makeMonster(kind: Kind, x: number, y: number, depth: number): Entity {
     xp: 0,
     level: 1,
     xpValue: kind.xp,
+    skillPoints: 0,
     archetype: kind.archetype,
     speed: kind.speed ?? 1,
     range: kind.range ?? 0,

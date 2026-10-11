@@ -22,6 +22,7 @@ function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity 
     xp: 0,
     level: 1,
     xpValue: 2,
+    skillPoints: 0,
     archetype: "normal",
     speed: 1,
     range: 0,

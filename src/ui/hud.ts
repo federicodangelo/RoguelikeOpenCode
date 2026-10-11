@@ -90,7 +90,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   }
 
   if (data.showInventory) {
-    const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Torches: ${data.inventory.torches}   Gold: ${data.inventory.gold}`;
+    const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Torches: ${data.inventory.torches}   Gold: ${data.inventory.gold}   Skill Points: ${data.player.skillPoints}`;
     drawPixelText(bctx, inv, 8, LOGICAL_H - 42, "#e8e4da", 2);
   } else {
     const n = data.messages.length;
