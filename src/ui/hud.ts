@@ -1,8 +1,8 @@
 import { TILE_SIZE } from "../core/tiles.ts";
 import { LOGICAL_H, LOGICAL_W, VIEW_COLS, VIEW_ROWS } from "../core/constants.ts";
 import { drawPixelText, drawPixelTextRight, pixelTextWidth } from "./pixel-font.ts";
-import type { Entity } from "../core/entities.ts";
-import type { Inventory } from "../core/items.ts";
+import type { Archetype, Entity } from "../core/entities.ts";
+import type { Inventory, ItemKind } from "../core/items.ts";
 import type { MessageLog } from "./menu.ts";
 
 export interface HudData {
@@ -16,8 +16,31 @@ export interface HudData {
   statusText: string;
 }
 
+export type HintIcon =
+  | "item"
+  | "stairs"
+  | "stairsUp"
+  | "trap"
+  | "door"
+  | "monster"
+  | "potion"
+  | "torch"
+  | "skill";
+
+export interface ContextualHint {
+  text: string;
+  icon: HintIcon;
+}
+
+export interface MonsterHint {
+  name: string;
+  archetype: Archetype;
+  range: number;
+}
+
 export interface ContextualHintInput {
   hasPickableItem: boolean;
+  itemKind?: ItemKind | null;
   cell: string;
   depth: number;
   potions: number;
@@ -25,31 +48,45 @@ export interface ContextualHintInput {
   hp: number;
   maxHp: number;
   skillPoints: number;
+  adjacentDoorClosed?: boolean;
+  adjacentTrap?: boolean;
+  adjacentMonster?: MonsterHint | null;
 }
 
-export function contextualHints(input: ContextualHintInput): string[] {
-  const hints: string[] = [];
+export function contextualHints(input: ContextualHintInput): ContextualHint[] {
+  const hints: ContextualHint[] = [];
 
-  if (input.hasPickableItem) {
-    hints.push("g: pick up");
+  if (input.itemKind && input.itemKind !== "corpse") {
+    hints.push({ text: `g: pick up ${input.itemKind}`, icon: "item" });
+  } else if (input.hasPickableItem) {
+    hints.push({ text: "g: pick up", icon: "item" });
   }
   if (input.cell === "stairs") {
-    hints.push(".: descend");
+    hints.push({ text: ".: descend stairs", icon: "stairs" });
   }
   if (input.cell === "stairsUp" && input.depth > 1) {
-    hints.push(",: ascend");
+    hints.push({ text: ",: ascend stairs", icon: "stairsUp" });
+  }
+  if (input.adjacentMonster) {
+    hints.push({ text: `bump: attack ${input.adjacentMonster.name}`, icon: "monster" });
+  }
+  if (input.adjacentDoorClosed) {
+    hints.push({ text: "bump: open door", icon: "door" });
+  }
+  if (input.adjacentTrap) {
+    hints.push({ text: "trap: danger", icon: "trap" });
   }
   if (input.potions > 0 && input.hp * 2 < input.maxHp) {
-    hints.push("u: drink");
+    hints.push({ text: "u: drink potion", icon: "potion" });
   }
   if (input.torches > 0) {
-    hints.push("t: torch");
+    hints.push({ text: "t: light torch", icon: "torch" });
   }
   if (input.skillPoints > 0) {
-    hints.push(`esc: skills (${input.skillPoints})`);
+    hints.push({ text: `esc: skills (${input.skillPoints})`, icon: "skill" });
   }
 
-  return hints;
+  return hints.slice(0, 4);
 }
 
 export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
@@ -115,7 +152,7 @@ export function drawContextHints(
   bctx: CanvasRenderingContext2D,
   player: Entity,
   cam: { x: number; y: number },
-  hints: string[],
+  hints: ContextualHint[],
 ): void {
   if (hints.length === 0) return;
 
@@ -123,7 +160,7 @@ export function drawContextHints(
   const py = player.y - cam.y;
   if (px < 0 || px >= VIEW_COLS || py < 0 || py >= VIEW_ROWS) return;
 
-  const text = hints.join("  ");
+  const text = hints.map((hint) => hint.text).join("  ");
   const w = pixelTextWidth(text, 2) + 12;
   const h = 18;
   let x = px * TILE_SIZE + TILE_SIZE / 2 - w / 2;

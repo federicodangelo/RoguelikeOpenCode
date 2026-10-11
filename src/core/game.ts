@@ -5,7 +5,15 @@ import { makePlayer, spawnMonsters, attack, gainXp, xpNeeded, type Entity } from
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { addStatus, hasStatus, tickStatuses } from "./status.ts";
-import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory } from "./items.ts";
+import {
+  kindOfTile,
+  makeInventory,
+  pickUp,
+  usePotion,
+  useTorch,
+  type Inventory,
+  type ItemKind,
+} from "./items.ts";
 import { MessageLog } from "../ui/menu.ts";
 import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
 import { spawnEffect, type Effect } from "../ui/effects.ts";
@@ -105,6 +113,47 @@ export class Game {
       const kind = kindOfTile(i.tile);
       return kind !== null && kind !== "corpse";
     });
+  }
+
+  itemKindAtPlayer(): ItemKind | null {
+    const item = this.map.items.find((i) => i.x === this.player.x && i.y === this.player.y);
+    return item ? kindOfTile(item.tile) : null;
+  }
+
+  adjacentInteractables(): { doorClosed: boolean; trap: boolean; monster: Entity | null } {
+    let doorClosed = false;
+    let trap = false;
+    let monster: Entity | null = null;
+
+    const dirs: [number, number][] = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ];
+    for (const [dx, dy] of dirs) {
+      const nx = this.player.x + dx;
+      const ny = this.player.y + dy;
+      const key = ny * MAP_W + nx;
+      const cell = this.map.cells[ny]?.[nx];
+      const visible = this.visible.has(key);
+
+      if (visible && cell === "doorClosed") doorClosed = true;
+      if (visible && cell === "trap") trap = true;
+
+      if (!monster) {
+        const target = this.monsters().find(
+          (m) => m.alive && m.x === nx && m.y === ny && visible,
+        );
+        if (target) monster = target;
+      }
+    }
+
+    return { doorClosed, trap, monster };
   }
 
   monstersAct(): void {

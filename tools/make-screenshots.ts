@@ -117,12 +117,14 @@ function renderGameplay(showMenu: boolean): Buffer {
   });
 
   if (!game.gameOver && !game.menuOpen) {
+    const interact = game.adjacentInteractables();
     drawContextHints(
       ctx,
       game.player,
       cam,
       contextualHints({
         hasPickableItem: game.hasPickableItemAtPlayer(),
+        itemKind: game.itemKindAtPlayer(),
         cell: game.map.cells[game.player.y]![game.player.x]!,
         depth: game.depth,
         potions: game.inventory.potions,
@@ -130,6 +132,15 @@ function renderGameplay(showMenu: boolean): Buffer {
         hp: game.player.hp,
         maxHp: game.player.maxHp,
         skillPoints: game.player.skillPoints,
+        adjacentDoorClosed: interact.doorClosed,
+        adjacentTrap: interact.trap,
+        adjacentMonster: interact.monster
+          ? {
+              name: interact.monster.name,
+              archetype: interact.monster.archetype,
+              range: interact.monster.range,
+            }
+          : null,
       }),
     );
   }

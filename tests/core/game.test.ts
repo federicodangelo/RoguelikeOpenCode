@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
 import { TORCH_TURNS } from "../../src/core/constants.ts";
+import { MAP_W } from "../../src/core/map.ts";
+import { T } from "../../src/core/tiles.ts";
 import { addStatus, hasStatus } from "../../src/core/status.ts";
 
 describe("Game torches", () => {
@@ -46,6 +48,56 @@ describe("Game skills", () => {
     expect(game.player.def).toBe(def + 1);
     expect(game.spendSkill("hp")).toBe(false);
     expect(game.player.maxHp).toBe(maxHp);
+  });
+});
+
+describe("Game interactables", () => {
+  it("reports the item kind at the player", () => {
+    const game = new Game();
+    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Potion });
+    expect(game.itemKindAtPlayer()).toBe("potion");
+  });
+
+  it("reports visible adjacent interactables", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    const x = game.player.x;
+    const y = game.player.y;
+
+    game.map.cells[y + 1]![x] = "doorClosed";
+    game.map.cells[y]![x + 1] = "trap";
+    game.monstersByFloor.get(game.depth)!.push({
+      id: 999,
+      name: "test rat",
+      x: x - 1,
+      y,
+      hp: 1,
+      maxHp: 1,
+      atk: 1,
+      def: 0,
+      sprite: T.Rat,
+      isPlayer: false,
+      alive: true,
+      xp: 0,
+      level: 1,
+      xpValue: 1,
+      skillPoints: 0,
+      archetype: "normal",
+      speed: 1,
+      range: 0,
+      statuses: [],
+    });
+
+    game.visible = new Set([
+      y * MAP_W + (x - 1),
+      (y + 1) * MAP_W + x,
+      y * MAP_W + (x + 1),
+    ]);
+
+    const adjacent = game.adjacentInteractables();
+    expect(adjacent.doorClosed).toBe(true);
+    expect(adjacent.trap).toBe(true);
+    expect(adjacent.monster?.name).toBe("test rat");
   });
 });
 
