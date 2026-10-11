@@ -159,7 +159,7 @@ PHASE 11 - UI/UX improvements [DONE]
 [x] 11.5 Add sound/volume settings and a quick mute toggle
 [x] 11.6 Polish contextual hints: avoid overlap, improve placement, add icons
 
-PHASE 12 - Audio polish [NEXT]
+PHASE 12 - Audio polish [COMPLETE]
 ------------------------------
 [x] 12.1 Improve Web Audio scheduling with lookahead instead of setInterval
 [x] 12.2 Add richer SFX variations for hit, hurt, kill, pickup, stairs, death
@@ -167,9 +167,11 @@ PHASE 12 - Audio polish [NEXT]
 [x] 12.4 Add volume slider and mute hotkey
 [x] 12.5 Add tests or safe fallbacks for audio behavior
 
-PHASE 13 - Tech, CI, and tooling [NEXT]
+PHASE 13 - Tech, CI, and tooling [COMPLETE]
 --------------------------------------
 [x] 13.1 Add CI workflow for typecheck, build, verify, and tests
 [x] 13.2 Add lint/format tooling if compatible with Bun workflow
 [x] 13.3 Add screenshot regeneration checks or visual smoke tests
-[ ] 13.4 Add documentation for module boundaries and contribution workflow
+[x] 13.4 Add documentation for module boundaries and contribution workflow
+
+Next step: define Phase 14.

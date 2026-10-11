@@ -106,4 +106,8 @@ Regenerate README screenshots:
 bun run screenshots
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for module boundaries, verification commands, and contribution workflow.
+
 This project was created using `bun init` in Bun v1.4.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
