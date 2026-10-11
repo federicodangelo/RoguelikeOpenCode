@@ -142,8 +142,14 @@ let message = "";
 let showInventory = false;
 let menuOpen = false;
 let menuIndex = 0;
+let menuPath: number[] = [];
 
-const MENU_ITEMS = ["Help", "Settings", "Restart"] as const;
+interface MenuEntry {
+  label: string;
+  submenu?: MenuEntry[];
+  action?: () => void;
+}
+
 const HELP_LINES: [string, string][] = [
   ["arrows", "move / bump attack"],
   ["home pgup end pgdn", "diagonal move"],
@@ -155,6 +161,35 @@ const HELP_LINES: [string, string][] = [
   ["esc", "open/close menu"],
   ["enter", "restart (when dead)"],
 ];
+
+function cycleScaling(): void {
+  scalingMode = SCALING_MODES[(SCALING_MODES.indexOf(scalingMode) + 1) % SCALING_MODES.length] ?? "fractional";
+  saveSettings();
+  fitCanvas();
+}
+
+function menuBack(): void {
+  menuPath.pop();
+  menuIndex = 0;
+  dirty = true;
+}
+
+function menuEntries(): MenuEntry[] {
+  if (menuPath.length === 0) {
+    return [
+      { label: "Help" },
+      { label: "Settings", submenu: [] },
+      { label: "Restart", action: resetGame },
+    ];
+  }
+  if (menuPath.length === 1) {
+    return [
+      { label: `Scaling mode: ${scalingMode}`, action: cycleScaling },
+      { label: "Back", action: menuBack },
+    ];
+  }
+  return [{ label: "Back", action: menuBack }];
+}
 
 function monstersAct(): void {
   const dist = chaseDistances(map, player);
@@ -229,6 +264,7 @@ function resetGame(): void {
   showInventory = false;
   menuOpen = false;
   menuIndex = 0;
+  menuPath = [];
   map = getFloor(1);
   player = makePlayer(map.spawn.x, map.spawn.y);
   refreshFOV();
@@ -245,27 +281,40 @@ window.addEventListener("keydown", (e) => {
   }
   if (e.key === "Escape") {
     e.preventDefault();
-    menuOpen = !menuOpen;
+    if (menuOpen && menuPath.length > 0) {
+      menuBack();
+    } else {
+      menuOpen = !menuOpen;
+      if (menuOpen) {
+        menuPath = [];
+        menuIndex = 0;
+      }
+    }
     dirty = true;
     return;
   }
   if (menuOpen) {
+    const entries = menuEntries();
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      menuIndex = (menuIndex + MENU_ITEMS.length - 1) % MENU_ITEMS.length;
+      menuIndex = (menuIndex + entries.length - 1) % entries.length;
       dirty = true;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      menuIndex = (menuIndex + 1) % MENU_ITEMS.length;
+      menuIndex = (menuIndex + 1) % entries.length;
       dirty = true;
+    } else if (e.key === "ArrowLeft" || e.key === "Backspace") {
+      e.preventDefault();
+      if (menuPath.length > 0) menuBack();
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (MENU_ITEMS[menuIndex] === "Restart") {
-        resetGame();
-      } else if (MENU_ITEMS[menuIndex] === "Settings") {
-        scalingMode = SCALING_MODES[(SCALING_MODES.indexOf(scalingMode) + 1) % SCALING_MODES.length] ?? "fractional";
-        saveSettings();
-        fitCanvas();
+      const entry = entries[menuIndex]!;
+      if (entry.submenu) {
+        menuPath.push(menuIndex);
+        menuIndex = 0;
+        dirty = true;
+      } else if (entry.action) {
+        entry.action();
       }
     }
     return;
@@ -377,8 +426,22 @@ async function main(): Promise<void> {
   function drawMenu(): void {
     bctx.fillStyle = "rgba(0,0,0,0.72)";
     bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-    const w = 460;
-    const h = 380;
+    const entries = menuEntries();
+    const showHelp = menuPath.length === 0 && menuIndex === 0;
+    const detail: string[] = [];
+    if (!showHelp) {
+      if (menuPath.length === 0) {
+        const sel = entries[menuIndex]!;
+        if (sel.label === "Settings") detail.push("Enter to open settings");
+        else if (sel.label === "Restart") detail.push("Enter to restart the run from depth 1");
+      } else {
+        detail.push("Enter: cycle integer / fractional / smooth");
+        detail.push("Fractional snaps to 0.25 steps (1.25, 1.5, 1.75)");
+      }
+    }
+    const w = 560;
+    const detailH = showHelp ? HELP_LINES.length * 24 : Math.max(1, detail.length) * 24;
+    const h = 64 + entries.length * 24 + 16 + detailH + 30;
     const x = (LOGICAL_W - w) / 2;
     const y = (LOGICAL_H - h) / 2;
     bctx.fillStyle = "#17150f";
@@ -387,32 +450,32 @@ async function main(): Promise<void> {
     bctx.strokeRect(x, y, w, h);
     bctx.fillStyle = "#e8e4da";
     bctx.font = "bold 20px monospace";
-    bctx.fillText("MENU", x + 20, y + 34);
+    bctx.fillText(menuPath.length === 0 ? "MENU" : "MENU > Settings", x + 20, y + 34);
     bctx.font = "16px monospace";
-    MENU_ITEMS.forEach((it, i) => {
+    entries.forEach((it, i) => {
       bctx.fillStyle = i === menuIndex ? "#ffd97a" : "#9a958c";
-      bctx.fillText(`${i === menuIndex ? ">" : " "} ${it}`, x + 20, y + 64 + i * 24);
+      const suffix = it.submenu ? "  >" : "";
+      bctx.fillText(`${i === menuIndex ? ">" : " "} ${it.label}${suffix}`, x + 20, y + 64 + i * 24);
     });
-    if (menuIndex === 0) {
+    const dy = y + 64 + entries.length * 24 + 8;
+    bctx.strokeStyle = "#3a352d";
+    bctx.beginPath();
+    bctx.moveTo(x + 16, dy);
+    bctx.lineTo(x + w - 16, dy);
+    bctx.stroke();
+    if (showHelp) {
       HELP_LINES.forEach(([k, v], i) => {
         bctx.fillStyle = "#e8e4da";
-        bctx.fillText(k, x + 24, y + 130 + i * 24);
+        bctx.fillText(k, x + 24, dy + 24 + i * 24);
         bctx.fillStyle = "#9a958c";
-        bctx.fillText(v, x + 220, y + 130 + i * 24);
+        bctx.fillText(v, x + 280, dy + 24 + i * 24);
       });
-    } else if (menuIndex === 1) {
-      bctx.fillStyle = "#e8e4da";
-      bctx.fillText("Scaling mode:", x + 24, y + 130);
-      bctx.fillStyle = scalingMode === "integer" ? "#7ac47a" : scalingMode === "fractional" ? "#ffd97a" : "#c47a7a";
-      bctx.fillText(scalingMode, x + 250, y + 130);
-      bctx.fillStyle = "#9a958c";
-      bctx.fillText("Press Enter to cycle: integer / fractional / smooth", x + 24, y + 154);
-      bctx.fillText("Fractional snaps to 0.25 steps (1.25, 1.5, 1.75...)", x + 24, y + 178);
     } else {
-      bctx.fillStyle = "#e8e4da";
-      bctx.fillText("Restart the run from depth 1.", x + 24, y + 130);
-      bctx.fillText("Press Enter.", x + 24, y + 154);
+      bctx.fillStyle = "#9a958c";
+      detail.forEach((line, i) => bctx.fillText(line, x + 24, dy + 24 + i * 24));
     }
+    bctx.fillStyle = "#6a655c";
+    bctx.fillText("arrows: navigate   enter: select   esc: back/close", x + 24, y + h - 12);
   }
 
   function drawHUD(): void {
