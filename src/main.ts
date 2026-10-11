@@ -74,14 +74,19 @@ const MOVE_KEYS: Record<string, [number, number]> = {
   PageDown: [1, 1],
 };
 
-const AI_RNG = new RNG(BASE_SEED + 999);
-const BATTLE_RNG = new RNG(BASE_SEED + 555);
+let AI_RNG = new RNG(BASE_SEED + 999);
+let BATTLE_RNG = new RNG(BASE_SEED + 555);
+let gameOver = false;
 
 function monstersAct(): void {
   const dist = chaseDistances(map, player);
   for (const m of monsters()) {
     if (!m.alive) continue;
     monsterStep(m, { player, map, rng: AI_RNG, dist, monsters: monsters() });
+    if (!player.alive) {
+      gameOver = true;
+      break;
+    }
   }
 }
 
@@ -129,7 +134,28 @@ function ascend(): boolean {
   return true;
 }
 
+function resetGame(): void {
+  depth = 1;
+  floors.clear();
+  monstersByFloor.clear();
+  exploredByFloor.clear();
+  AI_RNG = new RNG(BASE_SEED + 999);
+  BATTLE_RNG = new RNG(BASE_SEED + 555);
+  gameOver = false;
+  map = getFloor(1);
+  player = makePlayer(map.spawn.x, map.spawn.y);
+  refreshFOV();
+  dirty = true;
+}
+
 window.addEventListener("keydown", (e) => {
+  if (gameOver) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      resetGame();
+    }
+    return;
+  }
   let acted = false;
   const move = MOVE_KEYS[e.key];
   if (move) {
@@ -204,11 +230,24 @@ async function main(): Promise<void> {
   function draw(): void {
     drawScene(ctx, tiles, buildScene());
     drawHUD();
+    if (gameOver) drawGameOver();
     dirty = false;
   }
 
+  function drawGameOver(): void {
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#e8e4da";
+    ctx.textAlign = "center";
+    ctx.font = "bold 32px monospace";
+    ctx.fillText("You died!", canvas.width / 2, canvas.height / 2 - 10);
+    ctx.font = "16px monospace";
+    ctx.fillText("Press Enter to restart", canvas.width / 2, canvas.height / 2 + 24);
+    ctx.textAlign = "left";
+  }
+
   function drawHUD(): void {
-    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   arrows move   . stairs down   , stairs up`;
+    const text = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   arrows move/bump attack   . stairs down   , stairs up`;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
     ctx.fillStyle = "#e8e4da";
