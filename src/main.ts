@@ -6,6 +6,7 @@ import { makePlayer, spawnMonsters, attack, gainXp, type Entity } from "./entiti
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { makeInventory, pickUp, usePotion } from "./items.ts";
+import { MenuNav, MessageLog, computeScaling, SCALING_MODES, type MenuEntry, type ScalingMode } from "./ui.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -28,8 +29,6 @@ bctx.imageSmoothingEnabled = false;
 let dirty = true;
 
 const SETTINGS_KEY = "roguelike.settings";
-type ScalingMode = "integer" | "fractional" | "smooth";
-const SCALING_MODES: ScalingMode[] = ["integer", "fractional", "smooth"];
 let scalingMode: ScalingMode = "fractional";
 
 function loadSettings(): void {
@@ -59,28 +58,11 @@ function saveSettings(): void {
 function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
-  if (scalingMode === "integer") {
-    const factor = Math.max(1, Math.floor(fit * dpr));
-    canvas.width = LOGICAL_W * factor;
-    canvas.height = LOGICAL_H * factor;
-    canvas.style.width = `${(LOGICAL_W * factor) / dpr}px`;
-    canvas.style.height = `${(LOGICAL_H * factor) / dpr}px`;
-  } else if (scalingMode === "fractional") {
-    const scale = Math.max(0.25, Math.floor(fit * 4) / 4);
-    const cssW = LOGICAL_W * scale;
-    const cssH = LOGICAL_H * scale;
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    canvas.style.width = `${cssW}px`;
-    canvas.style.height = `${cssH}px`;
-  } else {
-    const cssW = Math.round(LOGICAL_W * fit);
-    const cssH = Math.round(LOGICAL_H * fit);
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    canvas.style.width = `${cssW}px`;
-    canvas.style.height = `${cssH}px`;
-  }
+  const s = computeScaling(scalingMode, LOGICAL_W, LOGICAL_H, fit, dpr);
+  canvas.width = s.backingW;
+  canvas.height = s.backingH;
+  canvas.style.width = `${s.cssW}px`;
+  canvas.style.height = `${s.cssH}px`;
   dirty = true;
 }
 window.addEventListener("resize", fitCanvas);
@@ -140,7 +122,7 @@ let gameOver = false;
 let screen: "title" | "game" = "title";
 let kills = 0;
 let inventory = makeInventory();
-const messageLog: string[] = [];
+const messageLog = new MessageLog(4);
 
 interface Effect {
   x: number;
@@ -159,25 +141,11 @@ function spawnEffect(x: number, y: number, text: string, color: string): void {
 }
 
 function logMessage(msg: string): void {
-  if (!msg) return;
   messageLog.push(msg);
-  if (messageLog.length > 4) messageLog.shift();
 }
 let showInventory = false;
 let menuOpen = false;
-let menuIndex = 0;
-let menuPath: number[] = [];
-const menuSelMemory = new Map<string, number>();
-
-function menuKey(): string {
-  return menuPath.join(",");
-}
-
-interface MenuEntry {
-  label: string;
-  submenu?: MenuEntry[];
-  action?: () => void;
-}
+const menu = new MenuNav(menuTree);
 
 const HELP_LINES: [string, string][] = [
   ["arrows", "move / bump attack"],
@@ -197,31 +165,18 @@ function cycleScaling(): void {
   fitCanvas();
 }
 
-function menuBack(): void {
-  menuSelMemory.set(menuKey(), menuIndex);
-  menuPath.pop();
-  menuIndex = menuSelMemory.get(menuKey()) ?? 0;
-  dirty = true;
-}
-
-function menuEntries(): MenuEntry[] {
-  if (menuPath.length === 0) {
-    return [
-      { label: "Help", submenu: [] },
-      { label: "Settings", submenu: [] },
-      { label: "Restart", action: resetGame },
-    ];
-  }
-  if (menuPath.length === 1) {
-    if (menuPath[0] === 0) {
-      return [{ label: "Back", action: menuBack }];
-    }
-    return [
-      { label: `Scaling mode: ${scalingMode}`, action: cycleScaling },
-      { label: "Back", action: menuBack },
-    ];
-  }
-  return [{ label: "Back", action: menuBack }];
+function menuTree(): MenuEntry[] {
+  return [
+    { label: "Help", submenu: () => [{ label: "Back", action: () => menu.back() }] },
+    {
+      label: "Settings",
+      submenu: () => [
+        { label: `Scaling mode: ${scalingMode}`, action: cycleScaling },
+        { label: "Back", action: () => menu.back() },
+      ],
+    },
+    { label: "Restart", action: resetGame },
+  ];
 }
 
 function monstersAct(): void {
@@ -305,14 +260,12 @@ function resetGame(): void {
   BATTLE_RNG = new RNG(BASE_SEED + 555);
   gameOver = false;
   inventory = makeInventory();
-  messageLog.length = 0;
+  messageLog.clear();
   effects.length = 0;
   playerFlashUntil = 0;
   showInventory = false;
   menuOpen = false;
-  menuIndex = 0;
-  menuPath = [];
-  menuSelMemory.clear();
+  menu.reset();
   map = getFloor(1);
   player = makePlayer(map.spawn.x, map.spawn.y);
   refreshFOV();
@@ -338,42 +291,34 @@ window.addEventListener("keydown", (e) => {
   }
   if (e.key === "Escape") {
     e.preventDefault();
-    if (menuOpen && menuPath.length > 0) {
-      menuBack();
+    if (menuOpen && menu.depth() > 0) {
+      menu.back();
     } else {
       menuOpen = !menuOpen;
-      if (menuOpen) {
-        menuPath = [];
-        menuIndex = menuSelMemory.get("") ?? 0;
-      }
+      if (menuOpen) menu.open();
     }
     dirty = true;
     return;
   }
   if (menuOpen) {
-    const entries = menuEntries();
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      menuIndex = (menuIndex + entries.length - 1) % entries.length;
+      menu.up();
       dirty = true;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      menuIndex = (menuIndex + 1) % entries.length;
+      menu.down();
       dirty = true;
     } else if (e.key === "ArrowLeft" || e.key === "Backspace") {
       e.preventDefault();
-      if (menuPath.length > 0) menuBack();
+      if (menu.depth() > 0) {
+        menu.back();
+        dirty = true;
+      }
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const entry = entries[menuIndex]!;
-      if (entry.submenu) {
-        menuSelMemory.set(menuKey(), menuIndex);
-        menuPath.push(menuIndex);
-        menuIndex = menuSelMemory.get(menuKey()) ?? 0;
-        dirty = true;
-      } else if (entry.action) {
-        entry.action();
-      }
+      menu.enter();
+      dirty = true;
     }
     return;
   }
@@ -504,12 +449,12 @@ async function main(): Promise<void> {
   function drawMenu(): void {
     bctx.fillStyle = "rgba(0,0,0,0.72)";
     bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-    const entries = menuEntries();
-    const showHelp = menuPath.length === 1 && menuPath[0] === 0;
+    const entries = menu.entries();
+    const showHelp = menu.depth() === 1 && menu.path[0] === 0;
     const detail: string[] = [];
     if (!showHelp) {
-      if (menuPath.length === 0) {
-        const sel = entries[menuIndex]!;
+      if (menu.depth() === 0) {
+        const sel = entries[menu.index]!;
         if (sel.label === "Help") detail.push("Enter to open help");
         else if (sel.label === "Settings") detail.push("Enter to open settings");
         else if (sel.label === "Restart") detail.push("Enter to restart the run from depth 1");
@@ -529,12 +474,12 @@ async function main(): Promise<void> {
     bctx.strokeRect(x, y, w, h);
     bctx.fillStyle = "#e8e4da";
     bctx.font = "bold 20px monospace";
-    bctx.fillText(menuPath.length === 0 ? "MENU" : menuPath[0] === 0 ? "MENU > Help" : "MENU > Settings", x + 20, y + 34);
+    bctx.fillText(menu.depth() === 0 ? "MENU" : menu.path[0] === 0 ? "MENU > Help" : "MENU > Settings", x + 20, y + 34);
     bctx.font = "16px monospace";
     entries.forEach((it, i) => {
-      bctx.fillStyle = i === menuIndex ? "#ffd97a" : "#9a958c";
+      bctx.fillStyle = i === menu.index ? "#ffd97a" : "#9a958c";
       const suffix = it.submenu ? "  >" : "";
-      bctx.fillText(`${i === menuIndex ? ">" : " "} ${it.label}${suffix}`, x + 20, y + 64 + i * 24);
+      bctx.fillText(`${i === menu.index ? ">" : " "} ${it.label}${suffix}`, x + 20, y + 64 + i * 24);
     });
     const dy = y + 64 + entries.length * 24 + 8;
     bctx.strokeStyle = "#3a352d";
@@ -589,7 +534,7 @@ async function main(): Promise<void> {
       const n = messageLog.length;
       for (let i = 0; i < n; i++) {
         bctx.fillStyle = i === n - 1 ? "#e8e4da" : "#9a958c";
-        bctx.fillText(messageLog[i]!, 8, LOGICAL_H - 40 - (n - 1 - i) * 16);
+        bctx.fillText(messageLog.at(i), 8, LOGICAL_H - 40 - (n - 1 - i) * 16);
       }
     }
   }
