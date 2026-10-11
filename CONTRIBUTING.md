@@ -81,6 +81,17 @@ If formatting or lint issues appear, run:
 bun run lint:fix
 ```
 
+## Publishing
+
+The site can be published automatically with GitHub Pages.
+
+1. Push the repository to GitHub.
+2. In GitHub, open **Settings > Pages**.
+3. Set **Source** to **GitHub Actions**.
+4. Push to `master`, or run the **GitHub Pages** workflow manually from the Actions tab.
+
+The `.github/workflows/pages.yml` workflow runs typecheck, lint, tests, build, and dist verification, then uploads `dist/` to GitHub Pages.
+
 ## Contribution rules
 
 - Keep one logical change per commit.
