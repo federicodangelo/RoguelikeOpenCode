@@ -9,6 +9,7 @@ describe("contextual hints", () => {
         cell: "floor",
         depth: 1,
         potions: 0,
+        torches: 0,
         hp: 10,
         maxHp: 10,
       }),
@@ -22,6 +23,7 @@ describe("contextual hints", () => {
         cell: "stairs",
         depth: 1,
         potions: 0,
+        torches: 0,
         hp: 10,
         maxHp: 10,
       }),
@@ -33,6 +35,7 @@ describe("contextual hints", () => {
         cell: "stairsUp",
         depth: 2,
         potions: 0,
+        torches: 0,
         hp: 10,
         maxHp: 10,
       }),
@@ -46,6 +49,7 @@ describe("contextual hints", () => {
         cell: "floor",
         depth: 1,
         potions: 1,
+        torches: 0,
         hp: 7,
         maxHp: 14,
       }),
@@ -57,9 +61,24 @@ describe("contextual hints", () => {
         cell: "floor",
         depth: 1,
         potions: 1,
+        torches: 0,
         hp: 6,
         maxHp: 14,
       }),
     ).toEqual(["u: drink"]);
+  });
+
+  it("shows torch hint when carrying torches", () => {
+    expect(
+      contextualHints({
+        hasPickableItem: false,
+        cell: "floor",
+        depth: 1,
+        potions: 0,
+        torches: 1,
+        hp: 10,
+        maxHp: 10,
+      }),
+    ).toEqual(["t: torch"]);
   });
 });

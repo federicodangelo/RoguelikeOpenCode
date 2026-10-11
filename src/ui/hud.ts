@@ -12,6 +12,7 @@ export interface HudData {
   algorithm: string;
   messages: MessageLog;
   showInventory: boolean;
+  lightTurns: number;
 }
 
 export interface ContextualHintInput {
@@ -19,6 +20,7 @@ export interface ContextualHintInput {
   cell: string;
   depth: number;
   potions: number;
+  torches: number;
   hp: number;
   maxHp: number;
 }
@@ -37,6 +39,9 @@ export function contextualHints(input: ContextualHintInput): string[] {
   }
   if (input.potions > 0 && input.hp * 2 < input.maxHp) {
     hints.push("u: drink");
+  }
+  if (input.torches > 0) {
+    hints.push("t: torch");
   }
 
   return hints;
@@ -71,11 +76,16 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   drawPixelText(bctx, `Atk ${data.player.atk}  Def ${data.player.def}`, 250, hudY, "#e8e4da", 2);
   drawPixelText(bctx, `Lvl ${data.player.level}`, 400, hudY, "#e8e4da", 2);
   drawPixelText(bctx, `Gold ${data.inventory.gold}`, 490, hudY, "#e8e4da", 2);
-  drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 600, hudY, "#e8e4da", 2);
+  if (data.lightTurns > 0) {
+    drawPixelText(bctx, `Light ${data.lightTurns}`, 600, hudY, "#ffd97a", 2);
+    drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 700, hudY, "#e8e4da", 2);
+  } else {
+    drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 600, hudY, "#e8e4da", 2);
+  }
   drawPixelTextRight(bctx, "esc menu", LOGICAL_W - 8, hudY, "#9a958c", 2);
 
   if (data.showInventory) {
-    const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Gold: ${data.inventory.gold}`;
+    const inv = `Sword: ${data.inventory.sword ? "+1 ATK" : "-"}   Shield: ${data.inventory.shield ? "+1 DEF" : "-"}   Potions: ${data.inventory.potions}   Torches: ${data.inventory.torches}   Gold: ${data.inventory.gold}`;
     drawPixelText(bctx, inv, 8, LOGICAL_H - 42, "#e8e4da", 2);
   } else {
     const n = data.messages.length;

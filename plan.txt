@@ -145,7 +145,7 @@ PHASE 10 - Gameplay depth [NEXT]
 [x] 10.1 Add more enemy archetypes: ranged, fast, tank, summoner, or boss
 [x] 10.2 Add ranged attacks or projectile-style bump alternatives
 [x] 10.3 Add traps, hazards, or environmental damage
-[ ] 10.4 Add lighting, torches, or temporary light radius
+[x] 10.4 Add lighting, torches, or temporary light radius
 [ ] 10.5 Add status effects: poison, stun, haste, bleeding, or fear
 [ ] 10.6 Add deeper progression: skills, equipment slots, or consumables
 [ ] 10.7 Add save/load or persistent run state

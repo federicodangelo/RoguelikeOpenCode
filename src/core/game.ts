@@ -4,9 +4,9 @@ import { RNG } from "./rng.ts";
 import { makePlayer, spawnMonsters, attack, gainXp, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
-import { kindOfTile, makeInventory, pickUp, usePotion, type Inventory } from "./items.ts";
+import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory } from "./items.ts";
 import { MessageLog } from "../ui/menu.ts";
-import { BASE_SEED, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
+import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
 import { spawnEffect, type Effect } from "../ui/effects.ts";
 import type { CellView } from "../platform/render.ts";
 
@@ -38,6 +38,7 @@ export class Game {
   messages = new MessageLog(4);
   effects: Effect[] = [];
   playerFlashUntil = 0;
+  lightTurns = 0;
   showInventory = false;
   menuOpen = false;
   dirty = true;
@@ -64,7 +65,8 @@ export class Game {
   }
 
   refreshFOV(): void {
-    this.visible = computeFOV(this.map, this.player.x, this.player.y);
+    const radius = this.lightTurns > 0 ? TORCH_RADIUS : undefined;
+    this.visible = computeFOV(this.map, this.player.x, this.player.y, radius);
     let explored = this.exploredByFloor.get(this.depth);
     if (!explored) {
       explored = new Set<number>();
@@ -91,6 +93,7 @@ export class Game {
   }
 
   monstersAct(): void {
+    if (this.lightTurns > 0) this.lightTurns--;
     const dist = chaseDistances(this.map, this.player);
     for (const m of this.monsters()) {
       if (!m.alive) continue;
@@ -232,6 +235,15 @@ export class Game {
     return true;
   }
 
+  useTorch(): boolean {
+    const msg = useTorch(this.inventory);
+    if (!msg) return false;
+    this.lightTurns = TORCH_TURNS;
+    this.logMessage(`${msg} Your light radius expands for ${TORCH_TURNS} turns.`);
+    this.events.pickup?.();
+    return true;
+  }
+
   reset(): void {
     this.depth = 1;
     this.kills = 0;
@@ -245,6 +257,7 @@ export class Game {
     this.messages.clear();
     this.effects.length = 0;
     this.playerFlashUntil = 0;
+    this.lightTurns = 0;
     this.showInventory = false;
     this.menuOpen = false;
     this.map = this.getFloor(1);

@@ -101,6 +101,9 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
   } else if (e.key === "u") {
     e.preventDefault();
     acted = game.drink();
+  } else if (e.key === "t") {
+    e.preventDefault();
+    acted = game.useTorch();
   } else if (e.key === "i") {
     e.preventDefault();
     game.showInventory = !game.showInventory;

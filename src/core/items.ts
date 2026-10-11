@@ -1,17 +1,18 @@
 import { T } from "./tiles.ts";
 import type { Entity } from "./entities.ts";
 
-export type ItemKind = "potion" | "gold" | "sword" | "shield" | "corpse";
+export type ItemKind = "potion" | "gold" | "sword" | "shield" | "torch" | "corpse";
 
 export interface Inventory {
   gold: number;
   potions: number;
+  torches: number;
   sword: boolean;
   shield: boolean;
 }
 
 export function makeInventory(): Inventory {
-  return { gold: 0, potions: 0, sword: false, shield: false };
+  return { gold: 0, potions: 0, torches: 0, sword: false, shield: false };
 }
 
 export function kindOfTile(tile: number): ItemKind | null {
@@ -24,6 +25,8 @@ export function kindOfTile(tile: number): ItemKind | null {
       return "sword";
     case T.Shield:
       return "shield";
+    case T.Torch:
+      return "torch";
     case T.Corpse:
       return "corpse";
     default:
@@ -51,7 +54,16 @@ export function pickUp(player: Entity, inv: Inventory, tile: number): string | n
       inv.shield = true;
       player.def += 1;
       return "You equip the shield (+1 DEF).";
+    case "torch":
+      inv.torches += 1;
+      return "You pick up a torch.";
   }
+}
+
+export function useTorch(inv: Inventory): string | null {
+  if (inv.torches <= 0) return null;
+  inv.torches -= 1;
+  return "You light a torch.";
 }
 
 export function usePotion(player: Entity, inv: Inventory): string | null {

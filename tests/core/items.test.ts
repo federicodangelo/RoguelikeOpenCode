@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { makePlayer } from "../../src/core/entities.ts";
-import { makeInventory, kindOfTile, pickUp, usePotion } from "../../src/core/items.ts";
+import { makeInventory, kindOfTile, pickUp, usePotion, useTorch } from "../../src/core/items.ts";
 import { T } from "../../src/core/tiles.ts";
 
 describe("kindOfTile", () => {
@@ -9,6 +9,7 @@ describe("kindOfTile", () => {
     expect(kindOfTile(T.Gold)).toBe("gold");
     expect(kindOfTile(T.Sword)).toBe("sword");
     expect(kindOfTile(T.Shield)).toBe("shield");
+    expect(kindOfTile(T.Torch)).toBe("torch");
     expect(kindOfTile(T.Corpse)).toBe("corpse");
     expect(kindOfTile(T.Floor)).toBeNull();
   });
@@ -52,6 +53,13 @@ describe("pickUp", () => {
     expect(p.def).toBe(2);
   });
 
+  it("torches accumulate in inventory", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    expect(pickUp(p, inv, T.Torch)).toContain("torch");
+    expect(inv.torches).toBe(1);
+  });
+
   it("corpses and non-items are not pickable", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
@@ -72,6 +80,16 @@ describe("usePotion", () => {
     expect(usePotion(p, inv)).toContain("potion");
     expect(p.hp).toBe(12);
     expect(inv.potions).toBe(0);
+  });
+
+  it("consumes torches", () => {
+    const inv = makeInventory();
+    inv.torches = 2;
+    expect(useTorch(inv)).toContain("torch");
+    expect(inv.torches).toBe(1);
+    expect(useTorch(inv)).toContain("torch");
+    expect(inv.torches).toBe(0);
+    expect(useTorch(inv)).toBeNull();
   });
 
   it("does nothing without potions or at full HP", () => {

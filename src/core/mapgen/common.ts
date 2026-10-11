@@ -233,7 +233,7 @@ export function nearestOpen(cells: CellType[][], at: Point): Point | null {
 }
 
 export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserved: Point[]): PlacedItem[] {
-  const kinds = [T.Potion, T.Gold, T.Sword, T.Shield];
+  const kinds = [T.Potion, T.Gold, T.Sword, T.Shield, T.Torch];
   const floors: Point[] = [];
   for (let y = 1; y < MAP_H - 1; y++) {
     for (let x = 1; x < MAP_W - 1; x++) {

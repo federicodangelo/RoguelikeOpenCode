@@ -120,6 +120,7 @@ async function main(): Promise<void> {
         algorithm: game.map.algorithm,
         messages: game.messages,
         showInventory: game.showInventory,
+        lightTurns: game.lightTurns,
       });
 
       if (!game.gameOver && !game.menuOpen) {
@@ -132,6 +133,7 @@ async function main(): Promise<void> {
             cell: game.map.cells[game.player.y]![game.player.x]!,
             depth: game.depth,
             potions: game.inventory.potions,
+            torches: game.inventory.torches,
             hp: game.player.hp,
             maxHp: game.player.maxHp,
           }),
