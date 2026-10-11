@@ -1,6 +1,6 @@
 import { T } from "../core/tiles.ts";
 import { HELP_LINES, LOGICAL_H, LOGICAL_W, VIEW_COLS } from "../core/constants.ts";
-import { drawPixelText, drawPixelTextCenter, wrapPixelText } from "./pixel-font.ts";
+import { drawPixelText, drawPixelTextCenter, drawPixelTextRight, wrapPixelText } from "./pixel-font.ts";
 import type { Tileset } from "../platform/render.ts";
 import type { MenuNav } from "./menu.ts";
 import type { ScalingMode } from "./scaling.ts";
@@ -69,12 +69,13 @@ export function menuDetail(menu: MenuNav, scalingMode: ScalingMode): string[] {
   const showHelp = menu.depth() === 1 && labels[0] === "Help";
   if (showHelp) return [];
 
-  const sel = entries[menu.index];
-  if (sel?.hint) return Array.isArray(sel.hint) ? sel.hint : [sel.hint];
+  const sel = menu.selectedEntry();
+  if (!sel) return [];
+  if (sel.hint) return Array.isArray(sel.hint) ? sel.hint : [sel.hint];
 
   if (menu.depth() === 0) {
-    if (sel?.submenu) return [`Enter to open ${sel.label}`];
-    if (sel?.label === "Restart") return ["Enter to restart the run from depth 1"];
+    if (sel.submenu) return [`Enter to open ${sel.label}`];
+    if (sel.action) return [`Enter to select ${sel.label}`];
     return [];
   }
 
@@ -86,6 +87,8 @@ export function menuDetail(menu: MenuNav, scalingMode: ScalingMode): string[] {
     ];
   }
 
+  if (sel.action) return [`Enter to select ${sel.label}`];
+  if (sel.submenu) return [`Enter to open ${sel.label}`];
   return [];
 }
 
@@ -114,15 +117,26 @@ export function drawMenu(
 
   const title = menu.depth() === 0 ? "MENU" : `MENU > ${labels.join(" > ")}`;
   drawPixelText(bctx, title, x + 20, y + 20, "#e8e4da", 3);
+  if (menu.depth() > 0) {
+    drawPixelTextRight(bctx, "submenu", x + MENU_WIDTH - 20, y + 20, "#9a958c", 2);
+  }
 
   entries.forEach((it, i) => {
-    const suffix = it.submenu ? "  >" : "";
+    const rowY = y + 60 + i * 24;
+    if (i === menu.index) {
+      bctx.fillStyle = "rgba(255,217,122,0.12)";
+      bctx.fillRect(x + 12, rowY - 4, MENU_WIDTH - 24, 22);
+      bctx.strokeStyle = "#ffd97a";
+      bctx.strokeRect(x + 12.5, rowY - 3.5, MENU_WIDTH - 25, 21);
+    }
+
+    const suffix = it.submenu ? "  >" : it.action ? "  *" : "";
     drawPixelText(
       bctx,
       `${i === menu.index ? ">" : " "} ${it.label}${suffix}`,
       x + 20,
-      y + 60 + i * 24,
-      i === menu.index ? "#ffd97a" : "#9a958c",
+      rowY,
+      i === menu.index ? "#ffd97a" : it.submenu ? "#e8e4da" : "#9a958c",
       2,
     );
   });
@@ -144,4 +158,10 @@ export function drawMenu(
       drawPixelText(bctx, line, x + 24, dy + 20 + i * 24, "#9a958c", 2),
     );
   }
+
+  const footer =
+    menu.depth() === 0
+      ? "up/down move   enter open/select   esc close"
+      : "up/down move   enter select   back/esc back";
+  drawPixelTextCenter(bctx, footer, LOGICAL_W / 2, y + h - 20, "#9a958c", 2);
 }

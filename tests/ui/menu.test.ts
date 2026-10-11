@@ -224,6 +224,17 @@ describe("MenuNav", () => {
     mode = "smooth";
     expect(nav.entries()[0]!.label).toBe("Scaling mode: smooth");
   });
+
+  it("selectedEntry returns the current entry", () => {
+    const { entries } = testTree();
+    const nav = new MenuNav(() => entries);
+    nav.open();
+    expect(nav.selectedEntry()?.label).toBe("Help");
+    nav.down();
+    expect(nav.selectedEntry()?.label).toBe("Settings");
+    nav.enter();
+    expect(nav.selectedEntry()?.label).toBe("Scaling");
+  });
 });
 
 describe("menuDetail", () => {
@@ -258,6 +269,19 @@ describe("menuDetail", () => {
     nav.index = 2;
     nav.enter();
     expect(menuDetail(nav, "fractional")).toEqual(["cycle scaling"]);
+  });
+
+  it("falls back to selection feedback when an entry has no hint", () => {
+    const nav = new MenuNav(
+      () =>
+        [
+          { label: "Cheats", submenu: [{ label: "God mode", action: () => {} }] },
+        ] as MenuEntry[],
+    );
+    nav.open();
+    expect(menuDetail(nav, "fractional")).toEqual(["Enter to open Cheats"]);
+    nav.enter();
+    expect(menuDetail(nav, "fractional")).toEqual(["Enter to select God mode"]);
   });
 
   it("does not treat the first submenu as Help by index", () => {

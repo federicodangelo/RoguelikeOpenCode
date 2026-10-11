@@ -63,6 +63,10 @@ export class MenuNav {
     return entries;
   }
 
+  selectedEntry(): MenuEntry | undefined {
+    return this.entries()[this.index];
+  }
+
   labels(): string[] {
     const labels: string[] = [];
     let entries = this.root();
