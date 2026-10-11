@@ -142,6 +142,22 @@ let kills = 0;
 let inventory = makeInventory();
 const messageLog: string[] = [];
 
+interface Effect {
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  born: number;
+}
+
+const effects: Effect[] = [];
+let playerFlashUntil = 0;
+
+function spawnEffect(x: number, y: number, text: string, color: string): void {
+  effects.push({ x, y, text, color, born: performance.now() });
+  dirty = true;
+}
+
 function logMessage(msg: string): void {
   if (!msg) return;
   messageLog.push(msg);
@@ -214,7 +230,11 @@ function monstersAct(): void {
     if (!m.alive) continue;
     const before = player.hp;
     monsterStep(m, { player, map, rng: AI_RNG, dist, monsters: monsters() });
-    if (player.hp < before) logMessage(`The ${m.name} hits you for ${before - player.hp}.`);
+    if (player.hp < before) {
+      logMessage(`The ${m.name} hits you for ${before - player.hp}.`);
+      spawnEffect(player.x, player.y, `-${before - player.hp}`, "#ff6a6a");
+      playerFlashUntil = performance.now() + 250;
+    }
     if (!player.alive) {
       gameOver = true;
       break;
@@ -238,6 +258,7 @@ function tryMove(dx: number, dy: number): boolean {
   const target = monsters().find((m) => m.alive && m.x === nx && m.y === ny);
   if (target) {
     const dmg = attack(BATTLE_RNG, player, target);
+    spawnEffect(target.x, target.y, `-${dmg}`, "#ffd97a");
     if (target.alive) {
       logMessage(`You hit the ${target.name} for ${dmg}.`);
     } else {
@@ -285,6 +306,8 @@ function resetGame(): void {
   gameOver = false;
   inventory = makeInventory();
   messageLog.length = 0;
+  effects.length = 0;
+  playerFlashUntil = 0;
   showInventory = false;
   menuOpen = false;
   menuIndex = 0;
@@ -453,6 +476,7 @@ async function main(): Promise<void> {
     } else {
       drawScene(bctx, tiles, buildScene());
       drawHUD();
+      drawEffects();
       if (gameOver) drawGameOver();
       if (menuOpen) drawMenu();
     }
@@ -585,7 +609,39 @@ async function main(): Promise<void> {
     bctx.textAlign = "left";
   }
 
+  function drawEffects(): void {
+    const now = performance.now();
+    const cam = camera();
+    for (let i = effects.length - 1; i >= 0; i--) {
+      const e = effects[i]!;
+      const age = now - e.born;
+      if (age > 800) {
+        effects.splice(i, 1);
+        continue;
+      }
+      const t = age / 800;
+      bctx.globalAlpha = 1 - t;
+      bctx.fillStyle = e.color;
+      bctx.font = "bold 16px monospace";
+      bctx.textAlign = "center";
+      bctx.fillText(
+        e.text,
+        (e.x - cam.x) * TILE_SIZE + TILE_SIZE / 2,
+        (e.y - cam.y) * TILE_SIZE + 12 - t * 20,
+      );
+      bctx.textAlign = "left";
+      bctx.globalAlpha = 1;
+    }
+    if (now < playerFlashUntil) {
+      bctx.strokeStyle = "rgba(255,60,60,0.8)";
+      bctx.lineWidth = 4;
+      bctx.strokeRect(2, 2, LOGICAL_W - 4, LOGICAL_H - 4);
+      bctx.lineWidth = 1;
+    }
+  }
+
   function frame(): void {
+    if (effects.length || performance.now() < playerFlashUntil) dirty = true;
     if (dirty) draw();
     requestAnimationFrame(frame);
   }
