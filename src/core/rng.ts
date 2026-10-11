@@ -19,4 +19,12 @@ export class RNG {
   pick<T>(arr: readonly T[]): T {
     return arr[this.int(0, arr.length - 1)]!;
   }
+
+  getState(): number {
+    return this.state;
+  }
+
+  setState(state: number): void {
+    this.state = state >>> 0;
+  }
 }

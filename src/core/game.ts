@@ -10,6 +10,7 @@ import { MessageLog } from "../ui/menu.ts";
 import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
 import { spawnEffect, type Effect } from "../ui/effects.ts";
 import type { CellView } from "../platform/render.ts";
+import { SAVE_VERSION, type SavedRun } from "./save.ts";
 
 export interface GameEvents {
   hit?: () => void;
@@ -326,6 +327,59 @@ export class Game {
     this.menuOpen = false;
     this.map = this.getFloor(1);
     this.player = makePlayer(this.map.spawn.x, this.map.spawn.y);
+    this.refreshFOV();
+    this.dirty = true;
+  }
+
+  serialize(): SavedRun {
+    return {
+      version: SAVE_VERSION,
+      depth: this.depth,
+      kills: this.kills,
+      gameOver: this.gameOver,
+      screen: this.screen,
+      player: this.player,
+      inventory: this.inventory,
+      lightTurns: this.lightTurns,
+      aiRng: this.aiRng.getState(),
+      battleRng: this.battleRng.getState(),
+      floors: [...this.floors.entries()].map(([depth, map]) => ({
+        depth,
+        map,
+        monsters: this.monstersByFloor.get(depth) ?? [],
+        explored: [...(this.exploredByFloor.get(depth) ?? [])],
+      })),
+      messages: this.messages.snapshot(),
+    };
+  }
+
+  loadRun(saved: SavedRun): void {
+    this.depth = saved.depth;
+    this.kills = saved.kills;
+    this.gameOver = saved.gameOver;
+    this.screen = saved.screen;
+    this.player = saved.player;
+    this.inventory = saved.inventory;
+    this.lightTurns = saved.lightTurns;
+    this.aiRng.setState(saved.aiRng);
+    this.battleRng.setState(saved.battleRng);
+
+    this.floors.clear();
+    this.monstersByFloor.clear();
+    this.exploredByFloor.clear();
+    for (const floor of saved.floors) {
+      this.floors.set(floor.depth, floor.map);
+      this.monstersByFloor.set(floor.depth, floor.monsters);
+      this.exploredByFloor.set(floor.depth, new Set(floor.explored));
+    }
+
+    this.map = this.floors.get(this.depth) ?? this.getFloor(this.depth);
+    if (!this.exploredByFloor.has(this.depth)) this.exploredByFloor.set(this.depth, new Set());
+    this.messages.restore(saved.messages);
+    this.effects.length = 0;
+    this.playerFlashUntil = 0;
+    this.showInventory = false;
+    this.menuOpen = false;
     this.refreshFOV();
     this.dirty = true;
   }

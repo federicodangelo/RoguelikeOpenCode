@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 9 done; PHASE 10 next
+STATUS: PHASE 10 done; next phase TBD
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -140,7 +140,7 @@ PHASE 9 - Code quality refactor [DONE]
 [x] 9.7 Organize src into core/ui/platform folders and update imports
 [x] 9.8 Mirror test structure into tests/core, tests/ui, and tests/platform
 
-PHASE 10 - Gameplay depth [NEXT]
+PHASE 10 - Gameplay depth [DONE]
 --------------------------------
 [x] 10.1 Add more enemy archetypes: ranged, fast, tank, summoner, or boss
 [x] 10.2 Add ranged attacks or projectile-style bump alternatives
@@ -148,7 +148,7 @@ PHASE 10 - Gameplay depth [NEXT]
 [x] 10.4 Add lighting, torches, or temporary light radius
 [x] 10.5 Add status effects: poison, stun, haste, bleeding, or fear
 [x] 10.6 Add deeper progression: skills, equipment slots, or consumables
-[ ] 10.7 Add save/load or persistent run state
+[x] 10.7 Add save/load or persistent run state
 
 PHASE 11 - UI/UX improvements [NEXT]
 -----------------------------------

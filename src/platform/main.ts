@@ -2,6 +2,7 @@ import { Tileset, drawScene } from "./render.ts";
 import { Game } from "../core/game.ts";
 import { GameAudio } from "./audio.ts";
 import { cycleScalingMode, loadSettings, saveSettings } from "./settings.ts";
+import { clearRun, loadRun, saveRun } from "./save.ts";
 import { handleKeydown } from "./input.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
 import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
@@ -41,6 +42,14 @@ game.events = {
   potion: () => audio.sfx("potion"),
 };
 
+if (loadRun(localStorage, game)) {
+  if (game.gameOver) {
+    clearRun(localStorage);
+    game.screen = "title";
+    game.dirty = true;
+  }
+}
+
 function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
@@ -70,6 +79,8 @@ function toggleSound(): void {
 
 function resetGame(): void {
   game.reset();
+  clearRun(localStorage);
+  saveRun(localStorage, game);
   audio.setEnabled(settings.soundEnabled);
   audio.unlock();
   if (settings.soundEnabled) audio.startMusic();
@@ -98,6 +109,18 @@ function menuTree(): MenuEntry[] {
         { label: "Back", action: () => menu.back() },
       ],
     },
+    { label: "Save", action: () => saveRun(localStorage, game) },
+    {
+      label: "Load",
+      action: () => {
+        if (loadRun(localStorage, game)) {
+          if (settings.soundEnabled && game.screen === "game" && !game.gameOver) {
+            audio.unlock();
+            audio.startMusic();
+          }
+        }
+      },
+    },
     { label: "Restart", action: resetGame },
   ];
 }
@@ -105,6 +128,11 @@ function menuTree(): MenuEntry[] {
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
   handleKeydown(e, { game, menu, audio, resetGame });
+  if (game.screen === "game" && !game.gameOver) {
+    saveRun(localStorage, game);
+  } else if (game.gameOver) {
+    clearRun(localStorage);
+  }
 });
 window.addEventListener("pointerdown", () => {
   audio.unlock();

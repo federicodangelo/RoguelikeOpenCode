@@ -20,6 +20,15 @@ export class MessageLog {
   clear(): void {
     this.lines.length = 0;
   }
+
+  snapshot(): string[] {
+    return [...this.lines];
+  }
+
+  restore(lines: string[]): void {
+    this.lines = [...lines];
+    if (this.lines.length > this.max) this.lines = this.lines.slice(-this.max);
+  }
 }
 
 export interface MenuEntry {
