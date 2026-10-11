@@ -6,6 +6,7 @@ import type { MenuNav } from "./menu.ts";
 import type { ScalingMode } from "./scaling.ts";
 
 const MENU_WIDTH = 640;
+const MENU_DETAIL_LINES = 3;
 
 export interface GameOverStats {
   depth: number;
@@ -104,8 +105,10 @@ export function drawMenu(
   const labels = menu.labels();
   const showHelp = menu.depth() === 1 && labels[0] === "Help";
   const detail = menuDetail(menu, scalingMode);
-  const detailLines = showHelp ? [] : detail.flatMap((line) => wrapPixelText(line, MENU_WIDTH - 48, 2));
-  const detailH = showHelp ? HELP_LINES.length * 24 : Math.max(1, detailLines.length) * 24;
+  const detailLines = showHelp
+    ? []
+    : detail.flatMap((line) => wrapPixelText(line, MENU_WIDTH - 48, 2)).slice(0, MENU_DETAIL_LINES);
+  const detailH = showHelp ? HELP_LINES.length * 24 : MENU_DETAIL_LINES * 24;
   const h = 64 + entries.length * 24 + 16 + detailH + 8;
   const x = (LOGICAL_W - MENU_WIDTH) / 2;
   const y = (LOGICAL_H - h) / 2;
@@ -130,13 +133,13 @@ export function drawMenu(
       bctx.strokeRect(x + 12.5, rowY - 3.5, MENU_WIDTH - 25, 21);
     }
 
-    const suffix = it.submenu ? "  >" : it.action ? "  *" : "";
+    const suffix = it.submenu ? "  >" : "";
     drawPixelText(
       bctx,
       `${i === menu.index ? ">" : " "} ${it.label}${suffix}`,
       x + 20,
       rowY,
-      i === menu.index ? "#ffd97a" : it.submenu ? "#e8e4da" : "#9a958c",
+      i === menu.index ? "#ffd97a" : "#e8e4da",
       2,
     );
   });
