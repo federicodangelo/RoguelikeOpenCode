@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 5 done -> PHASE 6 next
+STATUS: PHASE 6 done -> PHASE 7 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
