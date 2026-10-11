@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 4 done -> PHASE 5 next
+STATUS: PHASE 5 done -> PHASE 6 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -83,9 +83,10 @@ PHASE 4 - Combat & AI
 
 PHASE 5 - Items & progression
 -----------------------------
-[ ] 5.1 Items: health potion, sword (+ATK), shield (+DEF), gold
-[ ] 5.2 Inventory: simple pick-up/use keys (i, g, u)
-[ ] 5.3 Simple XP/level-up for player (optional stretch)
+[x] 5.1 Items: health potion, sword (+ATK), shield (+DEF), gold (src/items.ts)
+[x] 5.2 Inventory: pick-up/use keys (g pick up, u drink potion, i toggle)
+[x] 5.3 Simple XP/level-up for player (kills grant XP; level up:
+    +2 maxHP full heal, +1 ATK, +1 DEF)
 
 PHASE 6 - UI & polish
 ---------------------
