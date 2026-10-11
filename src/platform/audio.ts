@@ -10,9 +10,19 @@ export type SfxName =
   | "stairs"
   | "death";
 
-const MELODY: number[] = [220, 261.63, 329.63, 261.63, 392, 329.63, 261.63, 220];
-const BASS: number[] = [110, 110, 130.81, 130.81, 164.81, 164.81, 130.81, 110];
-const MUSIC_STEP_SECONDS = 0.32;
+const MELODIES: number[][] = [
+  [220, 261.63, 329.63, 261.63, 392, 329.63, 261.63, 220],
+  [196, 246.94, 293.66, 246.94, 349.23, 293.66, 246.94, 196],
+  [174.61, 220, 261.63, 220, 311.13, 261.63, 220, 174.61],
+  [164.81, 196, 246.94, 196, 261.63, 246.94, 196, 164.81],
+];
+const BASSES: number[][] = [
+  [110, 110, 130.81, 130.81, 164.81, 164.81, 130.81, 110],
+  [98, 98, 123.47, 123.47, 146.83, 146.83, 123.47, 98],
+  [87.31, 87.31, 110, 110, 138.59, 138.59, 110, 87.31],
+  [82.41, 82.41, 98, 98, 116.54, 116.54, 98, 82.41],
+];
+const MUSIC_TEMPOS: number[] = [0.32, 0.28, 0.24, 0.22];
 const MUSIC_LOOKAHEAD_SECONDS = 0.25;
 const MUSIC_SCHEDULER_MS = 100;
 
@@ -27,6 +37,8 @@ export class GameAudio {
   private musicTimer: number | null = null;
   private musicStep = 0;
   private nextMusicTime = 0;
+  private musicTheme = 0;
+  private musicStepSeconds = MUSIC_TEMPOS[0] ?? 0.32;
   private sfxVariant = 0;
 
   private get audible(): boolean {
@@ -55,6 +67,17 @@ export class GameAudio {
     this.muted = muted;
     if (muted) this.stopMusic();
     this.applyGain();
+  }
+
+  setMusicContext(depth: number, danger: boolean): void {
+    const theme = danger ? 3 : (Math.max(1, depth) - 1) % MELODIES.length;
+    if (theme === this.musicTheme) return;
+    this.musicTheme = theme;
+    this.musicStepSeconds = MUSIC_TEMPOS[theme] ?? 0.32;
+    if (this.musicTimer !== null) {
+      this.stopMusic();
+      this.startMusic();
+    }
   }
 
   unlock(): void {
@@ -210,7 +233,7 @@ export class GameAudio {
     const lookaheadEnd = this.ctx.currentTime + MUSIC_LOOKAHEAD_SECONDS;
     while (this.nextMusicTime < lookaheadEnd) {
       this.musicTick(this.nextMusicTime);
-      this.nextMusicTime += MUSIC_STEP_SECONDS;
+      this.nextMusicTime += this.musicStepSeconds;
     }
 
     this.musicTimer = window.setTimeout(() => this.scheduleMusic(), MUSIC_SCHEDULER_MS);
@@ -218,12 +241,14 @@ export class GameAudio {
 
   private musicTick(time: number): void {
     if (!this.ctx) return;
-    const step = this.musicStep++ % MELODY.length;
-    const melody = MELODY[step];
-    const bass = BASS[step];
+    const melodyRow = MELODIES[this.musicTheme] ?? MELODIES[0]!;
+    const bassRow = BASSES[this.musicTheme] ?? BASSES[0]!;
+    const step = this.musicStep++ % melodyRow.length;
+    const melody = melodyRow[step];
+    const bass = bassRow[step];
     if (melody !== undefined) this.toneAt(melody, 0.28, "triangle", 0.09, time);
     if (step % 2 === 0 && bass !== undefined) this.toneAt(bass, 0.55, "sine", 0.07, time);
-    if (step === 0) this.toneAt(440, 0.12, "square", 0.03, time);
+    if (step === 0) this.toneAt(this.musicTheme === 3 ? 330 : 440, 0.12, "square", 0.03, time);
   }
 
   private nextVariant(count: number): number {

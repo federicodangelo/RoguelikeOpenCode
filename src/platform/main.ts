@@ -37,6 +37,7 @@ function applyAudioSettings(): void {
 
 function startMusicIfAudible(): void {
   if (settings.soundEnabled && !settings.muted && settings.volume > 0 && game.screen === "game" && !game.gameOver) {
+    audio.setMusicContext(game.depth, game.danger());
     audio.unlock();
     audio.startMusic();
   }
@@ -169,6 +170,7 @@ window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
   handleKeydown(e, { game, menu, audio, startGame, toggleMute, openInventory: openInventoryMenu });
   if (game.screen === "game" && !game.gameOver) {
+    audio.setMusicContext(game.depth, game.danger());
     saveRun(localStorage, game);
   } else if (game.gameOver) {
     clearRun(localStorage);

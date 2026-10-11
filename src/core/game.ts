@@ -151,6 +151,11 @@ export class Game {
     return { doorClosed, trap, monster };
   }
 
+  danger(): boolean {
+    if (this.player.hp * 3 <= this.player.maxHp) return true;
+    return this.adjacentInteractables().monster !== null;
+  }
+
   monstersAct(): void {
     if (this.lightTurns > 0) this.lightTurns--;
 
