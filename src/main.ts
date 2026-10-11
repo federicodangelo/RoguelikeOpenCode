@@ -21,13 +21,36 @@ ctx.imageSmoothingEnabled = false;
 
 let dirty = true;
 
+const SETTINGS_KEY = "roguelike.settings";
+let fractionalScaling = true;
+
+function loadSettings(): void {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const s = JSON.parse(raw) as { fractionalScaling?: boolean };
+      fractionalScaling = s.fractionalScaling ?? true;
+    }
+  } catch {
+    fractionalScaling = true;
+  }
+}
+
+function saveSettings(): void {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ fractionalScaling }));
+  } catch {
+    // storage unavailable; keep in-memory setting
+  }
+}
+
 function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
-  const scale = fit >= 1 ? Math.floor(fit) : fit;
-  const factor = Math.max(1, Math.round(scale * dpr));
-  canvas.width = LOGICAL_W * factor;
-  canvas.height = LOGICAL_H * factor;
+  const scale = fractionalScaling ? fit : Math.max(1, Math.floor(fit));
+  const factor = fractionalScaling ? scale * dpr : Math.max(1, Math.round(scale * dpr));
+  canvas.width = Math.round(LOGICAL_W * factor);
+  canvas.height = Math.round(LOGICAL_H * factor);
   canvas.style.width = `${Math.round(LOGICAL_W * scale)}px`;
   canvas.style.height = `${Math.round(LOGICAL_H * scale)}px`;
   ctx.setTransform(factor, 0, 0, factor, 0, 0);
@@ -35,6 +58,7 @@ function fitCanvas(): void {
   dirty = true;
 }
 window.addEventListener("resize", fitCanvas);
+loadSettings();
 fitCanvas();
 
 const BASE_SEED = 1337;
@@ -93,7 +117,7 @@ let showInventory = false;
 let menuOpen = false;
 let menuIndex = 0;
 
-const MENU_ITEMS = ["Help", "Restart"] as const;
+const MENU_ITEMS = ["Help", "Settings", "Restart"] as const;
 const HELP_LINES: [string, string][] = [
   ["arrows", "move / bump attack"],
   ["home pgup end pgdn", "diagonal move"],
@@ -212,6 +236,10 @@ window.addEventListener("keydown", (e) => {
       e.preventDefault();
       if (MENU_ITEMS[menuIndex] === "Restart") {
         resetGame();
+      } else if (MENU_ITEMS[menuIndex] === "Settings") {
+        fractionalScaling = !fractionalScaling;
+        saveSettings();
+        fitCanvas();
       }
     }
     return;
@@ -343,6 +371,13 @@ async function main(): Promise<void> {
         ctx.fillStyle = "#9a958c";
         ctx.fillText(v, x + 220, y + 130 + i * 24);
       });
+    } else if (menuIndex === 1) {
+      ctx.fillStyle = "#e8e4da";
+      ctx.fillText("Fractional scaling:", x + 24, y + 130);
+      ctx.fillStyle = fractionalScaling ? "#7ac47a" : "#c47a7a";
+      ctx.fillText(fractionalScaling ? "on" : "off", x + 250, y + 130);
+      ctx.fillStyle = "#9a958c";
+      ctx.fillText("Press Enter to toggle", x + 24, y + 154);
     } else {
       ctx.fillStyle = "#e8e4da";
       ctx.fillText("Restart the run from depth 1.", x + 24, y + 130);
