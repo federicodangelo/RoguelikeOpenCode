@@ -177,12 +177,15 @@ function menuBack(): void {
 function menuEntries(): MenuEntry[] {
   if (menuPath.length === 0) {
     return [
-      { label: "Help" },
+      { label: "Help", submenu: [] },
       { label: "Settings", submenu: [] },
       { label: "Restart", action: resetGame },
     ];
   }
   if (menuPath.length === 1) {
+    if (menuPath[0] === 0) {
+      return [{ label: "Back", action: menuBack }];
+    }
     return [
       { label: `Scaling mode: ${scalingMode}`, action: cycleScaling },
       { label: "Back", action: menuBack },
@@ -427,12 +430,13 @@ async function main(): Promise<void> {
     bctx.fillStyle = "rgba(0,0,0,0.72)";
     bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
     const entries = menuEntries();
-    const showHelp = menuPath.length === 0 && menuIndex === 0;
+    const showHelp = menuPath.length === 1 && menuPath[0] === 0;
     const detail: string[] = [];
     if (!showHelp) {
       if (menuPath.length === 0) {
         const sel = entries[menuIndex]!;
-        if (sel.label === "Settings") detail.push("Enter to open settings");
+        if (sel.label === "Help") detail.push("Enter to open help");
+        else if (sel.label === "Settings") detail.push("Enter to open settings");
         else if (sel.label === "Restart") detail.push("Enter to restart the run from depth 1");
       } else {
         detail.push("Enter: cycle integer / fractional / smooth");
@@ -450,7 +454,7 @@ async function main(): Promise<void> {
     bctx.strokeRect(x, y, w, h);
     bctx.fillStyle = "#e8e4da";
     bctx.font = "bold 20px monospace";
-    bctx.fillText(menuPath.length === 0 ? "MENU" : "MENU > Settings", x + 20, y + 34);
+    bctx.fillText(menuPath.length === 0 ? "MENU" : menuPath[0] === 0 ? "MENU > Help" : "MENU > Settings", x + 20, y + 34);
     bctx.font = "16px monospace";
     entries.forEach((it, i) => {
       bctx.fillStyle = i === menuIndex ? "#ffd97a" : "#9a958c";
