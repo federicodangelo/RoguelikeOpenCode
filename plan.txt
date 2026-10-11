@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 8 done
+STATUS: PHASE 8 done; PHASE 9 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -120,3 +120,54 @@ MILESTONES (each = one commit)
 [x] M4: monsters + combat work
 [x] M5: items + UI + game over loop
 [x] M6: polished tileset + build script
+[x] M7: README screenshots, pixel font, synthesized audio, contextual hints
+
+PHASE 9 - Code quality refactor [NEXT]
+-------------------------------------
+[ ] 9.1 Split src/main.ts into smaller modules:
+    - src/game.ts: game state, turn flow, floor cache, reset flow
+    - src/input.ts: keyboard handling and action dispatch
+    - src/hud.ts: HUD, message log, contextual hints
+    - src/screens.ts: title, game-over, menu rendering
+    - src/effects.ts: floating damage/effect state and rendering
+    - src/settings.ts: localStorage settings load/save
+[ ] 9.2 Extract contextual hint logic into a pure helper with unit tests
+[ ] 9.3 Reduce global mutable state by introducing a GameContext or GameState
+[ ] 9.4 Keep behavior unchanged while moving rendering/input/UI out of main.ts
+[ ] 9.5 Add focused tests for settings persistence and contextual hints
+[ ] 9.6 Verify typecheck, build, dist verification, and tests after refactor
+
+PHASE 10 - Gameplay depth [NEXT]
+--------------------------------
+[ ] 10.1 Add more enemy archetypes: ranged, fast, tank, summoner, or boss
+[ ] 10.2 Add ranged attacks or projectile-style bump alternatives
+[ ] 10.3 Add traps, hazards, or environmental damage
+[ ] 10.4 Add lighting, torches, or temporary light radius
+[ ] 10.5 Add status effects: poison, stun, haste, bleeding, or fear
+[ ] 10.6 Add deeper progression: skills, equipment slots, or consumables
+[ ] 10.7 Add save/load or persistent run state
+
+PHASE 11 - UI/UX improvements [NEXT]
+-----------------------------------
+[ ] 11.1 Add a minimap or explored-area overview
+[ ] 11.2 Add tooltips or richer contextual help for interactable objects
+[ ] 11.3 Improve HUD readability: icons, spacing, status indicators
+[ ] 11.4 Improve menu navigation: clearer submenu states and selection feedback
+[ ] 11.5 Add sound/volume settings and a quick mute toggle
+[ ] 11.6 Polish contextual hints: avoid overlap, improve placement, add icons
+
+PHASE 12 - Audio polish [NEXT]
+------------------------------
+[ ] 12.1 Improve Web Audio scheduling with lookahead instead of setInterval
+[ ] 12.2 Add richer SFX variations for hit, hurt, kill, pickup, stairs, death
+[ ] 12.3 Add music variations by depth or danger state
+[ ] 12.4 Add volume slider and mute hotkey
+[ ] 12.5 Add tests or safe fallbacks for audio behavior
+
+PHASE 13 - Tech, CI, and tooling [NEXT]
+--------------------------------------
+[ ] 13.1 Add CI workflow for typecheck, build, verify, and tests
+[ ] 13.2 Add lint/format tooling if compatible with Bun workflow
+[ ] 13.3 Add screenshot regeneration checks or visual smoke tests
+[ ] 13.4 Add performance checks for rendering and FOV on larger maps
+[ ] 13.5 Add documentation for module boundaries and contribution workflow
