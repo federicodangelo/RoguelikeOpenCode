@@ -96,7 +96,7 @@ PHASE 6 - UI & polish
     persisted in localStorage
 [x] 6.0c Settings: three scaling modes - integer / fractional (0.25 steps,
     default) / smooth; blit from fixed 960x640 offscreen buffer
-[ ] 6.1 Message log panel (combat feedback)
+[x] 6.1 Message log panel (combat feedback)
 [ ] 6.2 HUD: HP bar, ATK/DEF, gold, depth level
 [ ] 6.3 Title screen, game-over screen, restart flow
 [ ] 6.4 Smooth-ish animations: damage flash, hit numbers (stretch)
