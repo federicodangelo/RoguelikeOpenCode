@@ -81,6 +81,21 @@ let gameOver = false;
 let inventory = makeInventory();
 let message = "";
 let showInventory = false;
+let menuOpen = false;
+let menuIndex = 0;
+
+const MENU_ITEMS = ["Help", "Restart"] as const;
+const HELP_LINES: [string, string][] = [
+  ["arrows", "move / bump attack"],
+  ["home pgup end pgdn", "diagonal move"],
+  [".", "stairs down"],
+  [",", "stairs up"],
+  ["g", "pick up item"],
+  ["u", "drink potion"],
+  ["i", "toggle inventory"],
+  ["esc", "open/close menu"],
+  ["enter", "restart (when dead)"],
+];
 
 function monstersAct(): void {
   const dist = chaseDistances(map, player);
@@ -153,6 +168,8 @@ function resetGame(): void {
   inventory = makeInventory();
   message = "";
   showInventory = false;
+  menuOpen = false;
+  menuIndex = 0;
   map = getFloor(1);
   player = makePlayer(map.spawn.x, map.spawn.y);
   refreshFOV();
@@ -164,6 +181,29 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       resetGame();
+    }
+    return;
+  }
+  if (e.key === "Escape") {
+    e.preventDefault();
+    menuOpen = !menuOpen;
+    dirty = true;
+    return;
+  }
+  if (menuOpen) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      menuIndex = (menuIndex + MENU_ITEMS.length - 1) % MENU_ITEMS.length;
+      dirty = true;
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      menuIndex = (menuIndex + 1) % MENU_ITEMS.length;
+      dirty = true;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (MENU_ITEMS[menuIndex] === "Restart") {
+        resetGame();
+      }
     }
     return;
   }
@@ -264,7 +304,56 @@ async function main(): Promise<void> {
     drawScene(ctx, tiles, buildScene());
     drawHUD();
     if (gameOver) drawGameOver();
+    if (menuOpen) drawMenu();
     dirty = false;
+  }
+
+  function drawMenu(): void {
+    ctx.fillStyle = "rgba(0,0,0,0.72)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const w = 460;
+    const h = 380;
+    const x = (canvas.width - w) / 2;
+    const y = (canvas.height - h) / 2;
+    ctx.fillStyle = "#17150f";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = "#5a544a";
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = "#e8e4da";
+    ctx.font = "bold 20px monospace";
+    ctx.fillText("MENU", x + 20, y + 34);
+    ctx.font = "16px monospace";
+    MENU_ITEMS.forEach((it, i) => {
+      ctx.fillStyle = i === menuIndex ? "#ffd97a" : "#9a958c";
+      ctx.fillText(`${i === menuIndex ? ">" : " "} ${it}`, x + 20, y + 64 + i * 24);
+    });
+    if (menuIndex === 0) {
+      HELP_LINES.forEach(([k, v], i) => {
+        ctx.fillStyle = "#e8e4da";
+        ctx.fillText(k, x + 24, y + 130 + i * 24);
+        ctx.fillStyle = "#9a958c";
+        ctx.fillText(v, x + 220, y + 130 + i * 24);
+      });
+    } else {
+      ctx.fillStyle = "#e8e4da";
+      ctx.fillText("Restart the run from depth 1.", x + 24, y + 130);
+      ctx.fillText("Press Enter.", x + 24, y + 154);
+    }
+  }
+
+  function drawHUD(): void {
+    const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}   esc menu`;
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
+    ctx.fillStyle = "#e8e4da";
+    ctx.font = "14px monospace";
+    ctx.fillText(stats, 8, canvas.height - 7);
+    if (showInventory) {
+      const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
+      ctx.fillText(inv, 8, canvas.height - 40);
+    } else if (message) {
+      ctx.fillText(message, 8, canvas.height - 40);
+    }
   }
 
   function drawGameOver(): void {
@@ -277,26 +366,6 @@ async function main(): Promise<void> {
     ctx.font = "16px monospace";
     ctx.fillText("Press Enter to restart", canvas.width / 2, canvas.height / 2 + 24);
     ctx.textAlign = "left";
-  }
-
-  function drawHUD(): void {
-    const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}`;
-    const help = "arrows move/attack   . down   , up   g pick up   u drink   i inventory";
-    ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
-    ctx.fillStyle = "#e8e4da";
-    ctx.font = "14px monospace";
-    ctx.fillText(stats, 8, canvas.height - 24);
-    ctx.fillStyle = "#9a958c";
-    ctx.fillText(help, 8, canvas.height - 8);
-    if (showInventory) {
-      const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
-      ctx.fillStyle = "#e8e4da";
-      ctx.fillText(inv, 8, canvas.height - 56);
-    } else if (message) {
-      ctx.fillStyle = "#e8e4da";
-      ctx.fillText(message, 8, canvas.height - 56);
-    }
   }
 
   function frame(): void {
