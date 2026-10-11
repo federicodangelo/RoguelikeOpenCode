@@ -90,6 +90,8 @@ PHASE 5 - Items & progression
 
 PHASE 6 - UI & polish
 ---------------------
+[x] 6.0 In-game menu (ESC): Help section with key bindings + Restart;
+    HUD help line removed (stats-only bar)
 [ ] 6.1 Message log panel (combat feedback)
 [ ] 6.2 HUD: HP bar, ATK/DEF, gold, depth level
 [ ] 6.3 Title screen, game-over screen, restart flow
