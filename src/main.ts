@@ -25,11 +25,12 @@ function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
   const scale = fit >= 1 ? Math.floor(fit) : fit;
-  canvas.width = Math.round(LOGICAL_W * scale * dpr);
-  canvas.height = Math.round(LOGICAL_H * scale * dpr);
+  const factor = Math.max(1, Math.round(scale * dpr));
+  canvas.width = LOGICAL_W * factor;
+  canvas.height = LOGICAL_H * factor;
   canvas.style.width = `${Math.round(LOGICAL_W * scale)}px`;
   canvas.style.height = `${Math.round(LOGICAL_H * scale)}px`;
-  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  ctx.setTransform(factor, 0, 0, factor, 0, 0);
   ctx.imageSmoothingEnabled = false;
   dirty = true;
 }
