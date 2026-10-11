@@ -8,6 +8,7 @@ import { chaseDistances, monsterStep } from "./ai.ts";
 import { makeInventory, pickUp, usePotion } from "./items.ts";
 import { MenuNav, MessageLog, computeScaling, SCALING_MODES, type MenuEntry, type ScalingMode } from "./ui.ts";
 import { drawPixelText, drawPixelTextCenter, drawPixelTextRight, wrapPixelText } from "./pixel-font.ts";
+import { GameAudio } from "./audio.ts";
 
 const VIEW_COLS = 30;
 const VIEW_ROWS = 20;
@@ -31,26 +32,37 @@ let dirty = true;
 
 const SETTINGS_KEY = "roguelike.settings";
 let scalingMode: ScalingMode = "fractional";
+let soundEnabled = true;
+const audio = new GameAudio();
 
 function loadSettings(): void {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) {
-      const s = JSON.parse(raw) as { scalingMode?: ScalingMode; fractionalScaling?: boolean };
+      const s = JSON.parse(raw) as {
+        scalingMode?: ScalingMode;
+        fractionalScaling?: boolean;
+        soundEnabled?: boolean;
+      };
       if (s.scalingMode && SCALING_MODES.includes(s.scalingMode)) {
         scalingMode = s.scalingMode;
       } else if (typeof s.fractionalScaling === "boolean") {
         scalingMode = s.fractionalScaling ? "fractional" : "integer";
       }
+      if (typeof s.soundEnabled === "boolean") {
+        soundEnabled = s.soundEnabled;
+      }
     }
   } catch {
     scalingMode = "fractional";
+    soundEnabled = true;
   }
+  audio.setEnabled(soundEnabled);
 }
 
 function saveSettings(): void {
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ scalingMode }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ scalingMode, soundEnabled }));
   } catch {
     // storage unavailable; keep in-memory setting
   }
@@ -125,6 +137,11 @@ let kills = 0;
 let inventory = makeInventory();
 const messageLog = new MessageLog(4);
 
+window.addEventListener("pointerdown", () => {
+  audio.unlock();
+  if (soundEnabled && screen === "game" && !gameOver) audio.startMusic();
+});
+
 interface Effect {
   x: number;
   y: number;
@@ -166,6 +183,16 @@ function cycleScaling(): void {
   fitCanvas();
 }
 
+function toggleSound(): void {
+  soundEnabled = !soundEnabled;
+  audio.setEnabled(soundEnabled);
+  if (soundEnabled && screen === "game" && !gameOver) {
+    audio.unlock();
+    audio.startMusic();
+  }
+  saveSettings();
+}
+
 function menuTree(): MenuEntry[] {
   return [
     { label: "Help", submenu: () => [{ label: "Back", action: () => menu.back() }] },
@@ -173,6 +200,7 @@ function menuTree(): MenuEntry[] {
       label: "Settings",
       submenu: () => [
         { label: `Scaling mode: ${scalingMode}`, action: cycleScaling },
+        { label: `Sound: ${soundEnabled ? "on" : "off"}`, action: toggleSound },
         { label: "Back", action: () => menu.back() },
       ],
     },
@@ -190,9 +218,12 @@ function monstersAct(): void {
       logMessage(`The ${m.name} hits you for ${before - player.hp}.`);
       spawnEffect(player.x, player.y, `-${before - player.hp}`, "#ff6a6a");
       playerFlashUntil = performance.now() + 250;
+      audio.sfx("hurt");
     }
     if (!player.alive) {
       gameOver = true;
+      audio.sfx("death");
+      audio.stopMusic();
       break;
     }
   }
@@ -217,12 +248,18 @@ function tryMove(dx: number, dy: number): boolean {
     spawnEffect(target.x, target.y, `-${dmg}`, "#ffd97a");
     if (target.alive) {
       logMessage(`You hit the ${target.name} for ${dmg}.`);
+      audio.sfx("hit");
     } else {
       dropLoot(target);
       kills++;
       const levels = gainXp(player, target.xpValue);
       logMessage(`You slay the ${target.name}.`);
-      if (levels > 0) logMessage(`Level up! You are now level ${player.level}.`);
+      if (levels > 0) {
+        logMessage(`Level up! You are now level ${player.level}.`);
+        audio.sfx("level");
+      } else {
+        audio.sfx("kill");
+      }
     }
     return true;
   }
@@ -239,6 +276,7 @@ function descend(): boolean {
   const target = map.upStairs ?? map.spawn;
   player.x = target.x;
   player.y = target.y;
+  audio.sfx("stairs");
   return true;
 }
 
@@ -248,6 +286,7 @@ function ascend(): boolean {
   map = getFloor(depth);
   player.x = map.stairs.x;
   player.y = map.stairs.y;
+  audio.sfx("stairs");
   return true;
 }
 
@@ -270,6 +309,9 @@ function resetGame(): void {
   map = getFloor(1);
   player = makePlayer(map.spawn.x, map.spawn.y);
   refreshFOV();
+  audio.setEnabled(soundEnabled);
+  audio.unlock();
+  if (soundEnabled) audio.startMusic();
   dirty = true;
 }
 
@@ -277,6 +319,8 @@ window.addEventListener("keydown", (e) => {
   if (screen === "title") {
     if (e.key === "Enter") {
       e.preventDefault();
+      audio.unlock();
+      audio.sfx("select");
       resetGame();
       screen = "game";
     }
@@ -285,6 +329,7 @@ window.addEventListener("keydown", (e) => {
   if (gameOver) {
     if (e.key === "Enter") {
       e.preventDefault();
+      audio.stopMusic();
       screen = "title";
       dirty = true;
     }
@@ -292,6 +337,7 @@ window.addEventListener("keydown", (e) => {
   }
   if (e.key === "Escape") {
     e.preventDefault();
+    audio.sfx("menu");
     if (menuOpen && menu.depth() > 0) {
       menu.back();
     } else {
@@ -305,20 +351,24 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "ArrowUp") {
       e.preventDefault();
       menu.up();
+      audio.sfx("menu");
       dirty = true;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       menu.down();
+      audio.sfx("menu");
       dirty = true;
     } else if (e.key === "ArrowLeft" || e.key === "Backspace") {
       e.preventDefault();
       if (menu.depth() > 0) {
         menu.back();
+        audio.sfx("menu");
         dirty = true;
       }
     } else if (e.key === "Enter") {
       e.preventDefault();
       menu.enter();
+      audio.sfx("select");
       dirty = true;
     }
     return;
@@ -342,6 +392,7 @@ window.addEventListener("keydown", (e) => {
       if (msg) {
         map.items.splice(idx, 1);
         logMessage(msg);
+        audio.sfx("pickup");
         acted = true;
       }
     }
@@ -350,11 +401,13 @@ window.addEventListener("keydown", (e) => {
     const msg = usePotion(player, inventory);
     if (msg) {
       logMessage(msg);
+      audio.sfx("potion");
       acted = true;
     }
   } else if (e.key === "i") {
     e.preventDefault();
     showInventory = !showInventory;
+    audio.sfx("menu");
     dirty = true;
   }
   if (acted) {
