@@ -19,6 +19,12 @@ canvas.width = LOGICAL_W;
 canvas.height = LOGICAL_H;
 ctx.imageSmoothingEnabled = false;
 
+const buffer = document.createElement("canvas");
+buffer.width = LOGICAL_W;
+buffer.height = LOGICAL_H;
+const bctx = buffer.getContext("2d")!;
+bctx.imageSmoothingEnabled = false;
+
 let dirty = true;
 
 const SETTINGS_KEY = "roguelike.settings";
@@ -54,16 +60,12 @@ function fitCanvas(): void {
     canvas.height = Math.round(cssH * dpr);
     canvas.style.width = `${cssW}px`;
     canvas.style.height = `${cssH}px`;
-    ctx.setTransform(canvas.width / LOGICAL_W, 0, 0, canvas.height / LOGICAL_H, 0, 0);
-    ctx.imageSmoothingEnabled = true;
   } else {
     const factor = Math.max(1, Math.floor(fit * dpr));
     canvas.width = LOGICAL_W * factor;
     canvas.height = LOGICAL_H * factor;
     canvas.style.width = `${(LOGICAL_W * factor) / dpr}px`;
     canvas.style.height = `${(LOGICAL_H * factor) / dpr}px`;
-    ctx.setTransform(factor, 0, 0, factor, 0, 0);
-    ctx.imageSmoothingEnabled = false;
   }
   dirty = true;
 }
@@ -348,82 +350,85 @@ async function main(): Promise<void> {
   const tiles = await Tileset.load("assets/tiles.png");
 
   function draw(): void {
-    drawScene(ctx, tiles, buildScene());
+    drawScene(bctx, tiles, buildScene());
     drawHUD();
     if (gameOver) drawGameOver();
     if (menuOpen) drawMenu();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = fractionalScaling;
+    ctx.drawImage(buffer, 0, 0, LOGICAL_W, LOGICAL_H, 0, 0, canvas.width, canvas.height);
     dirty = false;
   }
 
   function drawMenu(): void {
-    ctx.fillStyle = "rgba(0,0,0,0.72)";
-    ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+    bctx.fillStyle = "rgba(0,0,0,0.72)";
+    bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
     const w = 460;
     const h = 380;
     const x = (LOGICAL_W - w) / 2;
     const y = (LOGICAL_H - h) / 2;
-    ctx.fillStyle = "#17150f";
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = "#5a544a";
-    ctx.strokeRect(x, y, w, h);
-    ctx.fillStyle = "#e8e4da";
-    ctx.font = "bold 20px monospace";
-    ctx.fillText("MENU", x + 20, y + 34);
-    ctx.font = "16px monospace";
+    bctx.fillStyle = "#17150f";
+    bctx.fillRect(x, y, w, h);
+    bctx.strokeStyle = "#5a544a";
+    bctx.strokeRect(x, y, w, h);
+    bctx.fillStyle = "#e8e4da";
+    bctx.font = "bold 20px monospace";
+    bctx.fillText("MENU", x + 20, y + 34);
+    bctx.font = "16px monospace";
     MENU_ITEMS.forEach((it, i) => {
-      ctx.fillStyle = i === menuIndex ? "#ffd97a" : "#9a958c";
-      ctx.fillText(`${i === menuIndex ? ">" : " "} ${it}`, x + 20, y + 64 + i * 24);
+      bctx.fillStyle = i === menuIndex ? "#ffd97a" : "#9a958c";
+      bctx.fillText(`${i === menuIndex ? ">" : " "} ${it}`, x + 20, y + 64 + i * 24);
     });
     if (menuIndex === 0) {
       HELP_LINES.forEach(([k, v], i) => {
-        ctx.fillStyle = "#e8e4da";
-        ctx.fillText(k, x + 24, y + 130 + i * 24);
-        ctx.fillStyle = "#9a958c";
-        ctx.fillText(v, x + 220, y + 130 + i * 24);
+        bctx.fillStyle = "#e8e4da";
+        bctx.fillText(k, x + 24, y + 130 + i * 24);
+        bctx.fillStyle = "#9a958c";
+        bctx.fillText(v, x + 220, y + 130 + i * 24);
       });
     } else if (menuIndex === 1) {
-      ctx.fillStyle = "#e8e4da";
-      ctx.fillText("Fractional scaling:", x + 24, y + 130);
-      ctx.fillStyle = fractionalScaling ? "#7ac47a" : "#c47a7a";
-      ctx.fillText(fractionalScaling ? "on" : "off", x + 250, y + 130);
-      ctx.fillStyle = "#9a958c";
-      ctx.fillText("Press Enter to toggle", x + 24, y + 154);
+      bctx.fillStyle = "#e8e4da";
+      bctx.fillText("Fractional scaling:", x + 24, y + 130);
+      bctx.fillStyle = fractionalScaling ? "#7ac47a" : "#c47a7a";
+      bctx.fillText(fractionalScaling ? "on" : "off", x + 250, y + 130);
+      bctx.fillStyle = "#9a958c";
+      bctx.fillText("Press Enter to toggle", x + 24, y + 154);
     } else {
-      ctx.fillStyle = "#e8e4da";
-      ctx.fillText("Restart the run from depth 1.", x + 24, y + 130);
-      ctx.fillText("Press Enter.", x + 24, y + 154);
+      bctx.fillStyle = "#e8e4da";
+      bctx.fillText("Restart the run from depth 1.", x + 24, y + 130);
+      bctx.fillText("Press Enter.", x + 24, y + 154);
     }
   }
 
   function drawHUD(): void {
     const stats = `Depth ${depth} (${map.algorithm})   HP ${player.hp}/${player.maxHp}   Lvl ${player.level}   Gold ${inventory.gold}   Potions ${inventory.potions}`;
-    ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(0, LOGICAL_H - 24, LOGICAL_W, 24);
-    ctx.fillStyle = "#e8e4da";
-    ctx.font = "14px monospace";
-    ctx.fillText(stats, 8, LOGICAL_H - 7);
-    ctx.fillStyle = "#9a958c";
-    ctx.textAlign = "right";
-    ctx.fillText("esc menu", LOGICAL_W - 8, LOGICAL_H - 7);
-    ctx.textAlign = "left";
+    bctx.fillStyle = "rgba(0,0,0,0.65)";
+    bctx.fillRect(0, LOGICAL_H - 24, LOGICAL_W, 24);
+    bctx.fillStyle = "#e8e4da";
+    bctx.font = "14px monospace";
+    bctx.fillText(stats, 8, LOGICAL_H - 7);
+    bctx.fillStyle = "#9a958c";
+    bctx.textAlign = "right";
+    bctx.fillText("esc menu", LOGICAL_W - 8, LOGICAL_H - 7);
+    bctx.textAlign = "left";
     if (showInventory) {
       const inv = `Sword: ${inventory.sword ? "+1 ATK" : "-"}   Shield: ${inventory.shield ? "+1 DEF" : "-"}   Potions: ${inventory.potions}   Gold: ${inventory.gold}`;
-      ctx.fillText(inv, 8, LOGICAL_H - 40);
+      bctx.fillText(inv, 8, LOGICAL_H - 40);
     } else if (message) {
-      ctx.fillText(message, 8, LOGICAL_H - 40);
+      bctx.fillText(message, 8, LOGICAL_H - 40);
     }
   }
 
   function drawGameOver(): void {
-    ctx.fillStyle = "rgba(0,0,0,0.72)";
-    ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-    ctx.fillStyle = "#e8e4da";
-    ctx.textAlign = "center";
-    ctx.font = "bold 32px monospace";
-    ctx.fillText("You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 10);
-    ctx.font = "16px monospace";
-    ctx.fillText("Press Enter to restart", LOGICAL_W / 2, LOGICAL_H / 2 + 24);
-    ctx.textAlign = "left";
+    bctx.fillStyle = "rgba(0,0,0,0.72)";
+    bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+    bctx.fillStyle = "#e8e4da";
+    bctx.textAlign = "center";
+    bctx.font = "bold 32px monospace";
+    bctx.fillText("You died!", LOGICAL_W / 2, LOGICAL_H / 2 - 10);
+    bctx.font = "16px monospace";
+    bctx.fillText("Press Enter to restart", LOGICAL_W / 2, LOGICAL_H / 2 + 24);
+    bctx.textAlign = "left";
   }
 
   function frame(): void {
