@@ -32,11 +32,10 @@ const audio = new GameAudio();
 function applyAudioSettings(): void {
   audio.setEnabled(settings.soundEnabled);
   audio.setVolume(settings.volume);
-  audio.setMuted(settings.muted);
 }
 
 function startMusicIfAudible(): void {
-  if (settings.soundEnabled && !settings.muted && settings.volume > 0 && game.screen === "game" && !game.gameOver) {
+  if (settings.soundEnabled && settings.volume > 0 && game.screen === "game" && !game.gameOver) {
     audio.setMusicContext(game.depth, game.danger());
     audio.unlock();
     audio.startMusic();
@@ -87,12 +86,7 @@ function cycleScaling(): void {
 }
 
 function toggleSound(): void {
-  if (settings.soundEnabled && !settings.muted) {
-    settings.soundEnabled = false;
-  } else {
-    settings.soundEnabled = true;
-    settings.muted = false;
-  }
+  settings.soundEnabled = !settings.soundEnabled;
   applyAudioSettings();
   startMusicIfAudible();
   saveSettings(localStorage, settings);
@@ -107,13 +101,6 @@ function cycleVolumeSetting(): void {
 
 function setVolumeSetting(volume: number): void {
   settings.volume = Math.max(0, Math.min(1, volume));
-  applyAudioSettings();
-  startMusicIfAudible();
-  saveSettings(localStorage, settings);
-}
-
-function toggleMute(): void {
-  settings.muted = !settings.muted;
   applyAudioSettings();
   startMusicIfAudible();
   saveSettings(localStorage, settings);
@@ -180,7 +167,7 @@ function openInventoryMenu(): void {
 
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
-  handleKeydown(e, { game, menu, audio, startGame, toggleMute, openInventory: openInventoryMenu });
+  handleKeydown(e, { game, menu, audio, startGame, toggleSound, openInventory: openInventoryMenu });
   if (game.screen === "game" && !game.gameOver) {
     audio.setMusicContext(game.depth, game.danger());
     saveRun(localStorage, game);

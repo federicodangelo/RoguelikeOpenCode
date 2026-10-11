@@ -36,7 +36,7 @@ function makeContext(game: Game, menu: MenuNav): InputContext {
     menu,
     audio,
     startGame: () => {},
-    toggleMute: () => {},
+    toggleSound: () => {},
     openInventory: () => {},
   };
 }

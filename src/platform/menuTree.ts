@@ -116,11 +116,8 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           action: actions.cycleScaling,
         },
         {
-          label: `Sound: ${settings.soundEnabled && !settings.muted ? "on" : "off"}`,
-          hint: [
-            "Enter: toggle sound",
-            `Current sound: ${settings.soundEnabled && !settings.muted ? "on" : "off"}`,
-          ],
+          label: `Sound: ${settings.soundEnabled ? "on" : "off"}`,
+          hint: ["Enter: toggle sound", `Current sound: ${settings.soundEnabled ? "on" : "off"}`],
           action: actions.toggleSound,
         },
         {
@@ -128,7 +125,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           hint: [
             "Left/Right: adjust volume",
             `Current volume: ${Math.round(settings.volume * 100)}%`,
-            "M: quick mute",
+            "M: toggle sound",
           ],
           slider: {
             value: settings.volume,

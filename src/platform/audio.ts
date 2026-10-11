@@ -29,7 +29,6 @@ const MUSIC_SCHEDULER_MS = 100;
 export class GameAudio {
   enabled = true;
   volume = 0.5;
-  muted = false;
 
   private readonly baseGain = 0.45;
   private ctx: AudioContext | null = null;
@@ -42,7 +41,7 @@ export class GameAudio {
   private sfxVariant = 0;
 
   private get audible(): boolean {
-    return this.enabled && !this.muted && this.volume > 0;
+    return this.enabled && this.volume > 0;
   }
 
   private applyGain(): void {
@@ -60,12 +59,6 @@ export class GameAudio {
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
     if (!this.audible) this.stopMusic();
-    this.applyGain();
-  }
-
-  setMuted(muted: boolean): void {
-    this.muted = muted;
-    if (muted) this.stopMusic();
     this.applyGain();
   }
 

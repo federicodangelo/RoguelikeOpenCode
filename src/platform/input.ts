@@ -14,12 +14,12 @@ export interface InputContext {
   menu: MenuNav;
   audio: GameAudio;
   startGame(): void;
-  toggleMute(): void;
+  toggleSound(): void;
   openInventory(): void;
 }
 
 export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
-  const { game, menu, audio, toggleMute, openInventory } = ctx;
+  const { game, menu, audio, toggleSound, openInventory } = ctx;
 
   if (game.screen === "title") {
     if (e.key === "Enter") {
@@ -43,7 +43,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
 
   if (e.key === "m") {
     e.preventDefault();
-    toggleMute();
+    toggleSound();
     game.dirty = true;
     return;
   }

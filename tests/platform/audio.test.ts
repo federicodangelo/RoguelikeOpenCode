@@ -64,16 +64,14 @@ describe("game audio", () => {
     expect(audio.enabled).toBe(false);
   });
 
-  it("stores volume and mute state", () => {
+  it("stores volume state", () => {
     const audio = new GameAudio();
     audio.setVolume(1.5);
     expect(audio.volume).toBe(1);
     audio.setVolume(-1);
     expect(audio.volume).toBe(0);
-    audio.setMuted(true);
-    expect(audio.muted).toBe(true);
     audio.startMusic();
-    expect(audio.muted).toBe(true);
+    expect(audio.volume).toBe(0);
   });
 
   it("falls back safely when music context changes without Web Audio", () => {

@@ -31,14 +31,12 @@ describe("settings", () => {
         scalingMode: "smooth",
         soundEnabled: false,
         volume: 0.75,
-        muted: true,
       }),
     });
     expect(loadSettings(storage)).toEqual({
       scalingMode: "smooth",
       soundEnabled: false,
       volume: 0.75,
-      muted: true,
     });
   });
 
@@ -51,12 +49,11 @@ describe("settings", () => {
 
   it("saves settings to storage", () => {
     const storage = fakeStorage();
-    saveSettings(storage, { scalingMode: "integer", soundEnabled: false, volume: 0.25, muted: true });
+    saveSettings(storage, { scalingMode: "integer", soundEnabled: false, volume: 0.25 });
     expect(JSON.parse(storage.data.get("roguelike.settings") ?? "{}")).toEqual({
       scalingMode: "integer",
       soundEnabled: false,
       volume: 0.25,
-      muted: true,
     });
   });
 
