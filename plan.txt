@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 6 done -> PHASE 7 next
+STATUS: PHASE 7 done -> PHASE 8 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -103,8 +103,8 @@ PHASE 6 - UI & polish
 
 PHASE 7 - Assets & build
 ------------------------
-[ ] 7.1 Tileset polish: refine generated tiles (or source a CC0 pack)
-[ ] 7.2 bun build -> dist/ static bundle; verify playable in browser
+[x] 7.1 Tileset polish: refine generated tiles (or source a CC0 pack)
+[x] 7.2 bun build -> dist/ static bundle; verify playable in browser
 
 PHASE 8 - Verification
 ----------------------
@@ -118,5 +118,5 @@ MILESTONES (each = one commit)
 [x] M2: dungeon generated and rendered (with render layers)
 [x] M3: player moves with FOV
 [x] M4: monsters + combat work
-[ ] M5: items + UI + game over loop
-[ ] M6: polished tileset + build script
+[x] M5: items + UI + game over loop
+[x] M6: polished tileset + build script
