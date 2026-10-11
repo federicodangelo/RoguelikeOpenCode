@@ -28,23 +28,29 @@ bctx.imageSmoothingEnabled = false;
 let dirty = true;
 
 const SETTINGS_KEY = "roguelike.settings";
-let fractionalScaling = true;
+type ScalingMode = "integer" | "fractional" | "smooth";
+const SCALING_MODES: ScalingMode[] = ["integer", "fractional", "smooth"];
+let scalingMode: ScalingMode = "fractional";
 
 function loadSettings(): void {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) {
-      const s = JSON.parse(raw) as { fractionalScaling?: boolean };
-      fractionalScaling = s.fractionalScaling ?? true;
+      const s = JSON.parse(raw) as { scalingMode?: ScalingMode; fractionalScaling?: boolean };
+      if (s.scalingMode && SCALING_MODES.includes(s.scalingMode)) {
+        scalingMode = s.scalingMode;
+      } else if (typeof s.fractionalScaling === "boolean") {
+        scalingMode = s.fractionalScaling ? "fractional" : "integer";
+      }
     }
   } catch {
-    fractionalScaling = true;
+    scalingMode = "fractional";
   }
 }
 
 function saveSettings(): void {
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ fractionalScaling }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ scalingMode }));
   } catch {
     // storage unavailable; keep in-memory setting
   }
@@ -53,19 +59,27 @@ function saveSettings(): void {
 function fitCanvas(): void {
   const dpr = window.devicePixelRatio || 1;
   const fit = Math.min(window.innerWidth / LOGICAL_W, window.innerHeight / LOGICAL_H);
-  if (fractionalScaling) {
+  if (scalingMode === "integer") {
+    const factor = Math.max(1, Math.floor(fit * dpr));
+    canvas.width = LOGICAL_W * factor;
+    canvas.height = LOGICAL_H * factor;
+    canvas.style.width = `${(LOGICAL_W * factor) / dpr}px`;
+    canvas.style.height = `${(LOGICAL_H * factor) / dpr}px`;
+  } else if (scalingMode === "fractional") {
+    const scale = Math.max(0.25, Math.floor(fit * 4) / 4);
+    const cssW = LOGICAL_W * scale;
+    const cssH = LOGICAL_H * scale;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+  } else {
     const cssW = Math.round(LOGICAL_W * fit);
     const cssH = Math.round(LOGICAL_H * fit);
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     canvas.style.width = `${cssW}px`;
     canvas.style.height = `${cssH}px`;
-  } else {
-    const factor = Math.max(1, Math.floor(fit * dpr));
-    canvas.width = LOGICAL_W * factor;
-    canvas.height = LOGICAL_H * factor;
-    canvas.style.width = `${(LOGICAL_W * factor) / dpr}px`;
-    canvas.style.height = `${(LOGICAL_H * factor) / dpr}px`;
   }
   dirty = true;
 }
@@ -249,7 +263,7 @@ window.addEventListener("keydown", (e) => {
       if (MENU_ITEMS[menuIndex] === "Restart") {
         resetGame();
       } else if (MENU_ITEMS[menuIndex] === "Settings") {
-        fractionalScaling = !fractionalScaling;
+        scalingMode = SCALING_MODES[(SCALING_MODES.indexOf(scalingMode) + 1) % SCALING_MODES.length] ?? "fractional";
         saveSettings();
         fitCanvas();
       }
@@ -355,7 +369,7 @@ async function main(): Promise<void> {
     if (gameOver) drawGameOver();
     if (menuOpen) drawMenu();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.imageSmoothingEnabled = fractionalScaling;
+    ctx.imageSmoothingEnabled = scalingMode === "smooth";
     ctx.drawImage(buffer, 0, 0, LOGICAL_W, LOGICAL_H, 0, 0, canvas.width, canvas.height);
     dirty = false;
   }
@@ -388,11 +402,12 @@ async function main(): Promise<void> {
       });
     } else if (menuIndex === 1) {
       bctx.fillStyle = "#e8e4da";
-      bctx.fillText("Fractional scaling:", x + 24, y + 130);
-      bctx.fillStyle = fractionalScaling ? "#7ac47a" : "#c47a7a";
-      bctx.fillText(fractionalScaling ? "on" : "off", x + 250, y + 130);
+      bctx.fillText("Scaling mode:", x + 24, y + 130);
+      bctx.fillStyle = scalingMode === "integer" ? "#7ac47a" : scalingMode === "fractional" ? "#ffd97a" : "#c47a7a";
+      bctx.fillText(scalingMode, x + 250, y + 130);
       bctx.fillStyle = "#9a958c";
-      bctx.fillText("Press Enter to toggle", x + 24, y + 154);
+      bctx.fillText("Press Enter to cycle: integer / fractional / smooth", x + 24, y + 154);
+      bctx.fillText("Fractional snaps to 0.25 steps (1.25, 1.5, 1.75...)", x + 24, y + 178);
     } else {
       bctx.fillStyle = "#e8e4da";
       bctx.fillText("Restart the run from depth 1.", x + 24, y + 130);

@@ -94,6 +94,8 @@ PHASE 6 - UI & polish
     HUD help line removed (stats-only bar)
 [x] 6.0b Settings menu: fractional scaling on/off (on by default),
     persisted in localStorage
+[x] 6.0c Settings: three scaling modes - integer / fractional (0.25 steps,
+    default) / smooth; blit from fixed 960x640 offscreen buffer
 [ ] 6.1 Message log panel (combat feedback)
 [ ] 6.2 HUD: HP bar, ATK/DEF, gold, depth level
 [ ] 6.3 Title screen, game-over screen, restart flow
