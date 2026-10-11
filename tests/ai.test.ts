@@ -74,4 +74,33 @@ describe("monsterStep", () => {
     monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m, blocker] });
     expect(m.x).not.toBe(13);
   });
+
+  it("wanders only into safe tiles when the player is out of sight", () => {
+    const cells = openInterior();
+    for (let y = 5; y <= 20; y++) cells[y]![12] = "wall";
+    cells[10]![13] = "wall";
+    cells[10]![15] = "doorClosed";
+
+    const map = mkMap(cells, { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const blocker = monster(14, 9);
+    const m = monster(14, 10);
+
+    for (let seed = 1; seed <= 50; seed++) {
+      m.x = 14;
+      m.y = 10;
+      monsterStep(m, {
+        player,
+        map,
+        rng: new RNG(seed),
+        dist: chaseDistances(map, player),
+        monsters: [m, blocker],
+      });
+
+      expect(player.hp).toBe(12);
+      expect(m.x).toBe(14);
+      expect(m.y === 10 || m.y === 11).toBe(true);
+      expect(map.cells[m.y]![m.x]).toBe("floor");
+    }
+  });
 });

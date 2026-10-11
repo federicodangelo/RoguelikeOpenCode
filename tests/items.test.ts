@@ -24,6 +24,18 @@ describe("pickUp", () => {
     expect(inv.potions).toBe(1);
   });
 
+  it("gold and potions accumulate across multiple pickups", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, T.Gold);
+    pickUp(p, inv, T.Gold);
+    pickUp(p, inv, T.Potion);
+    pickUp(p, inv, T.Potion);
+    pickUp(p, inv, T.Potion);
+    expect(inv.gold).toBe(2);
+    expect(inv.potions).toBe(3);
+  });
+
   it("sword gives +1 ATK once, shield gives +1 DEF once", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
