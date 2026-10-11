@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 12 in progress; next step 12.2
+STATUS: PHASE 12 complete; next step 13.1
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -165,7 +165,7 @@ PHASE 12 - Audio polish [NEXT]
 [x] 12.2 Add richer SFX variations for hit, hurt, kill, pickup, stairs, death
 [x] 12.3 Add music variations by depth or danger state
 [x] 12.4 Add volume slider and mute hotkey
-[ ] 12.5 Add tests or safe fallbacks for audio behavior
+[x] 12.5 Add tests or safe fallbacks for audio behavior
 
 PHASE 13 - Tech, CI, and tooling [NEXT]
 --------------------------------------

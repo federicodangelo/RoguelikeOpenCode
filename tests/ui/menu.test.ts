@@ -235,6 +235,31 @@ describe("MenuNav", () => {
     nav.enter();
     expect(nav.selectedEntry()?.label).toBe("Scaling");
   });
+
+  it("adjustSlider changes slider values and clamps them", () => {
+    const values: number[] = [];
+    const nav = new MenuNav(
+      () =>
+        [
+          {
+            label: "Volume",
+            slider: {
+              value: 0.5,
+              min: 0,
+              max: 1,
+              step: 0.1,
+              onChange: (value) => values.push(value),
+            },
+          },
+        ] as MenuEntry[],
+    );
+    nav.open();
+
+    expect(nav.adjustSlider(1)).toBe(true);
+    expect(nav.adjustSlider(-10)).toBe(true);
+    expect(nav.adjustSlider(10)).toBe(true);
+    expect(values).toEqual([0.6, 0, 1]);
+  });
 });
 
 describe("menuDetail", () => {
