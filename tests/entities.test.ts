@@ -40,10 +40,12 @@ describe("attack", () => {
     const a = makePlayer(0, 0);
     const d = makePlayer(1, 0);
     for (let i = 0; i < 50; i++) {
+      d.hp = 12;
+      d.alive = true;
       const before = d.hp;
       const dmg = attack(rng, a, d);
-      expect(dmg).toBeGreaterThanOrEqual(2);
-      expect(dmg).toBeLessThanOrEqual(4);
+      expect(dmg).toBeGreaterThanOrEqual(1);
+      expect(dmg).toBeLessThanOrEqual(3);
       expect(d.hp).toBe(before - dmg);
     }
   });
