@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 7 done -> PHASE 8 next
+STATUS: PHASE 8.1 done -> PHASE 8.2 next
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -108,7 +108,7 @@ PHASE 7 - Assets & build
 
 PHASE 8 - Verification
 ----------------------
-[ ] 8.1 Typecheck clean (tsc --noEmit)
+[x] 8.1 Typecheck clean (tsc --noEmit)
 [ ] 8.2 Manual playtest: movement, combat, FOV, descend 2+ levels
 [ ] 8.3 Final commit
 
