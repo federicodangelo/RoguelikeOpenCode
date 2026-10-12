@@ -37,8 +37,12 @@ export const ICON_NAMES: IconName[] = [
   "stairsUp",
 ];
 
-export const ICON_SIZE = 8;
+import { FONT_CELL_H, FONT_CELL_W } from "./pixel-font.ts";
+
+export const ICON_W = FONT_CELL_W;
+export const ICON_H = FONT_CELL_H;
 export const ICON_COLS = 8;
+export const ICON_SCALE = 2;
 
 export class Iconset {
   private constructor(private readonly img: CanvasImageSource) {}
@@ -56,16 +60,23 @@ export class Iconset {
     return new Iconset(img);
   }
 
-  draw(ctx: CanvasRenderingContext2D, name: IconName, x: number, y: number): void {
+  draw(ctx: CanvasRenderingContext2D, name: IconName, x: number, y: number, scale = ICON_SCALE): void {
     const index = ICON_NAMES.indexOf(name);
     if (index < 0) return;
 
-    const sx = (index % ICON_COLS) * ICON_SIZE;
-    const sy = Math.floor(index / ICON_COLS) * ICON_SIZE;
-    ctx.drawImage(this.img, sx, sy, ICON_SIZE, ICON_SIZE, x, y, ICON_SIZE, ICON_SIZE);
+    const sx = (index % ICON_COLS) * ICON_W;
+    const sy = Math.floor(index / ICON_COLS) * ICON_H;
+    ctx.drawImage(this.img, sx, sy, ICON_W, ICON_H, x, y, ICON_W * scale, ICON_H * scale);
   }
 }
 
-export function drawIcon(ctx: CanvasRenderingContext2D, icons: Iconset, name: IconName, x: number, y: number): void {
-  icons.draw(ctx, name, x, y);
+export function drawIcon(
+  ctx: CanvasRenderingContext2D,
+  icons: Iconset,
+  name: IconName,
+  x: number,
+  y: number,
+  scale = ICON_SCALE,
+): void {
+  icons.draw(ctx, name, x, y, scale);
 }

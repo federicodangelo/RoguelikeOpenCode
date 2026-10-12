@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 14 complete; next step 15.1
+STATUS: PHASE 15 complete; next step 16.1
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -181,4 +181,10 @@ PHASE 14 - Font atlas rendering [COMPLETE]
 [x] 14.3 Move glyph data into tools/make-font.ts and keep src/ui/pixel-font.ts runtime-only
 [x] 14.4 Regenerate screenshots and verify dist includes assets/font.png
 
-Next step: define Phase 15.
+PHASE 15 - Icon scale alignment [COMPLETE]
+--------------------------------------
+[x] 15.1 Resize generated UI icons to 5x7 cells, matching font glyph cells
+[x] 15.2 Draw icons at the same default scale as pixel font text
+[x] 15.3 Regenerate icons.png and screenshots
+
+Next step: define Phase 16.

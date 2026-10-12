@@ -121,7 +121,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   const barW = 120;
   const barH = 12;
 
-  drawIcon(bctx, data.icons, "heart", 8, row1Y + 2);
+  drawIcon(bctx, data.icons, "heart", 8, row1Y);
   bctx.fillStyle = "#3a1a1a";
   bctx.fillRect(barX, barY, barW, barH);
 
@@ -140,26 +140,26 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   drawPixelText(bctx, lvlText, lvlX, row1Y, "#e8e4da", 2);
 
   const swordX = lvlX + pixelTextWidth(lvlText, 2) + 12;
-  drawIcon(bctx, data.icons, "sword", swordX, row1Y + 2);
+  drawIcon(bctx, data.icons, "sword", swordX, row1Y);
   const atkText = `Atk ${data.player.atk}`;
   const atkX = swordX + 12;
   drawPixelText(bctx, atkText, atkX, row1Y, "#e8e4da", 2);
 
   const shieldX = atkX + pixelTextWidth(atkText, 2) + 12;
-  drawIcon(bctx, data.icons, "shield", shieldX, row1Y + 2);
+  drawIcon(bctx, data.icons, "shield", shieldX, row1Y);
   const defText = `Def ${data.player.def}`;
   const defX = shieldX + 12;
   drawPixelText(bctx, defText, defX, row1Y, "#e8e4da", 2);
 
   const goldX = defX + pixelTextWidth(defText, 2) + 12;
-  drawIcon(bctx, data.icons, "gold", goldX, row1Y + 2);
+  drawIcon(bctx, data.icons, "gold", goldX, row1Y);
   const goldText = `Gold ${data.inventory.gold}`;
   const goldTextX = goldX + 12;
   drawPixelText(bctx, goldText, goldTextX, row1Y, "#e8e4da", 2);
 
   if (data.player.skillPoints > 0) {
     const skillX = goldTextX + pixelTextWidth(goldText, 2) + 12;
-    drawIcon(bctx, data.icons, "skill", skillX, row1Y + 2);
+    drawIcon(bctx, data.icons, "skill", skillX, row1Y);
     drawPixelText(bctx, `Skills ${data.player.skillPoints}`, skillX + 12, row1Y, "#ffd97a", 2);
   }
 
@@ -168,15 +168,15 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   const row2Y = panelY + 28;
   const lightColor = data.lightTurns > 0 ? "#ffd97a" : "#5a544a";
   if (data.lightTurns > 0) {
-    drawIcon(bctx, data.icons, "light", 8, row2Y + 2);
+    drawIcon(bctx, data.icons, "light", 8, row2Y);
   } else {
     bctx.globalAlpha = 0.45;
-    drawIcon(bctx, data.icons, "light", 8, row2Y + 2);
+    drawIcon(bctx, data.icons, "light", 8, row2Y);
     bctx.globalAlpha = 1;
   }
   drawPixelText(bctx, data.lightTurns > 0 ? `Light ${data.lightTurns}` : "Light off", 20, row2Y, lightColor, 2);
 
-  drawIcon(bctx, data.icons, "depth", 160, row2Y + 2);
+  drawIcon(bctx, data.icons, "depth", 160, row2Y);
   drawPixelText(bctx, `Depth ${data.depth} (${data.algorithm})`, 172, row2Y, "#e8e4da", 2);
 
   let statusX = 360;
@@ -185,7 +185,7 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
     const text = `${status.kind} ${status.turns}`;
     if (statusX > LOGICAL_W - 80) break;
     bctx.fillStyle = color;
-    bctx.fillRect(statusX, row2Y + 2, 8, 8);
+    bctx.fillRect(statusX, row2Y, 10, 14);
     drawPixelText(bctx, text, statusX + 12, row2Y, color, 2);
     statusX += 12 + pixelTextWidth(text, 2) + 12;
   }
