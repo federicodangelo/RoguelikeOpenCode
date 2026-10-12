@@ -9,6 +9,7 @@ import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
 import { drawEffects } from "../ui/effects.ts";
 import { drawMinimap } from "../ui/minimap.ts";
 import { Iconset } from "../ui/icons.ts";
+import { loadPixelFont } from "../ui/pixel-font.ts";
 import { LOGICAL_H, LOGICAL_W } from "../core/constants.ts";
 import { MenuNav } from "../ui/menu.ts";
 import { computeScaling } from "../ui/scaling.ts";
@@ -196,6 +197,7 @@ fitCanvas();
 async function main(): Promise<void> {
   const tiles = await Tileset.load("assets/tiles.png");
   const icons = await Iconset.load("assets/icons.png");
+  await loadPixelFont("assets/font.png");
 
   function draw(): void {
     if (game.screen === "title") {

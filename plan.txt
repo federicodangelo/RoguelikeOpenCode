@@ -10,7 +10,7 @@ WORK RULES
 - One commit per step/milestone
 - Stop after each step for user review
 
-STATUS: PHASE 12 complete; next step 13.1
+STATUS: PHASE 14 complete; next step 15.1
 
 PHASE 0 - Setup [DONE]
 ----------------------
@@ -174,4 +174,11 @@ PHASE 13 - Tech, CI, and tooling [COMPLETE]
 [x] 13.3 Add screenshot regeneration checks or visual smoke tests
 [x] 13.4 Add documentation for module boundaries and contribution workflow
 
-Next step: define Phase 14.
+PHASE 14 - Font atlas rendering [COMPLETE]
+--------------------------------------
+[x] 14.1 Generate public/assets/font.png from tools/make-font.ts
+[x] 14.2 Draw UI text from the font atlas instead of per-pixel fillRect
+[x] 14.3 Move glyph data into tools/make-font.ts and keep src/ui/pixel-font.ts runtime-only
+[x] 14.4 Regenerate screenshots and verify dist includes assets/font.png
+
+Next step: define Phase 15.

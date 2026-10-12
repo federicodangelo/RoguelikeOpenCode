@@ -2,10 +2,23 @@ import { Buffer } from "node:buffer";
 
 type RGBA = [number, number, number, number];
 
-export interface ShimCanvas {
-  width: number;
-  height: number;
-  data: Buffer;
+export class ShimCanvas {
+  readonly data: Buffer;
+
+  constructor(
+    public width: number,
+    public height: number,
+  ) {
+    this.data = Buffer.alloc(width * height * 4);
+  }
+
+  cloneNode(_deep?: boolean): ShimCanvas {
+    return new ShimCanvas(this.width, this.height);
+  }
+
+  getContext(_kind: "2d"): ShimContext {
+    return new ShimContext(this);
+  }
 }
 
 export class ShimImage {
@@ -64,26 +77,31 @@ function parseColor(value: string): RGBA {
   return [0, 0, 0, 255];
 }
 
-function isShimImage(value: unknown): value is ShimImage {
-  return value instanceof ShimImage;
+function isShimSource(value: unknown): value is ShimImage | ShimCanvas {
+  return value instanceof ShimImage || value instanceof ShimCanvas;
 }
 
-class ShimContext {
+export class ShimContext {
   fillStyle = "#000000";
   strokeStyle = "#000000";
   globalAlpha = 1;
+  globalCompositeOperation = "source-over";
   lineWidth = 1;
   imageSmoothingEnabled = false;
   private path: { x: number; y: number }[] = [];
 
-  constructor(private readonly canvas: ShimCanvas) {}
+  constructor(public readonly canvas: ShimCanvas) {}
 
   private put(x: number, y: number, c: RGBA): void {
     if (x < 0 || y < 0 || x >= this.canvas.width || y >= this.canvas.height) return;
-    const alpha = (c[3] / 255) * this.globalAlpha;
-    if (alpha <= 0) return;
 
     const o = (y * this.canvas.width + x) * 4;
+    const destAlpha = (this.canvas.data[o + 3] ?? 0) / 255;
+    let alpha = (c[3] / 255) * this.globalAlpha;
+
+    if (this.globalCompositeOperation === "source-in") alpha *= destAlpha;
+    if (alpha <= 0) return;
+
     if (alpha >= 1) {
       this.canvas.data[o] = c[0];
       this.canvas.data[o + 1] = c[1];
@@ -208,7 +226,7 @@ class ShimContext {
   }
 
   drawImage(source: unknown, ...args: number[]): void {
-    if (!isShimImage(source)) return;
+    if (!isShimSource(source)) return;
 
     let sx = 0;
     let sy = 0;
@@ -287,11 +305,7 @@ export function createCanvas(
   canvas: ShimCanvas;
   ctx: CanvasRenderingContext2D;
 } {
-  const canvas: ShimCanvas = {
-    width,
-    height,
-    data: Buffer.alloc(width * height * 4),
-  };
+  const canvas = new ShimCanvas(width, height);
   return {
     canvas,
     ctx: new ShimContext(canvas) as unknown as CanvasRenderingContext2D,

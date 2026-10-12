@@ -1,88 +1,80 @@
-export const FONT: Record<string, string[]> = {
-  " ": [".....", ".....", ".....", ".....", ".....", ".....", "....."],
-  "!": ["  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "     ", "  #  "],
-  '"': [" # # ", " # # ", "     ", "     ", "     ", "     ", "     "],
-  "(": ["   # ", "  #  ", " #   ", " #   ", " #   ", "  #  ", "   # "],
-  ")": [" #   ", "  #  ", "   # ", "   # ", "   # ", "  #  ", " #   "],
-  ",": [".....", ".....", ".....", ".....", "  #  ", "  #  ", " #   "],
-  "-": [".....", ".....", ".....", "#####", ".....", ".....", "....."],
-  ".": [".....", ".....", ".....", ".....", ".....", "  #  ", "  #  "],
-  "/": ["    #", "    #", "   # ", "  #  ", " #   ", "#    ", "#    "],
-  ":": [".....", "  #  ", "  #  ", ".....", "  #  ", "  #  ", "....."],
-  ">": ["#    ", " #   ", "  #  ", "   # ", "  #  ", " #   ", "#    "],
-  "*": [".#.#.", "#####", ".#.#.", "#####", ".#.#.", ".....", "....."],
-  "+": [".....", "  #  ", "  #  ", "#####", "  #  ", "  #  ", "....."],
-  "?": [" ### ", "#   #", "    #", "   # ", "  #  ", "     ", "  #  "],
-  "%": ["##  #", "##  #", "   # ", "  #  ", " #   ", "#  ##", "#  ##"],
-  "0": [" ### ", "#   #", "#  ##", "# # #", "##  #", "#   #", " ### "],
-  "1": ["  #  ", " ##  ", "  #  ", "  #  ", "  #  ", "  #  ", " ### "],
-  "2": [" ### ", "#   #", "    #", "   # ", "  #  ", " #   ", "#####"],
-  "3": ["#### ", "    #", "    #", " ### ", "    #", "    #", "#### "],
-  "4": ["   # ", "  ## ", " # # ", "#  # ", "#####", "   # ", "   # "],
-  "5": ["#####", "#    ", "#### ", "    #", "    #", "#   #", " ### "],
-  "6": [" ### ", "#    ", "#    ", "#### ", "#   #", "#   #", " ### "],
-  "7": ["#####", "    #", "   # ", "  #  ", " #   ", " #   ", " #   "],
-  "8": [" ### ", "#   #", "#   #", " ### ", "#   #", "#   #", " ### "],
-  "9": [" ### ", "#   #", "#   #", " ####", "    #", "    #", " ### "],
-  A: [" ### ", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"],
-  B: ["#### ", "#   #", "#   #", "#### ", "#   #", "#   #", "#### "],
-  C: [" ### ", "#   #", "#    ", "#    ", "#    ", "#   #", " ### "],
-  D: ["#### ", "#   #", "#   #", "#   #", "#   #", "#   #", "#### "],
-  E: ["#####", "#    ", "#    ", "#### ", "#    ", "#    ", "#####"],
-  F: ["#####", "#    ", "#    ", "#### ", "#    ", "#    ", "#    "],
-  G: [" ### ", "#   #", "#    ", "#  ##", "#   #", "#   #", " ### "],
-  H: ["#   #", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"],
-  I: [" ### ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", " ### "],
-  J: ["   ##", "   # ", "   # ", "   # ", "#  # ", "#  # ", " ##  "],
-  K: ["#   #", "#  # ", "# #  ", "##   ", "# #  ", "#  # ", "#   #"],
-  L: ["#    ", "#    ", "#    ", "#    ", "#    ", "#    ", "#####"],
-  M: ["#   #", "## ##", "# # #", "#   #", "#   #", "#   #", "#   #"],
-  N: ["#   #", "##  #", "# # #", "#  ##", "#   #", "#   #", "#   #"],
-  O: [" ### ", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "],
-  P: ["#### ", "#   #", "#   #", "#### ", "#    ", "#    ", "#    "],
-  Q: [" ### ", "#   #", "#   #", "#   #", "# # #", "#  # ", " ## #"],
-  R: ["#### ", "#   #", "#   #", "#### ", "# #  ", "#  # ", "#   #"],
-  S: [" ####", "#    ", "#    ", " ### ", "    #", "    #", "#### "],
-  T: ["#####", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  "],
-  U: ["#   #", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "],
-  V: ["#   #", "#   #", "#   #", "#   #", "#   #", " # # ", "  #  "],
-  W: ["#   #", "#   #", "#   #", "# # #", "# # #", "## ##", "#   #"],
-  X: ["#   #", "#   #", " # # ", "  #  ", " # # ", "#   #", "#   #"],
-  Y: ["#   #", "#   #", " # # ", "  #  ", "  #  ", "  #  ", "  #  "],
-  Z: ["#####", "    #", "   # ", "  #  ", " #   ", "#    ", "#####"],
-  a: [".....", ".....", " ### ", "    #", " ####", "#   #", " ####"],
-  b: ["#    ", "#    ", "#### ", "#   #", "#   #", "#   #", "#### "],
-  c: [".....", ".....", " ### ", "#    ", "#    ", "#    ", " ### "],
-  d: ["    #", "    #", " ####", "#   #", "#   #", "#   #", " ####"],
-  e: [".....", ".....", " ### ", "#   #", "#####", "#    ", " ### "],
-  f: ["  ## ", " #   ", "#### ", " #   ", " #   ", " #   ", " #   "],
-  g: [".....", ".....", " ####", "#   #", " ####", "    #", "###  "],
-  h: ["#    ", "#    ", "#### ", "#   #", "#   #", "#   #", "#   #"],
-  i: ["  #  ", "     ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  "],
-  j: ["   # ", "     ", "   # ", "   # ", "   # ", "   # ", " ##  "],
-  k: ["#    ", "#    ", "#  # ", "# #  ", "##   ", "# #  ", "#  # "],
-  l: [" ##  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  ## "],
-  m: [".....", ".....", "## # ", "# # #", "# # #", "# # #", "#   #"],
-  n: [".....", ".....", "#### ", "#   #", "#   #", "#   #", "#   #"],
-  o: [".....", ".....", " ### ", "#   #", "#   #", "#   #", " ### "],
-  p: [".....", ".....", "#### ", "#   #", "#### ", "#    ", "#    "],
-  q: [".....", ".....", " ####", "#   #", " ####", "    #", "    #"],
-  r: [".....", ".....", "#### ", "#   #", "#    ", "#    ", "#    "],
-  s: [".....", ".....", " ####", "#    ", " ### ", "    #", "#### "],
-  t: [" #   ", " #   ", "#### ", " #   ", " #   ", " # # ", "  #  "],
-  u: [".....", ".....", "#   #", "#   #", "#   #", "#   #", " ####"],
-  v: [".....", ".....", "#   #", "#   #", "#   #", " # # ", "  #  "],
-  w: [".....", ".....", "#   #", "#   #", "# # #", "# # #", " # # "],
-  x: [".....", ".....", "#   #", " # # ", "  #  ", " # # ", "#   #"],
-  y: [".....", ".....", "#   #", "#   #", " ####", "    #", "###  "],
-  z: [".....", ".....", "#####", "   # ", "  #  ", " #   ", "#####"],
-};
+const DIGITS = "0123456789".split("");
+const PUNCTUATION = [" ", "!", '"', "(", ")", ",", "-", ".", "/", ":", ">", "*", "+", "?", "%"];
+const UPPERCASE = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+const LOWERCASE = Array.from({ length: 26 }, (_, i) => String.fromCharCode(97 + i));
 
-for (const [ch, rows] of Object.entries(FONT)) {
-  if (rows.length !== 7) throw new Error(`font '${ch}' has ${rows.length} rows, expected 7`);
-  for (const row of rows) {
-    if (row.length !== 5) throw new Error(`font '${ch}' row "${row}" has ${row.length} chars, expected 5`);
+export const FONT_CELL_W = 5;
+export const FONT_CELL_H = 7;
+export const FONT_COLS = 10;
+export const FONT_ORDER = [...DIGITS, ...PUNCTUATION, ...UPPERCASE, ...LOWERCASE];
+export const FONT_ROWS = Math.ceil(FONT_ORDER.length / FONT_COLS);
+export const FONT_SHEET_W = FONT_COLS * FONT_CELL_W;
+export const FONT_SHEET_H = FONT_ROWS * FONT_CELL_H;
+
+const FONT_INDEX = new Map(FONT_ORDER.map((ch, index) => [ch, index]));
+
+export class Fontset {
+  private readonly tintCache = new Map<string, CanvasImageSource>();
+
+  private constructor(private readonly img: CanvasImageSource) {}
+
+  static load(url: string): Promise<Fontset> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(new Fontset(img));
+      img.onerror = () => reject(new Error(`Failed to load fontset: ${url}`));
+      img.src = url;
+    });
   }
+
+  static fromImage(img: CanvasImageSource): Fontset {
+    return new Fontset(img);
+  }
+
+  private tinted(ctx: CanvasRenderingContext2D, color: string): CanvasImageSource {
+    const cached = this.tintCache.get(color);
+    if (cached) return cached;
+
+    const canvas = ctx.canvas.cloneNode(false) as HTMLCanvasElement;
+    canvas.width = FONT_SHEET_W;
+    canvas.height = FONT_SHEET_H;
+
+    const tctx = canvas.getContext("2d")!;
+    tctx.imageSmoothingEnabled = false;
+    tctx.drawImage(this.img, 0, 0);
+    tctx.globalCompositeOperation = "source-in";
+    tctx.fillStyle = color;
+    tctx.fillRect(0, 0, FONT_SHEET_W, FONT_SHEET_H);
+
+    this.tintCache.set(color, canvas);
+    return canvas;
+  }
+
+  drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, scale = 2): void {
+    const atlas = this.tinted(ctx, color);
+    let cx = x;
+
+    for (const raw of text) {
+      const ch = FONT_INDEX.has(raw) ? raw : FONT_INDEX.has(raw.toUpperCase()) ? raw.toUpperCase() : "?";
+      const index = FONT_INDEX.get(ch) ?? FONT_INDEX.get("?")!;
+      const sx = (index % FONT_COLS) * FONT_CELL_W;
+      const sy = Math.floor(index / FONT_COLS) * FONT_CELL_H;
+      ctx.drawImage(atlas, sx, sy, FONT_CELL_W, FONT_CELL_H, cx, y, FONT_CELL_W * scale, FONT_CELL_H * scale);
+      cx += 6 * scale;
+    }
+  }
+}
+
+let activeFontset: Fontset | null = null;
+
+export function setFontset(fontset: Fontset | null): void {
+  activeFontset = fontset;
+}
+
+export async function loadPixelFont(url: string): Promise<Fontset> {
+  const fontset = await Fontset.load(url);
+  activeFontset = fontset;
+  return fontset;
 }
 
 export function pixelTextWidth(text: string, scale: number): number {
@@ -97,18 +89,8 @@ export function drawPixelText(
   color: string,
   scale = 2,
 ): void {
-  ctx.fillStyle = color;
-  let cx = x;
-  for (const raw of text) {
-    const glyph = FONT[raw] ?? FONT[raw.toUpperCase()] ?? FONT["?"]!;
-    for (let row = 0; row < glyph.length; row++) {
-      const line = glyph[row]!;
-      for (let col = 0; col < line.length; col++) {
-        if (line[col] === "#") ctx.fillRect(cx + col * scale, y + row * scale, scale, scale);
-      }
-    }
-    cx += 6 * scale;
-  }
+  if (!activeFontset) throw new Error("Fontset not loaded");
+  activeFontset.drawText(ctx, text, x, y, color, scale);
 }
 
 export function drawPixelTextCenter(

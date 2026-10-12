@@ -1,19 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { FONT, pixelTextWidth, wrapPixelText } from "../../src/ui/pixel-font.ts";
+import { FONT_ORDER, pixelTextWidth, wrapPixelText } from "../../src/ui/pixel-font.ts";
 
 describe("pixel font", () => {
-  it("includes lowercase and UI punctuation glyphs", () => {
+  it("has a stable atlas order for lowercase and UI punctuation glyphs", () => {
     for (const ch of "abcdefghijklmnopqrstuvwxyz+:/(),.-*%") {
-      expect(FONT[ch]).toBeDefined();
-    }
-  });
-
-  it("keeps every glyph 7 rows by 5 columns", () => {
-    for (const rows of Object.values(FONT)) {
-      expect(rows.length).toBe(7);
-      for (const row of rows) {
-        expect(row.length).toBe(5);
-      }
+      expect(FONT_ORDER).toContain(ch);
     }
   });
 

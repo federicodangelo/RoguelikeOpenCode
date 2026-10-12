@@ -32,7 +32,7 @@ Canvas drawing helpers.
 
 Build-time and development utilities.
 
-- Owns tile generation, icon generation, screenshot generation, bundling, dist verification, dev server, and static serving.
+- Owns tile generation, icon generation, font atlas generation, screenshot generation, bundling, dist verification, dev server, and static serving.
 - Tool output that is committed, such as `public/screenshots`, should be deterministic.
 
 ### `tests`
@@ -64,6 +64,7 @@ Before committing, run:
 bun run typecheck
 bun run lint
 bun test
+bun run font
 bun run screenshots
 bun run build
 bun run verify

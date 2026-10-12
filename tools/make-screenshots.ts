@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { encodePNG, TILE_SHEET_H, TILE_SHEET_W, tileSheet } from "./make-tiles.ts";
 import { ICON_SHEET_H, ICON_SHEET_W, iconSheet } from "./make-icons.ts";
+import { FONT_SHEET_H, FONT_SHEET_W, fontSheet } from "./make-font.ts";
 import { createCanvas, ShimImage } from "./canvas-shim.ts";
 import { Tileset, drawScene } from "../src/platform/render.ts";
 import { drawMenu, drawTitle } from "../src/ui/screens.ts";
@@ -8,6 +9,7 @@ import { contextualHints, drawContextHints, drawHUD } from "../src/ui/hud.ts";
 import { drawEffects } from "../src/ui/effects.ts";
 import { drawMinimap } from "../src/ui/minimap.ts";
 import { Iconset } from "../src/ui/icons.ts";
+import { Fontset, setFontset } from "../src/ui/pixel-font.ts";
 import { Game } from "../src/core/game.ts";
 import { MONSTER_KINDS, type Entity } from "../src/core/entities.ts";
 import { MenuNav } from "../src/ui/menu.ts";
@@ -42,6 +44,13 @@ function makeTileset(): Tileset {
 function makeIconset(): Iconset {
   const image = new ShimImage(ICON_SHEET_W, ICON_SHEET_H, iconSheet);
   return Iconset.fromImage(image as unknown as CanvasImageSource);
+}
+
+function makeFontset(): Fontset {
+  const image = new ShimImage(FONT_SHEET_W, FONT_SHEET_H, fontSheet);
+  const fontset = Fontset.fromImage(image as unknown as CanvasImageSource);
+  setFontset(fontset);
+  return fontset;
 }
 
 function centerOfRoomNearMapCenter(map: GameMap): Point {
@@ -250,6 +259,8 @@ function renderGameplay(showMenu: boolean): Buffer {
 
   return canvas.data;
 }
+
+makeFontset();
 
 export function renderTitlePNG(hasSave: boolean): Buffer {
   return encodePNG(LOGICAL_W, LOGICAL_H, renderTitle(hasSave));
