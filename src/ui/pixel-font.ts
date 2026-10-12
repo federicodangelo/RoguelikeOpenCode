@@ -71,12 +71,6 @@ export function setFontset(fontset: Fontset | null): void {
   activeFontset = fontset;
 }
 
-export async function loadPixelFont(url: string): Promise<Fontset> {
-  const fontset = await Fontset.load(url);
-  activeFontset = fontset;
-  return fontset;
-}
-
 export function pixelTextWidth(text: string, scale: number): number {
   return Math.max(0, text.length * 6 * scale - scale);
 }
