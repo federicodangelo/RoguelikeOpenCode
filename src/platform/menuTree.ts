@@ -45,18 +45,18 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
         const inv = game.inventory;
         return [
           {
-            label: `Sword: ${inv.sword ? "equipped" : "none"}`,
+            label: `Sword: ${inv.sword > 0 ? "equipped" : "none"}`,
             hint: [
-              inv.sword ? "Equipped sword" : "No sword equipped",
-              inv.sword ? "Grants +1 ATK" : "Find a sword to equip",
+              inv.sword > 0 ? "Equipped sword" : "No sword equipped",
+              inv.sword > 0 ? `Grants +${inv.sword} ATK` : "Find a sword to equip",
               `Current ATK: ${game.player.atk}`,
             ],
           },
           {
-            label: `Shield: ${inv.shield ? "equipped" : "none"}`,
+            label: `Shield: ${inv.shield > 0 ? "equipped" : "none"}`,
             hint: [
-              inv.shield ? "Equipped shield" : "No shield equipped",
-              inv.shield ? "Grants +1 DEF" : "Find a shield to equip",
+              inv.shield > 0 ? "Equipped shield" : "No shield equipped",
+              inv.shield > 0 ? `Grants +${inv.shield} DEF` : "Find a shield to equip",
               `Current DEF: ${game.player.def}`,
             ],
           },

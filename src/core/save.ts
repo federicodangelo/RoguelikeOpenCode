@@ -2,8 +2,9 @@ import type { Entity } from "./entities.ts";
 import type { Inventory } from "./items.ts";
 import type { GameMap } from "./mapgen/common.ts";
 import { BASE_SEED } from "./constants.ts";
+import { T } from "./tiles.ts";
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface SavedFloor {
   depth: number;
@@ -47,6 +48,8 @@ function isEntityShape(value: unknown): boolean {
     typeof e.maxHp === "number" &&
     typeof e.atk === "number" &&
     typeof e.def === "number" &&
+    typeof e.baseAtk === "number" &&
+    typeof e.baseDef === "number" &&
     typeof e.sprite === "number" &&
     typeof e.isPlayer === "boolean" &&
     typeof e.alive === "boolean" &&
@@ -74,6 +77,17 @@ function isGameMapShape(value: unknown): boolean {
     isPoint(m.stairs) &&
     (m.upStairs === null || isPoint(m.upStairs)) &&
     Array.isArray(m.items) &&
+    m.items.every((it) => {
+      if (!isPoint(it)) return false;
+      const i = it as Record<string, unknown>;
+      return (
+        typeof i.kind === "string" &&
+        typeof i.variant === "string" &&
+        typeof i.quality === "string" &&
+        typeof i.tile === "number" &&
+        typeof i.stat === "number"
+      );
+    }) &&
     typeof m.algorithm === "string"
   );
 }
@@ -85,8 +99,8 @@ function isInventoryShape(value: unknown): boolean {
     typeof inv.gold === "number" &&
     typeof inv.potions === "number" &&
     typeof inv.torches === "number" &&
-    typeof inv.sword === "boolean" &&
-    typeof inv.shield === "boolean"
+    typeof inv.sword === "number" &&
+    typeof inv.shield === "number"
   );
 }
 
@@ -103,15 +117,82 @@ function isSavedFloorShape(value: unknown): boolean {
   );
 }
 
+function itemFromLegacyTile(tile: number): Record<string, unknown> {
+  switch (tile) {
+    case T.Sword:
+      return { kind: "weapon", variant: "short sword", quality: "common", tile, stat: 1 };
+    case T.Shield:
+      return { kind: "armor", variant: "iron shield", quality: "common", tile, stat: 1 };
+    case T.Potion:
+      return { kind: "potion", variant: "minor potion", quality: "common", tile, stat: 5 };
+    case T.Torch:
+      return { kind: "torch", variant: "torch", quality: "common", tile, stat: 0 };
+    case T.Corpse:
+      return { kind: "corpse", variant: "corpse", quality: "common", tile, stat: 0 };
+    default:
+      return { kind: "gold", variant: "gold", quality: "common", tile: T.Gold, stat: 1 };
+  }
+}
+
+function migrateV2toV3(v: Record<string, unknown>): Record<string, unknown> {
+  const inv = (typeof v.inventory === "object" && v.inventory !== null ? v.inventory : {}) as Record<string, unknown>;
+  const sword = inv.sword === true ? 1 : typeof inv.sword === "number" ? inv.sword : 0;
+  const shield = inv.shield === true ? 1 : typeof inv.shield === "number" ? inv.shield : 0;
+
+  const player = (typeof v.player === "object" && v.player !== null ? v.player : {}) as Record<string, unknown>;
+  const atk = typeof player.atk === "number" ? player.atk : 3;
+  const def = typeof player.def === "number" ? player.def : 1;
+
+  const floors = Array.isArray(v.floors)
+    ? v.floors.map((f) => {
+        if (typeof f !== "object" || f === null) return f;
+        const fl = f as Record<string, unknown>;
+        const map = (typeof fl.map === "object" && fl.map !== null ? fl.map : {}) as Record<string, unknown>;
+        const items = Array.isArray(map.items)
+          ? map.items.map((it) => {
+              if (typeof it !== "object" || it === null) return it;
+              const item = it as Record<string, unknown>;
+              if (typeof item.kind === "string") return item;
+              return {
+                x: item.x,
+                y: item.y,
+                ...itemFromLegacyTile(typeof item.tile === "number" ? item.tile : T.Gold),
+              };
+            })
+          : map.items;
+        const monsters = Array.isArray(fl.monsters)
+          ? fl.monsters.map((m) => {
+              if (typeof m !== "object" || m === null) return m;
+              const mon = m as Record<string, unknown>;
+              if (typeof mon.baseAtk === "number") return mon;
+              return { ...mon, baseAtk: mon.atk, baseDef: mon.def };
+            })
+          : fl.monsters;
+        return { ...fl, map: { ...map, items }, monsters };
+      })
+    : v.floors;
+
+  return {
+    ...v,
+    version: SAVE_VERSION,
+    inventory: { ...inv, sword, shield },
+    player: {
+      ...player,
+      baseAtk: typeof player.baseAtk === "number" ? player.baseAtk : atk - sword,
+      baseDef: typeof player.baseDef === "number" ? player.baseDef : def - shield,
+    },
+    floors,
+  };
+}
+
 export function migrateSavedRun(value: unknown): unknown {
   if (typeof value !== "object" || value === null) return value;
-  const v = value as Record<string, unknown>;
+  let v = value as Record<string, unknown>;
   if (v.version === 1) {
-    return {
-      ...v,
-      version: SAVE_VERSION,
-      seed: typeof v.seed === "number" ? v.seed : BASE_SEED,
-    };
+    v = { ...v, version: 2, seed: typeof v.seed === "number" ? v.seed : BASE_SEED };
+  }
+  if (v.version === 2) {
+    v = migrateV2toV3(v);
   }
   return v;
 }

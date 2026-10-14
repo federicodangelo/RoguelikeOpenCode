@@ -5,7 +5,7 @@ import { MAP_W } from "../../src/core/map.ts";
 import { T } from "../../src/core/tiles.ts";
 import { addStatus, hasStatus } from "../../src/core/status.ts";
 import { type Entity } from "../../src/core/entities.ts";
-import { openInterior } from "./helpers.ts";
+import { openInterior, placedItem } from "./helpers.ts";
 
 function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity {
   return {
@@ -17,6 +17,8 @@ function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity 
     maxHp: 4,
     atk: 2,
     def: 0,
+    baseAtk: 2,
+    baseDef: 0,
     sprite: T.Rat,
     isPlayer: false,
     alive: true,
@@ -83,8 +85,8 @@ describe("Game pickups", () => {
     const game = new Game();
     const x = game.player.x;
     const y = game.player.y;
-    game.map.items.push({ x, y, tile: T.Corpse });
-    game.map.items.push({ x, y, tile: T.Gold });
+    game.map.items.push(placedItem(x, y, "corpse", T.Corpse));
+    game.map.items.push(placedItem(x, y, "gold", T.Gold, 1));
 
     expect(game.pickup()).toBe(true);
     expect(game.inventory.gold).toBe(1);
@@ -95,8 +97,8 @@ describe("Game pickups", () => {
     const game = new Game();
     const x = game.player.x;
     const y = game.player.y;
-    game.map.items.push({ x, y, tile: T.Corpse });
-    game.map.items.push({ x, y, tile: T.Potion });
+    game.map.items.push(placedItem(x, y, "corpse", T.Corpse));
+    game.map.items.push(placedItem(x, y, "potion", T.Potion, 5));
 
     expect(game.hasPickableItemAtPlayer()).toBe(true);
     expect(game.itemKindAtPlayer()).toBe("potion");
@@ -104,7 +106,7 @@ describe("Game pickups", () => {
 
   it("does not pick up a lone corpse", () => {
     const game = new Game();
-    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Corpse });
+    game.map.items.push(placedItem(game.player.x, game.player.y, "corpse", T.Corpse));
 
     expect(game.hasPickableItemAtPlayer()).toBe(false);
     expect(game.pickup()).toBe(false);
@@ -114,7 +116,7 @@ describe("Game pickups", () => {
 describe("Game interactables", () => {
   it("reports the item kind at the player", () => {
     const game = new Game();
-    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Potion });
+    game.map.items.push(placedItem(game.player.x, game.player.y, "potion", T.Potion, 5));
     expect(game.itemKindAtPlayer()).toBe("potion");
   });
 
@@ -135,6 +137,8 @@ describe("Game interactables", () => {
       maxHp: 1,
       atk: 1,
       def: 0,
+      baseAtk: 1,
+      baseDef: 0,
       sprite: T.Rat,
       isPlayer: false,
       alive: true,
@@ -235,8 +239,8 @@ describe("Game fear", () => {
 describe("Game scene lookup", () => {
   it("uses the first item when multiple items share a cell", () => {
     const game = new Game();
-    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Gold });
-    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Potion });
+    game.map.items.push(placedItem(game.player.x, game.player.y, "gold", T.Gold, 1));
+    game.map.items.push(placedItem(game.player.x, game.player.y, "potion", T.Potion, 5));
 
     const cam = game.camera();
     const scene = game.buildScene();

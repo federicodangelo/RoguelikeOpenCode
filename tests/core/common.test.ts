@@ -130,7 +130,7 @@ describe("nearestOpen", () => {
 });
 
 describe("placeItems", () => {
-  it("places items on unreserved floor cells with valid tiles", () => {
+  it("places full item instances on unreserved floor cells", () => {
     const cells = openInterior();
     const rng = new RNG(3);
     const reserved = [
@@ -143,8 +143,18 @@ describe("placeItems", () => {
     for (const item of items) {
       expect(cells[item.y]![item.x]).toBe("floor");
       expect(reserved.some((p) => p.x === item.x && p.y === item.y)).toBe(false);
-      expect([T.Potion, T.Gold, T.Sword, T.Shield] as number[]).toContain(item.tile);
+      expect(["gold", "potion", "weapon", "armor", "torch"]).toContain(item.kind);
+      expect(typeof item.variant).toBe("string");
+      expect(["common", "uncommon", "rare"]).toContain(item.quality);
+      expect(typeof item.stat).toBe("number");
     }
+  });
+
+  it("is deterministic for the same seed", () => {
+    const cells = openInterior();
+    const a = placeItems(cells, new RNG(5), 3, []);
+    const b = placeItems(cells, new RNG(5), 3, []);
+    expect(a).toEqual(b);
   });
 });
 

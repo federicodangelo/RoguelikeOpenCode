@@ -1,7 +1,7 @@
 import type { FloorCache } from "./floorCache.ts";
 import { setNextId, type Entity } from "./entities.ts";
 import type { Effect } from "./effects.ts";
-import type { Inventory } from "./items.ts";
+import { recalcStats, type Inventory } from "./items.ts";
 import type { GameMap } from "./map.ts";
 import type { MessageLog } from "./messages.ts";
 import type { RNG } from "./rng.ts";

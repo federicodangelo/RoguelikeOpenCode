@@ -1,5 +1,5 @@
 import { RNG } from "../rng.ts";
-import { T } from "../tiles.ts";
+import { makeInstance, pickDef, rollQuality, type ItemKind, type Quality } from "../items.ts";
 
 export const MAP_W = 40;
 export const MAP_H = 30;
@@ -23,7 +23,11 @@ export interface Room {
 export interface PlacedItem {
   x: number;
   y: number;
+  kind: ItemKind;
+  variant: string;
+  quality: Quality;
   tile: number;
+  stat: number;
 }
 
 export interface GameMap {
@@ -234,7 +238,6 @@ export function nearestOpen(cells: CellType[][], at: Point): Point | null {
 }
 
 export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserved: Point[]): PlacedItem[] {
-  const kinds = [T.Potion, T.Gold, T.Sword, T.Shield, T.Torch];
   const floors: Point[] = [];
   for (let y = 1; y < MAP_H - 1; y++) {
     for (let x = 1; x < MAP_W - 1; x++) {
@@ -248,7 +251,11 @@ export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserve
     [floors[i], floors[j]] = [floors[j]!, floors[i]!];
   }
   const count = Math.min(rng.int(3, 5) + Math.min(depth, 3), floors.length);
-  return floors.slice(0, count).map((p) => ({ x: p.x, y: p.y, tile: rng.pick(kinds) }));
+  return floors.slice(0, count).map((p) => ({
+    x: p.x,
+    y: p.y,
+    ...makeInstance(pickDef(rng, depth), rollQuality(rng, depth)),
+  }));
 }
 
 export function placeTraps(cells: CellType[][], rng: RNG, depth: number, reserved: Point[], items: PlacedItem[]): void {

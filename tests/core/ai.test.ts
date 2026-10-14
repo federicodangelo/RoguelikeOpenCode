@@ -16,6 +16,8 @@ function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity 
     maxHp: 4,
     atk: 2,
     def: 0,
+    baseAtk: 2,
+    baseDef: 0,
     sprite: T.Rat,
     isPlayer: false,
     alive: true,

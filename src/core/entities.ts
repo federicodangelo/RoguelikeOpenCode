@@ -22,6 +22,8 @@ export interface Entity {
   maxHp: number;
   atk: number;
   def: number;
+  baseAtk: number;
+  baseDef: number;
   sprite: number;
   isPlayer: boolean;
   alive: boolean;
@@ -93,6 +95,8 @@ export function makePlayer(x: number, y: number): Entity {
     maxHp: 12,
     atk: 3,
     def: 1,
+    baseAtk: 3,
+    baseDef: 1,
     sprite: T.Player,
     isPlayer: true,
     alive: true,
@@ -127,8 +131,8 @@ export function gainXp(player: Entity, amount: number): number {
     player.level += 1;
     player.maxHp += 2;
     player.hp = player.maxHp;
-    player.atk += 1;
-    player.def += 1;
+    player.baseAtk += 1;
+    player.baseDef += 1;
     player.skillPoints += 1;
     levels += 1;
   }
@@ -145,6 +149,8 @@ function makeMonster(kind: Kind, x: number, y: number, depth: number): Entity {
     maxHp: kind.hp + depth,
     atk: kind.atk + Math.floor(depth / 2),
     def: kind.def + Math.floor(depth / 3),
+    baseAtk: kind.atk + Math.floor(depth / 2),
+    baseDef: kind.def + Math.floor(depth / 3),
     sprite: kind.sprite,
     isPlayer: false,
     alive: true,

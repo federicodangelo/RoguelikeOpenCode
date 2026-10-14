@@ -1,70 +1,116 @@
 import { describe, expect, it } from "bun:test";
 import { makePlayer } from "../../src/core/entities.ts";
-import { makeInventory, kindOfTile, pickUp, usePotion, useTorch } from "../../src/core/items.ts";
+import {
+  ITEM_DEFS,
+  makeCorpse,
+  makeGold,
+  makeInstance,
+  makeInventory,
+  pickDef,
+  pickUp,
+  rollQuality,
+  usePotion,
+  useTorch,
+  type ItemInstance,
+} from "../../src/core/items.ts";
+import { RNG } from "../../src/core/rng.ts";
 import { T } from "../../src/core/tiles.ts";
 
-describe("kindOfTile", () => {
-  it("maps item tiles to kinds", () => {
-    expect(kindOfTile(T.Potion)).toBe("potion");
-    expect(kindOfTile(T.Gold)).toBe("gold");
-    expect(kindOfTile(T.Sword)).toBe("sword");
-    expect(kindOfTile(T.Shield)).toBe("shield");
-    expect(kindOfTile(T.Torch)).toBe("torch");
-    expect(kindOfTile(T.Corpse)).toBe("corpse");
-    expect(kindOfTile(T.Floor)).toBeNull();
+function inst(kind: ItemInstance["kind"], variant: string, stat: number, tile: number): ItemInstance {
+  return { kind, variant, quality: "common", tile, stat };
+}
+
+describe("ITEM_DEFS", () => {
+  it("provides multiple variants per kind", () => {
+    expect(ITEM_DEFS.filter((d) => d.kind === "weapon").length).toBeGreaterThanOrEqual(4);
+    expect(ITEM_DEFS.filter((d) => d.kind === "armor").length).toBeGreaterThanOrEqual(3);
+    expect(ITEM_DEFS.filter((d) => d.kind === "potion").length).toBeGreaterThanOrEqual(2);
+    expect(ITEM_DEFS.filter((d) => d.kind === "torch").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("pickDef only returns defs unlocked at the given depth", () => {
+    const rng = new RNG(1);
+    for (let i = 0; i < 60; i++) {
+      expect(pickDef(rng, 1).minDepth).toBeLessThanOrEqual(1);
+    }
+    for (let i = 0; i < 200; i++) {
+      expect(pickDef(rng, 5).minDepth).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("rollQuality is deterministic per seed and improves with depth", () => {
+    const a = new RNG(7);
+    const b = new RNG(7);
+    expect(rollQuality(a, 5)).toBe(rollQuality(b, 5));
+
+    const shallow = new RNG(9);
+    const deep = new RNG(9);
+    let shallowBetter = 0;
+    let deepBetter = 0;
+    for (let i = 0; i < 300; i++) {
+      if (rollQuality(shallow, 1) !== "common") shallowBetter++;
+      if (rollQuality(deep, 8) !== "common") deepBetter++;
+    }
+    expect(deepBetter).toBeGreaterThan(shallowBetter);
+  });
+
+  it("makeInstance adds the quality bonus to the base stat", () => {
+    const def = ITEM_DEFS.find((d) => d.kind === "weapon" && d.variant === "short sword")!;
+    expect(makeInstance(def, "common").stat).toBe(def.baseStat);
+    expect(makeInstance(def, "uncommon").stat).toBe(def.baseStat + 1);
+    expect(makeInstance(def, "rare").stat).toBe(def.baseStat + 2);
+    expect(makeInstance(def, "rare").quality).toBe("rare");
   });
 });
 
 describe("pickUp", () => {
-  it("gold and potions go to inventory", () => {
+  it("gold adds the pile amount to inventory", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    expect(pickUp(p, inv, T.Gold)).toContain("gold");
-    expect(pickUp(p, inv, T.Potion)).toContain("potion");
-    expect(inv.gold).toBe(1);
-    expect(inv.potions).toBe(1);
+    expect(pickUp(p, inv, makeGold(7))).toContain("gold");
+    expect(inv.gold).toBe(7);
   });
 
-  it("gold and potions accumulate across multiple pickups", () => {
+  it("potions accumulate across multiple pickups", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    pickUp(p, inv, T.Gold);
-    pickUp(p, inv, T.Gold);
-    pickUp(p, inv, T.Potion);
-    pickUp(p, inv, T.Potion);
-    pickUp(p, inv, T.Potion);
-    expect(inv.gold).toBe(2);
-    expect(inv.potions).toBe(3);
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(p, inv, inst("potion", "major potion", 9, T.Potion));
+    expect(inv.potions).toBe(2);
   });
 
-  it("sword gives +1 ATK once, shield gives +1 DEF once", () => {
+  it("weapons equip once and grant their stat as ATK", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    pickUp(p, inv, T.Sword);
-    expect(p.atk).toBe(4);
-    expect(inv.sword).toBe(true);
-    expect(pickUp(p, inv, T.Sword)).toContain("already");
-    expect(p.atk).toBe(4);
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    expect(p.atk).toBe(p.baseAtk + 2);
+    expect(inv.sword).toBe(2);
+    expect(pickUp(p, inv, inst("weapon", "dagger", 1, T.Sword))).toContain("already");
+    expect(p.atk).toBe(p.baseAtk + 2);
+    expect(inv.sword).toBe(2);
+  });
 
-    pickUp(p, inv, T.Shield);
-    expect(p.def).toBe(2);
-    expect(inv.shield).toBe(true);
-    expect(pickUp(p, inv, T.Shield)).toContain("already");
-    expect(p.def).toBe(2);
+  it("armor equips once and grants its stat as DEF", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("armor", "iron shield", 2, T.Shield));
+    expect(p.def).toBe(p.baseDef + 2);
+    expect(inv.shield).toBe(2);
+    expect(pickUp(p, inv, inst("armor", "buckler", 1, T.Shield))).toContain("already");
+    expect(p.def).toBe(p.baseDef + 2);
   });
 
   it("torches accumulate in inventory", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    expect(pickUp(p, inv, T.Torch)).toContain("torch");
+    expect(pickUp(p, inv, inst("torch", "bullseye lantern", 0, T.Torch))).toContain("lantern");
     expect(inv.torches).toBe(1);
   });
 
-  it("corpses and non-items are not pickable", () => {
+  it("corpses are not pickable", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    expect(pickUp(p, inv, T.Corpse)).toBeNull();
-    expect(pickUp(p, inv, T.Floor)).toBeNull();
+    expect(pickUp(p, inv, makeCorpse())).toBeNull();
   });
 });
 

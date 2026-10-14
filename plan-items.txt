@@ -79,21 +79,21 @@ D7. Quality visuals without new art per tier: color item names in menus and
 
 PHASE 1 - Item data model and save migration
 --------------------------------------------
-[ ] 1.1 Add Quality type and ITEM_DEFS registry in src/core/items.ts
-[ ] 1.2 Extend PlacedItem with kind/variant/quality (src/core/mapgen/common.ts)
-[ ] 1.3 placeItems builds instances from ITEM_DEFS using a weighted pick
+[x] 1.1 Add Quality type and ITEM_DEFS registry in src/core/items.ts
+[x] 1.2 Extend PlacedItem with kind/variant/quality (src/core/mapgen/common.ts)
+[x] 1.3 placeItems builds instances from ITEM_DEFS using a weighted pick
         (replaces uniform rng.pick), same RNG stream, still deterministic
-[ ] 1.4 Replace kindOfTile lookups with instance.kind in src/core/game.ts
+[x] 1.4 Replace kindOfTile lookups with instance.kind in src/core/game.ts
         (hasPickableItemAtPlayer, itemKindAtPlayer, pickup) and src/ui/hud.ts
-[ ] 1.5 Add baseAtk/baseDef to Entity (src/core/entities.ts); gainXp and
+[x] 1.5 Add baseAtk/baseDef to Entity (src/core/entities.ts); gainXp and
         spendSkill update base stats; add recalcStats(player, inventory)
-[ ] 1.6 Bump SAVE_VERSION to 3; migrateSavedRun upgrades v2 saves:
+[x] 1.6 Bump SAVE_VERSION to 3; migrateSavedRun upgrades v2 saves:
         - old {x,y,tile} map items get variant + common quality from tile
         - old inventory sword/shield booleans become equipped common items
         - old entities get baseAtk/baseDef = current atk/def minus the
           common equipment bonus they had
-[ ] 1.7 Update isInventoryShape, isEntityShape, isGameMapShape validators
-[ ] 1.8 Tests: items.test.ts (defs + weighted pick), save.test.ts
+[x] 1.7 Update isInventoryShape, isEntityShape, isGameMapShape validators
+[x] 1.8 Tests: items.test.ts (defs + weighted pick), save.test.ts
         (v2 -> v3 migration round-trip), generators.test.ts (instances
         exist and are identical for the same seed)
 

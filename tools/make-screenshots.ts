@@ -86,6 +86,8 @@ function makeScreenshotMonster(
     maxHp: kind.hp + depth,
     atk: kind.atk + Math.floor(depth / 2),
     def: kind.def + Math.floor(depth / 3),
+    baseAtk: kind.atk + Math.floor(depth / 2),
+    baseDef: kind.def + Math.floor(depth / 3),
     sprite: kind.sprite,
     isPlayer: false,
     alive: true,

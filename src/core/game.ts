@@ -1,10 +1,19 @@
-import { T } from "./tiles.ts";
 import { MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
 import { attack, gainXp, makePlayer, xpNeeded, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { hasStatus } from "./status.ts";
-import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory, type ItemKind } from "./items.ts";
+import {
+  makeCorpse,
+  makeGold,
+  makeInventory,
+  pickUp,
+  recalcStats,
+  usePotion,
+  useTorch,
+  type Inventory,
+  type ItemKind,
+} from "./items.ts";
 import { MessageLog } from "./messages.ts";
 import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS } from "./constants.ts";
 import type { Effect } from "./effects.ts";
@@ -123,20 +132,12 @@ export class Game {
   }
 
   hasPickableItemAtPlayer(): boolean {
-    return this.map.items.some((i) => {
-      if (i.x !== this.player.x || i.y !== this.player.y) return false;
-      const kind = kindOfTile(i.tile);
-      return kind !== null && kind !== "corpse";
-    });
+    return this.map.items.some((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
   }
 
   itemKindAtPlayer(): ItemKind | null {
-    const item = this.map.items.find((i) => {
-      if (i.x !== this.player.x || i.y !== this.player.y) return false;
-      const kind = kindOfTile(i.tile);
-      return kind !== null && kind !== "corpse";
-    });
-    return item ? kindOfTile(item.tile) : null;
+    const item = this.map.items.find((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
+    return item ? item.kind : null;
   }
 
   adjacentInteractables(): { doorClosed: boolean; trap: boolean; monster: Entity | null } {
@@ -202,11 +203,8 @@ export class Game {
   }
 
   dropLoot(m: Entity): void {
-    this.map.items.push({
-      x: m.x,
-      y: m.y,
-      tile: this.battleRng.next() < 0.3 ? T.Gold : T.Corpse,
-    });
+    const loot = this.battleRng.next() < 0.3 ? makeGold(1) : makeCorpse();
+    this.map.items.push({ x: m.x, y: m.y, ...loot });
   }
 
   private handleMonsterDeath(m: Entity): void {
@@ -214,6 +212,7 @@ export class Game {
     this.kills++;
     const levels = gainXp(this.player, m.xpValue);
     if (levels > 0) {
+      recalcStats(this.player, this.inventory);
       this.logMessage(`Level up! You are now level ${this.player.level}.`);
       this.events.level?.();
     } else {
@@ -289,13 +288,9 @@ export class Game {
   }
 
   pickup(): boolean {
-    const idx = this.map.items.findIndex((i) => {
-      if (i.x !== this.player.x || i.y !== this.player.y) return false;
-      const kind = kindOfTile(i.tile);
-      return kind !== null && kind !== "corpse";
-    });
+    const idx = this.map.items.findIndex((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
     if (idx === -1) return false;
-    const msg = pickUp(this.player, this.inventory, this.map.items[idx]!.tile);
+    const msg = pickUp(this.player, this.inventory, this.map.items[idx]!);
     if (!msg) return false;
     this.map.items.splice(idx, 1);
     this.logMessage(msg);
@@ -324,10 +319,12 @@ export class Game {
     if (this.player.skillPoints <= 0) return false;
     this.player.skillPoints--;
     if (stat === "atk") {
-      this.player.atk += 1;
+      this.player.baseAtk += 1;
+      recalcStats(this.player, this.inventory);
       this.logMessage("You spend a skill point on ATK.");
     } else if (stat === "def") {
-      this.player.def += 1;
+      this.player.baseDef += 1;
+      recalcStats(this.player, this.inventory);
       this.logMessage("You spend a skill point on DEF.");
     } else {
       this.player.maxHp += 2;
@@ -347,6 +344,7 @@ export class Game {
   cheatLevelUp(): void {
     const levels = gainXp(this.player, xpNeeded(this.player.level));
     if (levels > 0) {
+      recalcStats(this.player, this.inventory);
       this.logMessage(`Cheated level up! You are now level ${this.player.level}.`);
       this.events.level?.();
     }

@@ -13,7 +13,7 @@ import {
 import { generateMap } from "../../src/core/map.ts";
 import { bfsDistances, MAP_H, MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
-import { mkMap, openInterior } from "./helpers.ts";
+import { mkMap, openInterior, placedItem } from "./helpers.ts";
 
 const KIND_BY_NAME = new Map([...MONSTER_KINDS, BOSS_KIND].map((kind) => [kind.name, kind]));
 
@@ -87,8 +87,10 @@ describe("gainXp", () => {
     expect(p.xp).toBe(2);
     expect(p.maxHp).toBe(14);
     expect(p.hp).toBe(14);
-    expect(p.atk).toBe(4);
-    expect(p.def).toBe(2);
+    expect(p.baseAtk).toBe(4);
+    expect(p.baseDef).toBe(2);
+    expect(p.atk).toBe(3);
+    expect(p.def).toBe(1);
     expect(p.skillPoints).toBe(1);
   });
 
@@ -160,7 +162,7 @@ describe("spawnMonsters", () => {
     ] as const)
       cells[y]![x] = "floor";
     cells[1]![18] = "stairsUp";
-    map.items.push({ x: 10, y: 1, tile: T.Gold }, { x: 11, y: 1, tile: T.Potion });
+    map.items.push(placedItem(10, 1, "gold", T.Gold, 1), placedItem(11, 1, "potion", T.Potion, 5));
 
     const monsters = spawnMonsters(map, new RNG(3), 1);
     expect(monsters.length).toBe(4);
