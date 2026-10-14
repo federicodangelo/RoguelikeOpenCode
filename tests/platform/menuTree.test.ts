@@ -104,6 +104,29 @@ describe("inventory menu", () => {
     expect(game.player.atk).toBe(game.player.baseAtk + 3);
   });
 
+  it("colors inventory entries by item quality", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "long sword",
+      quality: "rare",
+      tile: T.LongSword,
+      stat: 5,
+    });
+    game.pickup();
+    const menu = makeMenu(game);
+    menu.open();
+
+    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.index = inventoryIdx;
+    menu.enter();
+
+    expect(menu.entries()[menu.indexOfId("slot-weapon")]!.color).toBe("#7ab8ff");
+  });
+
   it("drinks potions with enter", () => {
     const game = new Game();
     game.monstersByFloor.set(game.depth, []);

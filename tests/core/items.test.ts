@@ -9,12 +9,14 @@ import {
   makeInventory,
   pickDef,
   pickUp,
+  qualityColor,
   recalcStats,
   rollQuality,
   unequipSlot,
   usePotion,
   useTorch,
   type ItemInstance,
+  type Quality,
 } from "../../src/core/items.ts";
 import { CARRIED_CAP, TORCH_TURNS } from "../../src/core/constants.ts";
 import { RNG } from "../../src/core/rng.ts";
@@ -71,6 +73,20 @@ describe("ITEM_DEFS", () => {
     expect(makeInstance(def, "uncommon").stat).toBe(def.baseStat + 1);
     expect(makeInstance(def, "rare").stat).toBe(def.baseStat + 2);
     expect(makeInstance(def, "rare").quality).toBe("rare");
+  });
+
+  it("every variant has its own tile art", () => {
+    const tiles = ITEM_DEFS.map((d) => d.tile);
+    expect(new Set(tiles).size).toBe(tiles.length);
+  });
+});
+
+describe("qualityColor", () => {
+  it("maps each quality to a distinct readable color", () => {
+    expect(qualityColor("common")).toBe("#e8e4da");
+    expect(qualityColor("uncommon")).toBe("#9be56f");
+    expect(qualityColor("rare")).toBe("#7ab8ff");
+    expect(new Set((["common", "uncommon", "rare"] as Quality[]).map(qualityColor)).size).toBe(3);
   });
 });
 

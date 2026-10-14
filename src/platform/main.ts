@@ -1,6 +1,6 @@
 import { Tileset, drawScene } from "./render.ts";
 import { Game } from "../core/game.ts";
-import { countConsumable } from "../core/items.ts";
+import { countConsumable, qualityColor } from "../core/items.ts";
 import { GameAudio } from "./audio.ts";
 import { cycleScalingMode, cycleVolume, loadSettings, saveSettings } from "./settings.ts";
 import { clearRun, loadRun, saveRun } from "./save.ts";
@@ -262,6 +262,7 @@ async function main(): Promise<void> {
 
       if (!game.gameOver && !game.menuOpen) {
         const interact = game.adjacentInteractables();
+        const itemQuality = game.itemQualityAtPlayer();
         drawContextHints(
           bctx,
           icons,
@@ -270,6 +271,7 @@ async function main(): Promise<void> {
           contextualHints({
             hasPickableItem: game.hasPickableItemAtPlayer(),
             itemName: game.itemNameAtPlayer(),
+            itemNameColor: itemQuality ? qualityColor(itemQuality) : null,
             cell: game.map.cells[game.player.y]![game.player.x]!,
             depth: game.depth,
             potions: countConsumable(game.inventory, "potion"),

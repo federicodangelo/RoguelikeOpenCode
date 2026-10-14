@@ -11,6 +11,7 @@ export interface MenuSlider {
 export interface MenuEntry {
   id?: string;
   label: string;
+  color?: string;
   submenu?: MenuEntry[] | (() => MenuEntry[]);
   action?: () => void;
   hint?: string | string[];

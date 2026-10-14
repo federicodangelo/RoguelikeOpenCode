@@ -26,4 +26,11 @@ export const T = {
   Trap: 21,
   Torch: 22,
   Projectile: 23,
+  Dagger: 24,
+  LongSword: 25,
+  BattleAxe: 26,
+  Buckler: 27,
+  KiteShield: 28,
+  MajorPotion: 29,
+  Lantern: 30,
 } as const;

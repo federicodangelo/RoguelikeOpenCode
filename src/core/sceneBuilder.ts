@@ -1,5 +1,7 @@
 import type { Entity } from "./entities.ts";
+import { qualityColor } from "./items.ts";
 import { MAP_H, MAP_W, type GameMap } from "./map.ts";
+import type { PlacedItem } from "./mapgen/common.ts";
 import type { CellView } from "./scene.ts";
 import { T } from "./tiles.ts";
 import { VIEW_COLS, VIEW_ROWS } from "./constants.ts";
@@ -24,10 +26,10 @@ export function buildScene(ctx: SceneContext): CellView[][] {
   const cam = camera(ctx);
   const scene: CellView[][] = [];
   const explored = ctx.exploredByFloor.get(ctx.depth) ?? new Set<number>();
-  const itemByPos = new Map<number, number>();
+  const itemByPos = new Map<number, PlacedItem>();
   for (const item of ctx.map.items) {
     const key = item.y * MAP_W + item.x;
-    if (!itemByPos.has(key)) itemByPos.set(key, item.tile);
+    if (!itemByPos.has(key)) itemByPos.set(key, item);
   }
   const monsterByPos = new Map<number, number>();
   for (const m of ctx.monsters()) {
@@ -55,8 +57,11 @@ export function buildScene(ctx: SceneContext): CellView[][] {
       else if (cell === "doorOpen") view.feature = T.DoorOpen;
       else if (cell === "trap") view.feature = T.Trap;
 
-      const itemTile = itemByPos.get(key);
-      if (itemTile !== undefined) view.feature = itemTile;
+      const item = itemByPos.get(key);
+      if (item !== undefined) {
+        view.feature = item.tile;
+        if (item.quality !== "common") view.pip = qualityColor(item.quality);
+      }
 
       const isVisible = ctx.visible.has(key);
       if (isVisible) {

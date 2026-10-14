@@ -1,6 +1,6 @@
 import type { Game } from "../core/game.ts";
 import { CARRIED_CAP } from "../core/constants.ts";
-import { countConsumable, itemName } from "../core/items.ts";
+import { countConsumable, itemName, qualityColor } from "../core/items.ts";
 import type { MenuEntry } from "../ui/menu.ts";
 import type { Settings } from "./settings.ts";
 
@@ -51,6 +51,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
         entries.push({
           id: "slot-weapon",
           label: `Weapon: ${weapon ? itemName(weapon) : "none"}`,
+          color: weapon ? qualityColor(weapon.quality) : undefined,
           hint: weapon
             ? ["Enter: unequip weapon", `Grants +${weapon.stat} ATK`, `Current ATK: ${game.player.atk}`]
             : ["No weapon equipped", "Pick up a weapon to equip it", `Current ATK: ${game.player.atk}`],
@@ -61,6 +62,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
         entries.push({
           id: "slot-armor",
           label: `Armor: ${armor ? itemName(armor) : "none"}`,
+          color: armor ? qualityColor(armor.quality) : undefined,
           hint: armor
             ? ["Enter: unequip armor", `Grants +${armor.stat} DEF`, `Current DEF: ${game.player.def}`]
             : ["No armor equipped", "Pick up armor to equip it", `Current DEF: ${game.player.def}`],
@@ -71,6 +73,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           entries.push({
             id: `carried-${item.uid ?? item.variant}`,
             label: `${itemName(item)} (${item.kind})`,
+            color: qualityColor(item.quality),
             hint: [
               "Enter: equip, swapping the current piece back",
               `+${item.stat} ${item.kind === "weapon" ? "ATK" : "DEF"}`,
@@ -85,6 +88,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
             entries.push({
               id: `stack-potion-${stack.variant}`,
               label: `Potions: ${stack.variant} x${stack.count}`,
+              color: qualityColor(stack.quality),
               hint: [
                 `Enter: drink (+${stack.stat} HP)`,
                 `Current HP: ${game.player.hp}/${game.player.maxHp}`,
@@ -96,6 +100,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
             entries.push({
               id: `stack-torch-${stack.variant}`,
               label: `Torches: ${stack.variant} x${stack.count}`,
+              color: qualityColor(stack.quality),
               hint: [
                 `Enter: light (+${stack.stat} turns)`,
                 `Light turns: ${game.lightTurns}`,

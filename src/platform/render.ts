@@ -12,6 +12,10 @@ export function drawScene(ctx: CanvasRenderingContext2D, tileset: Tileset, scene
       tileset.drawTile(ctx, cell.floor, x, y);
       if (cell.feature !== undefined) tileset.drawTile(ctx, cell.feature, x, y);
       if (cell.entity !== undefined) tileset.drawTile(ctx, cell.entity, x, y);
+      if (cell.pip) {
+        ctx.fillStyle = cell.pip;
+        ctx.fillRect(x * TILE_SIZE + TILE_SIZE - 9, y * TILE_SIZE + 1, 8, 8);
+      }
       if (cell.dim) {
         ctx.fillStyle = "rgba(0,0,0,0.55)";
         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);

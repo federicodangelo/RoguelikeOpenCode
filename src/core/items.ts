@@ -23,16 +23,16 @@ export interface ItemDef {
 export const ITEM_DEFS: ItemDef[] = [
   { kind: "gold", variant: "gold", tile: T.Gold, baseStat: 1, minDepth: 1, weight: 12 },
   { kind: "potion", variant: "minor potion", tile: T.Potion, baseStat: 5, minDepth: 1, weight: 14 },
-  { kind: "potion", variant: "major potion", tile: T.Potion, baseStat: 9, minDepth: 3, weight: 5 },
+  { kind: "potion", variant: "major potion", tile: T.MajorPotion, baseStat: 9, minDepth: 3, weight: 5 },
   { kind: "torch", variant: "torch", tile: T.Torch, baseStat: TORCH_TURNS, minDepth: 1, weight: 12 },
-  { kind: "torch", variant: "bullseye lantern", tile: T.Torch, baseStat: 30, minDepth: 3, weight: 4 },
-  { kind: "weapon", variant: "dagger", tile: T.Sword, baseStat: 1, minDepth: 1, weight: 8 },
+  { kind: "torch", variant: "bullseye lantern", tile: T.Lantern, baseStat: 30, minDepth: 3, weight: 4 },
+  { kind: "weapon", variant: "dagger", tile: T.Dagger, baseStat: 1, minDepth: 1, weight: 8 },
   { kind: "weapon", variant: "short sword", tile: T.Sword, baseStat: 2, minDepth: 1, weight: 7 },
-  { kind: "weapon", variant: "long sword", tile: T.Sword, baseStat: 3, minDepth: 3, weight: 4 },
-  { kind: "weapon", variant: "battle axe", tile: T.Sword, baseStat: 4, minDepth: 4, weight: 3 },
-  { kind: "armor", variant: "buckler", tile: T.Shield, baseStat: 1, minDepth: 1, weight: 7 },
+  { kind: "weapon", variant: "long sword", tile: T.LongSword, baseStat: 3, minDepth: 3, weight: 4 },
+  { kind: "weapon", variant: "battle axe", tile: T.BattleAxe, baseStat: 4, minDepth: 4, weight: 3 },
+  { kind: "armor", variant: "buckler", tile: T.Buckler, baseStat: 1, minDepth: 1, weight: 7 },
   { kind: "armor", variant: "iron shield", tile: T.Shield, baseStat: 2, minDepth: 2, weight: 6 },
-  { kind: "armor", variant: "kite shield", tile: T.Shield, baseStat: 3, minDepth: 4, weight: 3 },
+  { kind: "armor", variant: "kite shield", tile: T.KiteShield, baseStat: 3, minDepth: 4, weight: 3 },
 ];
 
 export interface ItemInstance {
@@ -45,6 +45,17 @@ export interface ItemInstance {
 }
 
 export const QUALITY_BONUS: Record<Quality, number> = { common: 0, uncommon: 1, rare: 2 };
+
+export function qualityColor(quality: Quality): string {
+  switch (quality) {
+    case "common":
+      return "#e8e4da";
+    case "uncommon":
+      return "#9be56f";
+    case "rare":
+      return "#7ab8ff";
+  }
+}
 
 let nextUid = 1;
 

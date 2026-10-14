@@ -336,6 +336,30 @@ describe("Game scene lookup", () => {
     const scene = game.buildScene();
     expect(scene[20 - cam.y]![26 - cam.x]!.entity).toBeUndefined();
   });
+
+  it("marks non-common items with a quality pip and leaves common items unmarked", () => {
+    const game = new Game();
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "battle axe",
+      quality: "rare",
+      tile: T.BattleAxe,
+      stat: 6,
+    });
+    const cam = game.camera();
+    const cell = game.buildScene()[game.player.y - cam.y]![game.player.x - cam.x]!;
+    expect(cell.feature).toBe(T.BattleAxe);
+    expect(cell.pip).toBe("#7ab8ff");
+
+    game.map.items.length = 0;
+    game.map.items.push(placedItem(game.player.x, game.player.y, "weapon", T.Dagger, 1, "dagger"));
+    const cam2 = game.camera();
+    const plain = game.buildScene()[game.player.y - cam2.y]![game.player.x - cam2.x]!;
+    expect(plain.feature).toBe(T.Dagger);
+    expect(plain.pip).toBeUndefined();
+  });
 });
 
 describe("Game kill rewards", () => {

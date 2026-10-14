@@ -29,6 +29,17 @@ describe("drawScene", () => {
     drawScene(ctx, tileset, [[{ floor: 15 }]]);
     expect(calls).toEqual(["15"]);
   });
+
+  it("draws a quality pip in the tile corner", () => {
+    const calls: string[] = [];
+    const ctx = {
+      fillStyle: "",
+      fillRect: (x: number, y: number, w: number, h: number) => calls.push(`pip:${ctx.fillStyle}@${x},${y},${w},${h}`),
+    } as unknown as CanvasRenderingContext2D;
+    const tileset = { drawTile: () => {} } as unknown as Tileset;
+    drawScene(ctx, tileset, [[{ floor: 0, feature: 24, pip: "#9be56f" }]]);
+    expect(calls).toEqual([`pip:#9be56f@${TILE_SIZE - 9},1,8,8`]);
+  });
 });
 
 describe("Tileset.drawTile", () => {

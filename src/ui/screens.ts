@@ -161,7 +161,7 @@ export function drawMenu(bctx: CanvasRenderingContext2D, menu: MenuNav, scalingM
       `${i === menu.index ? ">" : " "} ${it.label}${suffix}`,
       x + 20,
       rowY,
-      i === menu.index ? "#ffd97a" : "#e8e4da",
+      i === menu.index ? "#ffd97a" : (it.color ?? "#e8e4da"),
       2,
     );
 

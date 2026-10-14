@@ -54,10 +54,17 @@ describe("minimap", () => {
 
   it("colors known item tiles", () => {
     expect(minimapItemColor(T.Potion)).toBe("#9be56f");
+    expect(minimapItemColor(T.MajorPotion)).toBe("#9be56f");
     expect(minimapItemColor(T.Gold)).toBe("#ffd97a");
     expect(minimapItemColor(T.Sword)).toBe("#d8d8d8");
+    expect(minimapItemColor(T.Dagger)).toBe("#d8d8d8");
+    expect(minimapItemColor(T.LongSword)).toBe("#d8d8d8");
+    expect(minimapItemColor(T.BattleAxe)).toBe("#d8d8d8");
     expect(minimapItemColor(T.Shield)).toBe("#7ab8ff");
+    expect(minimapItemColor(T.Buckler)).toBe("#7ab8ff");
+    expect(minimapItemColor(T.KiteShield)).toBe("#7ab8ff");
     expect(minimapItemColor(T.Torch)).toBe("#ff9a4a");
+    expect(minimapItemColor(T.Lantern)).toBe("#ff9a4a");
     expect(minimapItemColor(T.Corpse)).toBe("#6a6a6a");
     expect(minimapItemColor(T.Floor)).toBeNull();
   });

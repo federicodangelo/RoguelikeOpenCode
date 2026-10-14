@@ -53,14 +53,21 @@ export function minimapCellColor(game: Game, x: number, y: number): string | nul
 export function minimapItemColor(tile: number): string | null {
   switch (tile) {
     case T.Potion:
+    case T.MajorPotion:
       return "#9be56f";
     case T.Gold:
       return "#ffd97a";
     case T.Sword:
+    case T.Dagger:
+    case T.LongSword:
+    case T.BattleAxe:
       return "#d8d8d8";
     case T.Shield:
+    case T.Buckler:
+    case T.KiteShield:
       return "#7ab8ff";
     case T.Torch:
+    case T.Lantern:
       return "#ff9a4a";
     case T.Corpse:
       return "#6a6a6a";

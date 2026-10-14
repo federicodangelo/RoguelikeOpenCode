@@ -12,6 +12,7 @@ import {
   makeInventory,
   pickDefWhere,
   pickUp,
+  qualityColor,
   recalcStats,
   rollQuality,
   unequipSlot,
@@ -21,6 +22,7 @@ import {
   type Inventory,
   type ItemDef,
   type ItemKind,
+  type Quality,
 } from "./items.ts";
 import { MessageLog } from "./messages.ts";
 import { BASE_SEED, CORPSE_CAP, TORCH_RADIUS } from "./constants.ts";
@@ -122,8 +124,8 @@ export class Game {
     if (explored.size !== before) this.cache.exploredVersion++;
   }
 
-  logMessage(msg: string): void {
-    this.messages.push(msg);
+  logMessage(msg: string, color?: string): void {
+    this.messages.push(msg, color);
   }
 
   private protectPlayer(): void {
@@ -151,6 +153,11 @@ export class Game {
   itemNameAtPlayer(): string | null {
     const item = this.map.items.find((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
     return item ? itemName(item) : null;
+  }
+
+  itemQualityAtPlayer(): Quality | null {
+    const item = this.map.items.find((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
+    return item ? item.quality : null;
   }
 
   adjacentInteractables(): { doorClosed: boolean; trap: boolean; monster: Entity | null } {
@@ -331,10 +338,11 @@ export class Game {
   pickup(): boolean {
     const idx = this.map.items.findIndex((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
     if (idx === -1) return false;
-    const result = pickUp(this.player, this.inventory, this.map.items[idx]!);
+    const item = this.map.items[idx]!;
+    const result = pickUp(this.player, this.inventory, item);
     if (!result) return false;
     if (result.took) this.map.items.splice(idx, 1);
-    this.logMessage(result.message);
+    this.logMessage(result.message, qualityColor(item.quality));
     this.events.pickup?.();
     return true;
   }

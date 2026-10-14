@@ -25,6 +25,7 @@ export type HintIcon = "item" | "stairs" | "stairsUp" | "trap" | "door" | "potio
 export interface ContextualHint {
   text: string;
   icon: HintIcon;
+  color?: string;
 }
 
 export function hintIconColor(icon: HintIcon): string {
@@ -51,6 +52,7 @@ export function hintIconColor(icon: HintIcon): string {
 export interface ContextualHintInput {
   hasPickableItem: boolean;
   itemName?: string | null;
+  itemNameColor?: string | null;
   cell: string;
   depth: number;
   potions: number;
@@ -66,7 +68,7 @@ export function contextualHints(input: ContextualHintInput): ContextualHint[] {
   const hints: ContextualHint[] = [];
 
   if (input.itemName) {
-    hints.push({ text: `g: pick up ${input.itemName}`, icon: "item" });
+    hints.push({ text: `g: pick up ${input.itemName}`, icon: "item", color: input.itemNameColor ?? undefined });
   } else if (input.hasPickableItem) {
     hints.push({ text: "g: pick up", icon: "item" });
   }
@@ -206,7 +208,15 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
 
   const n = data.messages.length;
   for (let i = 0; i < n; i++) {
-    drawPixelText(bctx, data.messages.at(i), 8, panelY - 16 - (n - 1 - i) * 16, i === n - 1 ? "#e8e4da" : "#9a958c", 2);
+    const fallback = i === n - 1 ? "#e8e4da" : "#9a958c";
+    drawPixelText(
+      bctx,
+      data.messages.at(i),
+      8,
+      panelY - 16 - (n - 1 - i) * 16,
+      data.messages.colorAt(i) ?? fallback,
+      2,
+    );
   }
 }
 
@@ -263,6 +273,6 @@ export function drawContextHints(
   rows.forEach((row, i) => {
     const rowY = chosen.y + 4 + i * rowH;
     drawIcon(bctx, icons, row.icon, chosen.x + 6, rowY);
-    drawPixelText(bctx, row.text, chosen.x + 20, rowY, hintIconColor(row.icon), 2);
+    drawPixelText(bctx, row.text, chosen.x + 20, rowY, row.color ?? hintIconColor(row.icon), 2);
   });
 }

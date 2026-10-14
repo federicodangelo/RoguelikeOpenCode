@@ -3,4 +3,5 @@ export interface CellView {
   feature?: number;
   entity?: number;
   dim?: boolean;
+  pip?: string;
 }

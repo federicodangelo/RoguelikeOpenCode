@@ -140,18 +140,18 @@ PHASE 3 - Equipment, inventory, and swapping
 
 PHASE 4 - Variant art and quality visuals
 -----------------------------------------
-[ ] 4.1 Add variant tile art in tools/make-tiles.ts (dagger, long sword,
+[x] 4.1 Add variant tile art in tools/make-tiles.ts (dagger, long sword,
         battle axe, buckler, kite shield, major potion, lantern) using free
         indices 24-31; regenerate with bun run tiles
-[ ] 4.2 Add optional tint/pip field to CellView (src/core/scene.ts), set it
+[x] 4.2 Add optional tint/pip field to CellView (src/core/scene.ts), set it
         from item quality in src/core/sceneBuilder.ts, draw it in
         src/platform/render.ts (white / green / blue corner pip)
-[ ] 4.3 Color item names by quality in inventory menu, pickup messages, and
+[x] 4.3 Color item names by quality in inventory menu, pickup messages, and
         contextual hints (qualityColor() helper in src/core/items.ts so core
         and ui share it)
-[ ] 4.4 Regenerate screenshots if HUD/menu layout changed
+[x] 4.4 Regenerate screenshots if HUD/menu layout changed
         (bun run screenshots, tools/make-screenshots.ts)
-[ ] 4.5 Tests: render.test.ts pip field, hud.test.ts quality colors
+[x] 4.5 Tests: render.test.ts pip field, hud.test.ts quality colors
 
 PHASE 5 - Balance pass and hardening
 ------------------------------------

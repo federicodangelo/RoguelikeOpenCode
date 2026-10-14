@@ -33,6 +33,23 @@ describe("contextual hints", () => {
     ).toEqual([{ text: "g: pick up potion", icon: "item" }]);
   });
 
+  it("colors the pickup hint by item quality", () => {
+    expect(
+      contextualHints({
+        hasPickableItem: true,
+        itemName: "rare long sword",
+        itemNameColor: "#7ab8ff",
+        cell: "floor",
+        depth: 1,
+        potions: 0,
+        torches: 0,
+        hp: 10,
+        maxHp: 10,
+        skillPoints: 0,
+      }),
+    ).toEqual([{ text: "g: pick up rare long sword", icon: "item", color: "#7ab8ff" }]);
+  });
+
   it("shows stairs hints", () => {
     expect(
       contextualHints({
