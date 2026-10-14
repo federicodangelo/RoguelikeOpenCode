@@ -1,7 +1,7 @@
 import { T } from "../core/tiles.ts";
 import { HELP_LINES, LOGICAL_H, LOGICAL_W, VIEW_COLS } from "../core/constants.ts";
 import { drawPixelText, drawPixelTextCenter, drawPixelTextRight, wrapPixelText } from "./pixel-font.ts";
-import type { Tileset } from "../platform/render.ts";
+import type { TileDrawer } from "../shared/types.ts";
 import type { MenuNav } from "./menu.ts";
 import type { ScalingMode } from "./scaling.ts";
 
@@ -15,7 +15,7 @@ export interface GameOverStats {
   kills: number;
 }
 
-export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset, hasSave: boolean): void {
+export function drawTitle(bctx: CanvasRenderingContext2D, tiles: TileDrawer, hasSave: boolean): void {
   bctx.fillStyle = "#111";
   bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
 

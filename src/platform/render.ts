@@ -1,5 +1,6 @@
 import { SHEET_COLS, TILE_SIZE } from "../core/tiles.ts";
 import type { CellView } from "../core/scene.ts";
+import type { TileDrawer } from "../shared/types.ts";
 
 export type { CellView } from "../core/scene.ts";
 
@@ -19,7 +20,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, tileset: Tileset, scene
   }
 }
 
-export class Tileset {
+export class Tileset implements TileDrawer {
   private constructor(private readonly img: CanvasImageSource) {}
 
   static load(url: string): Promise<Tileset> {
