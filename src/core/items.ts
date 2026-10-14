@@ -228,6 +228,18 @@ export function unequipSlot(player: Entity, inv: Inventory, slot: EquipSlot): Un
   return { message: `You stow the ${item.variant}.`, took: true };
 }
 
+export function dropCarried(inv: Inventory, index: number): ItemInstance | null {
+  const item = inv.carried[index];
+  if (!item || (item.kind !== "weapon" && item.kind !== "armor")) return null;
+  inv.carried.splice(index, 1);
+  delete item.uid;
+  return item;
+}
+
+export function dropConsumable(inv: Inventory, kind: ConsumableKind): ConsumableStack | null {
+  return takeStack(inv, kind);
+}
+
 export interface TorchResult {
   message: string;
   turns: number;

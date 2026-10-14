@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { makePlayer } from "../../src/core/entities.ts";
 import {
   ITEM_DEFS,
+  dropCarried,
+  dropConsumable,
   equipCarried,
   makeCorpse,
   makeGold,
@@ -234,6 +236,41 @@ describe("equip and unequip", () => {
     inv.equipment.weapon = null;
     recalcStats(p, inv);
     expect(p.atk).toBe(p.baseAtk);
+  });
+});
+
+describe("drop", () => {
+  it("dropCarried removes the item and clears its uid", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    pickUp(p, inv, inst("weapon", "dagger", 1, T.Sword));
+    const dropped = dropCarried(inv, 0);
+    expect(dropped?.variant).toBe("dagger");
+    expect(dropped!.uid).toBeUndefined();
+    expect(inv.carried.length).toBe(0);
+    expect(inv.equipment.weapon?.variant).toBe("short sword");
+    expect(p.atk).toBe(p.baseAtk + 2);
+  });
+
+  it("dropCarried refuses bad indexes and equipped items", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    expect(dropCarried(inv, 0)).toBeNull();
+    expect(dropCarried(inv, -1)).toBeNull();
+    expect(inv.equipment.weapon?.variant).toBe("short sword");
+  });
+
+  it("dropConsumable decrements the stack and returns the stack info", () => {
+    const inv = makeInventory();
+    pickUp(makePlayer(0, 0), inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(makePlayer(0, 0), inv, inst("potion", "minor potion", 5, T.Potion));
+    const stack = dropConsumable(inv, "potion");
+    expect(stack?.variant).toBe("minor potion");
+    expect(stack?.stat).toBe(5);
+    expect(inv.consumables[0]!.count).toBe(1);
+    expect(dropConsumable(inv, "torch")).toBeNull();
   });
 });
 

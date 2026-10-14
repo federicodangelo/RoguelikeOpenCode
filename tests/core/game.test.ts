@@ -173,6 +173,47 @@ describe("Game pickups", () => {
     expect(game.player.atk).toBe(game.player.baseAtk);
     expect(game.unequip("weapon")).toBe(false);
   });
+
+  it("dropping a carried weapon places it on the floor at the player", () => {
+    const game = new Game();
+    const x = game.player.x;
+    const y = game.player.y;
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 2, "short sword"));
+    game.pickup();
+    game.map.items.push({ ...placedItem(x, y, "weapon", T.LongSword, 4, "long sword"), quality: "uncommon" });
+    game.pickup();
+    expect(game.inventory.carried.length).toBe(1);
+    expect(game.dropCarried(0)).toBe(true);
+    expect(game.inventory.carried.length).toBe(0);
+    expect(game.player.atk).toBe(game.player.baseAtk + 2);
+    const dropped = game.map.items.find((i) => i.variant === "long sword");
+    expect(dropped).toBeDefined();
+    expect(dropped!.x).toBe(x);
+    expect(dropped!.y).toBe(y);
+    expect(dropped!.quality).toBe("uncommon");
+    expect(dropped!.stat).toBe(4);
+    expect(game.messages.at(game.messages.length - 1)).toContain("drop");
+    expect(game.messages.colorAt(game.messages.length - 1)).toBe("#9be56f");
+    expect(game.dropCarried(0)).toBe(false);
+  });
+
+  it("dropping a consumable places one item on the floor", () => {
+    const game = new Game();
+    game.inventory.consumables.push({
+      kind: "potion",
+      variant: "minor potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 5,
+      count: 2,
+    });
+    expect(game.dropConsumable("potion")).toBe(true);
+    expect(game.inventory.consumables[0]!.count).toBe(1);
+    const dropped = game.map.items.find((i) => i.kind === "potion" && i.x === game.player.x && i.y === game.player.y);
+    expect(dropped).toBeDefined();
+    expect(dropped!.variant).toBe("minor potion");
+    expect(game.dropConsumable("torch")).toBe(false);
+  });
 });
 
 describe("Game interactables", () => {

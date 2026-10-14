@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
 import { addStatus } from "../../src/core/status.ts";
+import { T } from "../../src/core/tiles.ts";
 import { openInterior } from "../core/helpers.ts";
 import { buildMenuTree } from "../../src/platform/menuTree.ts";
 import { defaultSettings } from "../../src/platform/settings.ts";
@@ -92,6 +93,49 @@ describe("input", () => {
     handleKeydown(key("Escape"), makeContext(game, menu));
 
     expect(game.menuOpen).toBe(false);
+  });
+
+  it("escape inside an item submenu returns to the inventory list", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.monstersByFloor.set(game.depth, []);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "short sword",
+      quality: "common",
+      tile: T.Sword,
+      stat: 2,
+    });
+    game.pickup();
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "long sword",
+      quality: "common",
+      tile: T.LongSword,
+      stat: 3,
+    });
+    game.pickup();
+    game.menuOpen = true;
+    const menu = makeMenu(game);
+    menu.open();
+
+    menu.index = menu.indexOfId("inventory");
+    menu.enter();
+    const carriedIdx = menu.entries().findIndex((entry) => entry.id?.startsWith("carried-"));
+    expect(carriedIdx).toBeGreaterThanOrEqual(0);
+    menu.index = carriedIdx;
+    menu.enter();
+    expect(menu.depth()).toBe(2);
+
+    handleKeydown(key("Escape"), makeContext(game, menu));
+
+    expect(game.menuOpen).toBe(true);
+    expect(menu.depth()).toBe(1);
+    expect(menu.ids()[0]).toBe("inventory");
   });
 
   it("non-action keys do not consume a turn while stunned", () => {

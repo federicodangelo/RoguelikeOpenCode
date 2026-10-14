@@ -32,6 +32,11 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
     }
   };
 
+  const consumeBack = (fn: () => boolean) => () => {
+    consume(fn)();
+    actions.back();
+  };
+
   return [
     {
       id: "help",
@@ -70,45 +75,88 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
         });
 
         for (const item of inv.carried) {
+          const statLabel = item.kind === "weapon" ? "ATK" : "DEF";
+          const equipped = item.kind === "weapon" ? weapon : armor;
+          let relText: string;
+          if (equipped) {
+            const diff = item.stat - equipped.stat;
+            relText =
+              diff === 0
+                ? `same ${statLabel} as ${itemName(equipped)}`
+                : `${diff > 0 ? "+" : ""}${diff} ${statLabel} vs ${itemName(equipped)}`;
+          } else {
+            relText = `nothing equipped: +${item.stat} ${statLabel}`;
+          }
+          const uid = item.uid ?? item.variant;
           entries.push({
-            id: `carried-${item.uid ?? item.variant}`,
+            id: `carried-${uid}`,
             label: `${itemName(item)} (${item.kind})`,
             color: qualityColor(item.quality),
-            hint: [
-              "Enter: equip, swapping the current piece back",
-              `+${item.stat} ${item.kind === "weapon" ? "ATK" : "DEF"}`,
-              `Carried: ${inv.carried.length}/${CARRIED_CAP}`,
-            ],
-            action: consume(() => game.equipCarried(inv.carried.indexOf(item))),
+            hint: [relText, `Carried: ${inv.carried.length}/${CARRIED_CAP}`, "Enter: equip or drop"],
+            submenu: () => {
+              const idx = inv.carried.indexOf(item);
+              const kids: MenuEntry[] = [];
+              if (idx >= 0) {
+                kids.push({
+                  id: `carried-${uid}-equip`,
+                  label: "Equip (swap)",
+                  color: qualityColor(item.quality),
+                  hint: [
+                    relText,
+                    equipped ? `Equipped: +${equipped.stat} ${statLabel}` : "Nothing equipped",
+                    `This item: +${item.stat} ${statLabel}`,
+                  ],
+                  action: consumeBack(() => game.equipCarried(idx)),
+                });
+                kids.push({
+                  id: `carried-${uid}-drop`,
+                  label: "Drop on floor",
+                  hint: "Enter: leave this item on the ground",
+                  action: consumeBack(() => game.dropCarried(idx)),
+                });
+              }
+              kids.push({ label: "Back", hint: "Enter to return to the menu", action: actions.back });
+              return kids;
+            },
           });
         }
 
         for (const stack of inv.consumables) {
-          if (stack.kind === "potion") {
-            entries.push({
-              id: `stack-potion-${stack.variant}`,
-              label: `Potions: ${stack.variant} x${stack.count}`,
-              color: qualityColor(stack.quality),
-              hint: [
-                `Enter: drink (+${stack.stat} HP)`,
-                `Current HP: ${game.player.hp}/${game.player.maxHp}`,
-                `Potions: ${countConsumable(inv, "potion")}`,
-              ],
-              action: consume(() => game.drink()),
-            });
-          } else {
-            entries.push({
-              id: `stack-torch-${stack.variant}`,
-              label: `Torches: ${stack.variant} x${stack.count}`,
-              color: qualityColor(stack.quality),
-              hint: [
-                `Enter: light (+${stack.stat} turns)`,
-                `Light turns: ${game.lightTurns}`,
-                `Torches: ${countConsumable(inv, "torch")}`,
-              ],
-              action: consume(() => game.useTorch()),
-            });
-          }
+          const isPotion = stack.kind === "potion";
+          const group = isPotion ? "Potions" : "Torches";
+          const verb = isPotion ? "Drink" : "Light";
+          const benefit = isPotion ? `+${stack.stat} HP` : `+${stack.stat} light turns`;
+          entries.push({
+            id: `stack-${stack.kind}-${stack.variant}`,
+            label: `${group}: ${stack.variant} x${stack.count}`,
+            color: qualityColor(stack.quality),
+            hint: [
+              `Enter: ${verb.toLowerCase()} or drop one`,
+              benefit,
+              `${group}: ${countConsumable(inv, stack.kind)}`,
+            ],
+            submenu: () => {
+              const kids: MenuEntry[] = [];
+              if (inv.consumables.includes(stack)) {
+                kids.push({
+                  id: `stack-${stack.kind}-${stack.variant}-use`,
+                  label: verb,
+                  hint: isPotion
+                    ? [benefit, `Current HP: ${game.player.hp}/${game.player.maxHp}`]
+                    : [benefit, `Light turns: ${game.lightTurns}`],
+                  action: consumeBack(() => (isPotion ? game.drink() : game.useTorch())),
+                });
+                kids.push({
+                  id: `stack-${stack.kind}-${stack.variant}-drop`,
+                  label: "Drop one",
+                  hint: "Enter: leave one on the ground",
+                  action: consumeBack(() => game.dropConsumable(stack.kind)),
+                });
+              }
+              kids.push({ label: "Back", hint: "Enter to return to the menu", action: actions.back });
+              return kids;
+            },
+          });
         }
 
         entries.push({

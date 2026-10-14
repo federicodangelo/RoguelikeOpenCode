@@ -8,6 +8,7 @@ import { defaultSettings } from "../../src/platform/settings.ts";
 import { MenuNav } from "../../src/ui/menu.ts";
 
 function makeMenu(game: Game, settings = defaultSettings()): MenuNav {
+  let menu: MenuNav;
   const actions = {
     cycleScaling: () => {},
     toggleSound: () => {},
@@ -17,9 +18,10 @@ function makeMenu(game: Game, settings = defaultSettings()): MenuNav {
     save: () => {},
     load: () => {},
     reset: () => {},
-    back: () => {},
+    back: () => menu.back(),
   };
-  return new MenuNav(() => buildMenuTree(game, settings, actions));
+  menu = new MenuNav(() => buildMenuTree(game, settings, actions));
+  return menu;
 }
 
 describe("inventory menu", () => {
@@ -99,9 +101,107 @@ describe("inventory menu", () => {
     menu.index = carriedIdx;
     menu.enter();
 
+    const equipIdx = menu.entries().findIndex((entry) => entry.label === "Equip (swap)");
+    expect(equipIdx).toBeGreaterThanOrEqual(0);
+    menu.index = equipIdx;
+    menu.enter();
+
+    expect(menu.depth()).toBe(1);
+    expect(menu.labels()[0]).toBe("Inventory");
+    expect(menu.entries()[menu.indexOfId("slot-weapon")]!.label).toContain("long sword");
     expect(game.inventory.equipment.weapon?.variant).toBe("long sword");
     expect(game.inventory.carried[0]!.variant).toBe("short sword");
     expect(game.player.atk).toBe(game.player.baseAtk + 3);
+  });
+
+  it("shows carried item stats relative to the equipped item", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "short sword",
+      quality: "common",
+      tile: T.Sword,
+      stat: 2,
+    });
+    game.pickup();
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "long sword",
+      quality: "common",
+      tile: T.LongSword,
+      stat: 3,
+    });
+    game.pickup();
+    const menu = makeMenu(game);
+    menu.open();
+
+    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.index = inventoryIdx;
+    menu.enter();
+
+    const carried = menu.entries().find((entry) => entry.id?.startsWith("carried-"))!;
+    expect(carried.hint).toContain("+1 ATK vs short sword");
+  });
+
+  it("drops a carried item on the floor", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "short sword",
+      quality: "common",
+      tile: T.Sword,
+      stat: 2,
+    });
+    game.pickup();
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "long sword",
+      quality: "uncommon",
+      tile: T.LongSword,
+      stat: 4,
+    });
+    game.pickup();
+    expect(game.inventory.carried.length).toBe(1);
+    const floorBefore = game.map.items.length;
+
+    const menu = makeMenu(game);
+    menu.open();
+
+    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.index = inventoryIdx;
+    menu.enter();
+
+    const carriedIdx = menu.entries().findIndex((entry) => entry.id?.startsWith("carried-"));
+    menu.index = carriedIdx;
+    menu.enter();
+
+    const dropIdx = menu.entries().findIndex((entry) => entry.label === "Drop on floor");
+    expect(dropIdx).toBeGreaterThanOrEqual(0);
+    menu.index = dropIdx;
+    menu.enter();
+
+    expect(menu.depth()).toBe(1);
+    expect(menu.labels()[0]).toBe("Inventory");
+    expect(game.inventory.carried.length).toBe(0);
+    expect(game.inventory.equipment.weapon?.variant).toBe("short sword");
+    expect(game.player.atk).toBe(game.player.baseAtk + 2);
+    const dropped = game.map.items.find(
+      (i) => i.x === game.player.x && i.y === game.player.y && i.variant === "long sword",
+    );
+    expect(dropped).toBeDefined();
+    expect(dropped!.quality).toBe("uncommon");
+    expect(dropped!.stat).toBe(4);
+    expect(game.map.items.length).toBe(floorBefore + 1);
   });
 
   it("colors inventory entries by item quality", () => {
@@ -152,6 +252,11 @@ describe("inventory menu", () => {
     menu.index = potionIdx;
     menu.enter();
 
+    const drinkIdx = menu.entries().findIndex((entry) => entry.label === "Drink");
+    expect(drinkIdx).toBeGreaterThanOrEqual(0);
+    menu.index = drinkIdx;
+    menu.enter();
+
     expect(game.inventory.consumables.length).toBe(0);
     expect(game.player.hp).toBe(6);
   });
@@ -179,6 +284,11 @@ describe("inventory menu", () => {
     expect(torchIdx).toBeGreaterThanOrEqual(0);
 
     menu.index = torchIdx;
+    menu.enter();
+
+    const lightIdx = menu.entries().findIndex((entry) => entry.label === "Light");
+    expect(lightIdx).toBeGreaterThanOrEqual(0);
+    menu.index = lightIdx;
     menu.enter();
 
     expect(game.inventory.consumables.length).toBe(0);
@@ -211,9 +321,49 @@ describe("inventory menu", () => {
     menu.index = potionIdx;
     menu.enter();
 
+    const drinkIdx = menu.entries().findIndex((entry) => entry.label === "Drink");
+    expect(drinkIdx).toBeGreaterThanOrEqual(0);
+    menu.index = drinkIdx;
+    menu.enter();
+
     expect(game.inventory.consumables[0]!.count).toBe(1);
     expect(game.player.hp).toBe(1);
     expect(game.lightTurns).toBe(4);
+  });
+
+  it("drops one potion from a stack onto the floor", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.inventory.consumables.push({
+      kind: "potion",
+      variant: "minor potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 5,
+      count: 2,
+    });
+    const floorBefore = game.map.items.length;
+    const menu = makeMenu(game);
+    menu.open();
+
+    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.index = inventoryIdx;
+    menu.enter();
+
+    const potionIdx = menu.entries().findIndex((entry) => entry.label.startsWith("Potions:"));
+    menu.index = potionIdx;
+    menu.enter();
+
+    const dropIdx = menu.entries().findIndex((entry) => entry.label === "Drop one");
+    expect(dropIdx).toBeGreaterThanOrEqual(0);
+    menu.index = dropIdx;
+    menu.enter();
+
+    expect(game.inventory.consumables[0]!.count).toBe(1);
+    const dropped = game.map.items.find((i) => i.x === game.player.x && i.y === game.player.y && i.kind === "potion");
+    expect(dropped).toBeDefined();
+    expect(dropped!.variant).toBe("minor potion");
+    expect(game.map.items.length).toBe(floorBefore + 1);
   });
 
   it("a stunned player cannot equip but keeps the carried item", () => {
@@ -250,6 +400,11 @@ describe("inventory menu", () => {
     const carriedIdx = menu.entries().findIndex((entry) => entry.id?.startsWith("carried-"));
     expect(carriedIdx).toBeGreaterThanOrEqual(0);
     menu.index = carriedIdx;
+    menu.enter();
+
+    const equipIdx = menu.entries().findIndex((entry) => entry.label === "Equip (swap)");
+    expect(equipIdx).toBeGreaterThanOrEqual(0);
+    menu.index = equipIdx;
     menu.enter();
 
     expect(game.inventory.equipment.weapon?.variant).toBe("short sword");

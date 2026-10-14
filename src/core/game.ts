@@ -4,6 +4,8 @@ import { attack, gainXp, makePlayer, xpNeeded, type Entity } from "./entities.ts
 import { computeFOV } from "./fov.ts";
 import { hasStatus } from "./status.ts";
 import {
+  dropCarried as dropCarriedItem,
+  dropConsumable as dropConsumableStack,
   equipCarried,
   itemName,
   makeCorpse,
@@ -359,6 +361,40 @@ export class Game {
     const result = unequipSlot(this.player, this.inventory, slot);
     this.logMessage(result.message);
     if (!result.took) return false;
+    this.dirty = true;
+    return true;
+  }
+
+  dropCarried(index: number): boolean {
+    const item = dropCarriedItem(this.inventory, index);
+    if (!item) return false;
+    this.map.items.push({
+      x: this.player.x,
+      y: this.player.y,
+      kind: item.kind,
+      variant: item.variant,
+      quality: item.quality,
+      tile: item.tile,
+      stat: item.stat,
+    });
+    this.logMessage(`You drop the ${itemName(item)}.`, qualityColor(item.quality));
+    this.dirty = true;
+    return true;
+  }
+
+  dropConsumable(kind: "potion" | "torch"): boolean {
+    const stack = dropConsumableStack(this.inventory, kind);
+    if (!stack) return false;
+    this.map.items.push({
+      x: this.player.x,
+      y: this.player.y,
+      kind: stack.kind,
+      variant: stack.variant,
+      quality: stack.quality,
+      tile: stack.tile,
+      stat: stack.stat,
+    });
+    this.logMessage(`You drop a ${stack.variant}.`, qualityColor(stack.quality));
     this.dirty = true;
     return true;
   }

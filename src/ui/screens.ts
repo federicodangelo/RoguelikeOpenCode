@@ -140,7 +140,7 @@ export function drawMenu(bctx: CanvasRenderingContext2D, menu: MenuNav, scalingM
   bctx.strokeStyle = "#5a544a";
   bctx.strokeRect(x, y, MENU_WIDTH, h);
 
-  const title = menu.depth() === 0 ? "MENU" : `MENU > ${labels.join(" > ")}`;
+  const title = menu.depth() === 0 ? "MENU" : (labels[labels.length - 1] ?? "MENU");
   drawPixelText(bctx, title, x + 20, y + 20, "#e8e4da", 3);
   if (menu.depth() > 0) {
     drawPixelTextRight(bctx, "submenu", x + MENU_WIDTH - 20, y + 20, "#9a958c", 2);
