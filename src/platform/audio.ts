@@ -1,18 +1,22 @@
 export type SfxName = "menu" | "select" | "hit" | "hurt" | "kill" | "pickup" | "potion" | "level" | "stairs" | "death";
 
-const MELODIES: number[][] = [
-  [220, 261.63, 329.63, 261.63, 392, 329.63, 261.63, 220],
-  [196, 246.94, 293.66, 246.94, 349.23, 293.66, 246.94, 196],
-  [174.61, 220, 261.63, 220, 311.13, 261.63, 220, 174.61],
-  [164.81, 196, 246.94, 196, 261.63, 246.94, 196, 164.81],
+interface MusicTheme {
+  root: number;
+  tempo: number;
+  progression: number[];
+}
+
+const MUSIC_THEMES: MusicTheme[] = [
+  { root: 110, tempo: 0.32, progression: [0, 8, 3, 10] },
+  { root: 98, tempo: 0.28, progression: [0, 8, 3, 10] },
+  { root: 87.31, tempo: 0.24, progression: [0, 8, 3, 10] },
+  { root: 82.41, tempo: 0.22, progression: [0, 8, 3, 10] },
 ];
-const BASSES: number[][] = [
-  [110, 110, 130.81, 130.81, 164.81, 164.81, 130.81, 110],
-  [98, 98, 123.47, 123.47, 146.83, 146.83, 123.47, 98],
-  [87.31, 87.31, 110, 110, 138.59, 138.59, 110, 87.31],
-  [82.41, 82.41, 98, 98, 116.54, 116.54, 98, 82.41],
-];
-const MUSIC_TEMPOS: number[] = [0.32, 0.28, 0.24, 0.22];
+const MINOR_SCALE = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22, 24];
+const MELODY_A: (number | null)[] = [0, null, 2, 3, null, 4, null, 3, 2, null, 0, null, 7, null, 5, 3];
+const MELODY_B: (number | null)[] = [7, null, 5, 4, null, 3, null, 4, 5, null, 7, null, 8, null, 7, 5];
+const ARP_STEPS = [2, 6, 10, 14];
+const ARP_PATTERN = [0, 1, 2, 1];
 const MUSIC_LOOKAHEAD_SECONDS = 0.25;
 const MUSIC_SCHEDULER_MS = 100;
 
@@ -23,11 +27,20 @@ export class GameAudio {
   private readonly baseGain = 0.45;
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  private musicBus: GainNode | null = null;
+  private musicFilter: BiquadFilterNode | null = null;
+  private musicCompressor: DynamicsCompressorNode | null = null;
+  private musicDelay: DelayNode | null = null;
+  private musicFeedback: GainNode | null = null;
+  private musicWet: GainNode | null = null;
   private musicTimer: number | null = null;
+  private themeSwitchTimer: number | null = null;
+  private musicPlaying = false;
+  private themeSwitchToken = 0;
   private musicStep = 0;
   private nextMusicTime = 0;
   private musicTheme = 0;
-  private musicStepSeconds = MUSIC_TEMPOS[0] ?? 0.32;
+  private musicStepSeconds = MUSIC_THEMES[0]?.tempo ?? 0.32;
   private sfxVariant = 0;
 
   private get audible(): boolean {
@@ -53,13 +66,26 @@ export class GameAudio {
   }
 
   setMusicContext(depth: number, danger: boolean): void {
-    const theme = danger ? 3 : (Math.max(1, depth) - 1) % MELODIES.length;
+    const theme = danger ? 3 : (Math.max(1, depth) - 1) % MUSIC_THEMES.length;
     if (theme === this.musicTheme) return;
     this.musicTheme = theme;
-    this.musicStepSeconds = MUSIC_TEMPOS[theme] ?? 0.32;
-    if (this.musicTimer !== null) {
-      this.stopMusic();
-      this.startMusic();
+    this.musicStepSeconds = MUSIC_THEMES[theme]?.tempo ?? 0.32;
+    if (this.musicTimer !== null || this.themeSwitchTimer !== null) {
+      if (typeof window !== "undefined") {
+        if (this.musicTimer !== null) window.clearTimeout(this.musicTimer);
+        this.musicTimer = null;
+        this.musicPlaying = false;
+        if (this.themeSwitchTimer !== null) window.clearTimeout(this.themeSwitchTimer);
+        const token = ++this.themeSwitchToken;
+        this.fadeOutMusic(0.25);
+        this.themeSwitchTimer = window.setTimeout(() => {
+          if (this.themeSwitchToken !== token) return;
+          this.themeSwitchTimer = null;
+          this.startMusic();
+        }, 300);
+      }
+    } else {
+      this.updateMusicTone();
     }
   }
 
@@ -73,6 +99,39 @@ export class GameAudio {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.audible ? this.volume * this.baseGain : 0;
       this.master.connect(this.ctx.destination);
+
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.gain.value = 1;
+
+      this.musicFilter = this.ctx.createBiquadFilter();
+      this.musicFilter.type = "lowpass";
+      this.musicFilter.frequency.value = 2600;
+      this.musicFilter.Q.value = 0.7;
+
+      this.musicCompressor = this.ctx.createDynamicsCompressor();
+      this.musicCompressor.threshold.value = -18;
+      this.musicCompressor.knee.value = 24;
+      this.musicCompressor.ratio.value = 3;
+      this.musicCompressor.attack.value = 0.003;
+      this.musicCompressor.release.value = 0.25;
+
+      this.musicDelay = this.ctx.createDelay(1);
+      this.musicDelay.delayTime.value = this.musicStepSeconds * 0.75;
+
+      this.musicFeedback = this.ctx.createGain();
+      this.musicFeedback.gain.value = 0.32;
+
+      this.musicWet = this.ctx.createGain();
+      this.musicWet.gain.value = 0.22;
+
+      this.musicBus.connect(this.musicFilter);
+      this.musicFilter.connect(this.musicCompressor);
+      this.musicCompressor.connect(this.master);
+      this.musicFilter.connect(this.musicDelay);
+      this.musicDelay.connect(this.musicFeedback);
+      this.musicFeedback.connect(this.musicDelay);
+      this.musicDelay.connect(this.musicWet);
+      this.musicWet.connect(this.musicCompressor);
     }
     if (this.ctx.state !== "running") void this.ctx.resume();
   }
@@ -80,17 +139,29 @@ export class GameAudio {
   startMusic(): void {
     if (!this.audible || typeof window === "undefined") return;
     this.unlock();
-    if (!this.ctx || this.musicTimer !== null) return;
+    if (!this.ctx || this.musicPlaying || this.musicTimer !== null) return;
+    if (this.themeSwitchTimer !== null) {
+      window.clearTimeout(this.themeSwitchTimer);
+      this.themeSwitchTimer = null;
+      this.themeSwitchToken++;
+    }
+    this.musicPlaying = true;
     this.musicStep = 0;
     this.nextMusicTime = this.ctx.currentTime + 0.05;
+    this.fadeInMusic();
+    this.updateMusicTone();
     this.scheduleMusic();
   }
 
   stopMusic(): void {
-    if (this.musicTimer !== null && typeof window !== "undefined") {
-      window.clearTimeout(this.musicTimer);
+    if (typeof window !== "undefined") {
+      if (this.musicTimer !== null) window.clearTimeout(this.musicTimer);
+      if (this.themeSwitchTimer !== null) window.clearTimeout(this.themeSwitchTimer);
     }
     this.musicTimer = null;
+    this.themeSwitchTimer = null;
+    this.musicPlaying = false;
+    this.themeSwitchToken++;
   }
 
   sfx(name: SfxName): void {
@@ -207,7 +278,7 @@ export class GameAudio {
   }
 
   private scheduleMusic(): void {
-    if (typeof window === "undefined" || !this.ctx || !this.audible) {
+    if (typeof window === "undefined" || !this.ctx || !this.audible || !this.musicPlaying) {
       this.musicTimer = null;
       return;
     }
@@ -223,14 +294,133 @@ export class GameAudio {
 
   private musicTick(time: number): void {
     if (!this.ctx) return;
-    const melodyRow = MELODIES[this.musicTheme] ?? MELODIES[0]!;
-    const bassRow = BASSES[this.musicTheme] ?? BASSES[0]!;
-    const step = this.musicStep++ % melodyRow.length;
-    const melody = melodyRow[step];
-    const bass = bassRow[step];
-    if (melody !== undefined) this.toneAt(melody, 0.28, "triangle", 0.09, time);
-    if (step % 2 === 0 && bass !== undefined) this.toneAt(bass, 0.55, "sine", 0.07, time);
-    if (step === 0) this.toneAt(this.musicTheme === 3 ? 330 : 440, 0.12, "square", 0.03, time);
+    const theme = MUSIC_THEMES[this.musicTheme] ?? MUSIC_THEMES[0]!;
+    const step = this.musicStep % 16;
+    const bar = Math.floor(this.musicStep / 16) % theme.progression.length;
+    this.musicStep++;
+
+    const danger = this.musicTheme === 3;
+    const chordRoot = theme.progression[bar] ?? 0;
+    const chordIntervals = bar === 0 ? [0, 3, 7] : [0, 4, 7];
+    const melodyPattern = bar === 3 ? MELODY_B : MELODY_A;
+    const degree = melodyPattern[step];
+
+    if (degree !== null && degree !== undefined) {
+      const semis = MINOR_SCALE[degree] ?? 0;
+      const freq = this.freqAt(theme.root * 2, semis);
+      const dur = this.musicStepSeconds * (step % 4 === 0 ? 1.4 : 0.9);
+      this.musicTone(freq, time, dur, "triangle", 0.075, -7);
+      this.musicTone(freq, time, dur, "sine", 0.035, 7);
+    }
+
+    if (step % 4 === 0) {
+      const bassRoot = this.normalizeBass(chordRoot);
+      const semis = step === 4 || step === 12 ? bassRoot + 7 : bassRoot;
+      const freq = this.freqAt(theme.root, semis);
+      this.musicTone(freq, time, this.musicStepSeconds * 1.6, "sine", 0.08, 0, freq * 0.98);
+    }
+
+    const arpSlot = ARP_STEPS.indexOf(step);
+    if (arpSlot >= 0) {
+      const arpIndex = ARP_PATTERN[arpSlot] ?? 0;
+      const interval = chordIntervals[arpIndex % chordIntervals.length] ?? 0;
+      this.musicTone(
+        this.freqAt(theme.root * 2, chordRoot + interval),
+        time,
+        this.musicStepSeconds * 0.45,
+        "square",
+        0.025,
+      );
+    }
+
+    if (step === 0 || step === 8 || (danger && (step === 2 || step === 10))) {
+      this.musicTone(70, time, 0.12, "sine", 0.12, 0, 45);
+    }
+    if (step === 4 || step === 12 || (danger && (step === 6 || step === 14))) {
+      this.musicTone(180, time, 0.08, "square", 0.05, 0, 120);
+      this.musicTone(1200, time, 0.04, "triangle", 0.025);
+    }
+    if (step % 4 === 2) {
+      this.musicTone(4200, time, 0.03, "triangle", 0.012);
+    }
+  }
+
+  private fadeInMusic(): void {
+    if (!this.ctx || !this.musicBus) return;
+    const now = this.ctx.currentTime;
+    const gain = this.musicBus.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(0.0001, now);
+    gain.linearRampToValueAtTime(1, now + 0.6);
+  }
+
+  private fadeOutMusic(seconds: number): void {
+    if (!this.ctx || !this.musicBus) return;
+    const now = this.ctx.currentTime;
+    const gain = this.musicBus.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(Math.max(0.0001, gain.value), now);
+    gain.linearRampToValueAtTime(0.0001, now + seconds);
+  }
+
+  private updateMusicTone(): void {
+    if (!this.ctx || !this.musicFilter || !this.musicDelay) return;
+    const now = this.ctx.currentTime;
+    const danger = this.musicTheme === 3;
+
+    const filter = this.musicFilter.frequency;
+    filter.cancelScheduledValues(now);
+    filter.setValueAtTime(filter.value, now);
+    filter.linearRampToValueAtTime(danger ? 1800 : 2600, now + 0.5);
+
+    const delay = this.musicDelay.delayTime;
+    delay.cancelScheduledValues(now);
+    delay.setValueAtTime(delay.value, now);
+    delay.linearRampToValueAtTime(this.musicStepSeconds * 0.75, now + 0.5);
+  }
+
+  private freqAt(root: number, semitones: number): number {
+    return root * 2 ** (semitones / 12);
+  }
+
+  private normalizeBass(offset: number): number {
+    let normalized = offset % 12;
+    if (normalized > 7) normalized -= 12;
+    return normalized;
+  }
+
+  private musicTone(
+    freq: number,
+    startTime: number,
+    dur: number,
+    type: OscillatorType,
+    peak: number,
+    detune = 0,
+    slideTo?: number,
+  ): void {
+    if (!this.ctx) return;
+    const t = Math.max(this.ctx.currentTime, startTime);
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    osc.detune.setValueAtTime(detune, t);
+    if (slideTo !== undefined) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), t + dur);
+    }
+
+    const attack = Math.min(0.03, dur * 0.25);
+    const release = Math.min(0.25, dur * 0.6);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.linearRampToValueAtTime(peak, t + attack);
+    gain.gain.linearRampToValueAtTime(peak * 0.65, t + Math.max(attack + 0.01, dur - release));
+    gain.gain.linearRampToValueAtTime(0.0001, t + dur);
+
+    osc.connect(gain);
+    gain.connect(this.musicBus ?? this.master ?? this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
   }
 
   private nextVariant(count: number): number {
