@@ -11,6 +11,8 @@ const DIRS4: [number, number][] = [
   [0, -1],
 ];
 
+export const SHOOT_COOLDOWN = 3;
+
 export function chaseDistances(map: GameMap, player: Entity): Int32Array {
   return bfsDistances(map.cells, { x: player.x, y: player.y }, (c) => c === "doorClosed");
 }
@@ -88,9 +90,19 @@ export function monsterStep(m: Entity, ctx: MonsterContext): void {
   }
 
   if (seesPlayer && myDist !== -1) {
-    if (m.range > 0 && myDist <= m.range) {
-      attack(rng, m, player);
-      return;
+    if (m.range > 0) {
+      const cooldown = m.shootCooldown ?? 0;
+      if (cooldown > 0) {
+        m.shootCooldown = cooldown - 1;
+        const adjacent = DIRS4.some(([dx, dy]) => m.x + dx === player.x && m.y + dy === player.y);
+        if (adjacent) moveAway(m, player, map, dist, monsters);
+        return;
+      }
+      if (myDist <= m.range) {
+        m.shootCooldown = SHOOT_COOLDOWN;
+        attack(rng, m, player);
+        return;
+      }
     }
 
     for (let step = 0; step < effectiveSpeed(m); step++) {

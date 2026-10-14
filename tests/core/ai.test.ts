@@ -91,6 +91,41 @@ describe("monsterStep", () => {
     expect(m.y).toBe(10);
   });
 
+  it("reloads for three turns between ranged shots", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(13, 10, { name: "archer", archetype: "ranged", range: 5, sprite: T.Archer });
+    const ctx = { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] };
+
+    monsterStep(m, ctx);
+    const hpAfterShot = player.hp;
+    expect(hpAfterShot).toBeLessThan(12);
+    expect(m.shootCooldown).toBe(3);
+
+    monsterStep(m, ctx);
+    monsterStep(m, ctx);
+    monsterStep(m, ctx);
+    expect(player.hp).toBe(hpAfterShot);
+    expect(m.shootCooldown).toBe(0);
+    expect(m.x).toBe(13);
+    expect(m.y).toBe(10);
+
+    monsterStep(m, ctx);
+    expect(player.hp).toBeLessThan(hpAfterShot);
+    expect(m.shootCooldown).toBe(3);
+  });
+
+  it("reloading ranged monsters back away when adjacent", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(11, 10, { name: "archer", archetype: "ranged", range: 5, sprite: T.Archer, shootCooldown: 1 });
+    monsterStep(m, { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [m] });
+    expect(player.hp).toBe(12);
+    expect(m.x).toBe(12);
+    expect(m.y).toBe(10);
+    expect(m.shootCooldown).toBe(0);
+  });
+
   it("stunned monsters do not act", () => {
     const map = mkMap(openInterior(), { x: 10, y: 10 });
     const player = makePlayer(10, 10);

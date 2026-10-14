@@ -32,6 +32,7 @@ export interface Entity {
   archetype: Archetype;
   speed: number;
   range: number;
+  shootCooldown?: number;
   statuses: Status[];
   panicked?: boolean;
 }
@@ -102,6 +103,7 @@ export function makePlayer(x: number, y: number): Entity {
     archetype: "normal",
     speed: 1,
     range: 0,
+    shootCooldown: 0,
     statuses: [],
   };
 }
@@ -153,6 +155,7 @@ function makeMonster(kind: Kind, x: number, y: number, depth: number): Entity {
     archetype: kind.archetype,
     speed: kind.speed ?? 1,
     range: kind.range ?? 0,
+    shootCooldown: 0,
     statuses: [],
   };
 }
