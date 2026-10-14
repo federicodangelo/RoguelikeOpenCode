@@ -1,7 +1,7 @@
 import { T } from "./tiles.ts";
 import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
-import { makePlayer, spawnMonsters, attack, gainXp, xpNeeded, type Entity } from "./entities.ts";
+import { attack, gainXp, makePlayer, setNextId, spawnMonsters, xpNeeded, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { addStatus, hasStatus, tickStatuses } from "./status.ts";
@@ -465,6 +465,13 @@ export class Game {
 
     this.map = this.floors.get(this.depth) ?? this.getFloor(this.depth);
     if (!this.exploredByFloor.has(this.depth)) this.exploredByFloor.set(this.depth, new Set());
+
+    let maxId = this.player.id;
+    for (const monsters of this.monstersByFloor.values()) {
+      for (const m of monsters) maxId = Math.max(maxId, m.id);
+    }
+    setNextId(maxId + 1);
+
     this.messages.restore(saved.messages);
     this.effects.length = 0;
     this.playerFlashUntil = 0;

@@ -1,6 +1,15 @@
 import { describe, expect, it } from "bun:test";
 import { RNG } from "../../src/core/rng.ts";
-import { attack, BOSS_KIND, gainXp, makePlayer, MONSTER_KINDS, spawnMonsters } from "../../src/core/entities.ts";
+import {
+  attack,
+  BOSS_KIND,
+  gainXp,
+  getNextId,
+  makePlayer,
+  MONSTER_KINDS,
+  setNextId,
+  spawnMonsters,
+} from "../../src/core/entities.ts";
 import { generateMap } from "../../src/core/map.ts";
 import { bfsDistances, MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
@@ -87,6 +96,18 @@ describe("gainXp", () => {
     expect(gainXp(p, 20)).toBe(2);
     expect(p.level).toBe(3);
     expect(p.xp).toBe(5);
+  });
+});
+
+describe("entity id counter", () => {
+  it("setNextId moves the counter used by new entities", () => {
+    const before = getNextId();
+    setNextId(before + 100);
+    const map = generateMap(new RNG(4242), 1, { algorithm: "bsp" });
+    const monsters = spawnMonsters(map, new RNG(11), 1);
+    expect(monsters.length).toBeGreaterThan(0);
+    for (const m of monsters) expect(m.id).toBeGreaterThanOrEqual(before + 100);
+    setNextId(before);
   });
 });
 

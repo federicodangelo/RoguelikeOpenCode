@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
+import { setNextId } from "../../src/core/entities.ts";
 import { clearRun, loadRun, saveRun, SAVE_KEY, type SaveStorage } from "../../src/platform/save.ts";
 
 class MemoryStorage implements SaveStorage {
@@ -43,6 +44,25 @@ describe("save/load", () => {
     expect(loaded.godMode).toBe(true);
     expect(loaded.messages.at(loaded.messages.length - 1)).toBe("saved message");
     expect(loaded.map).toBe(loaded.floors.get(2)!);
+  });
+
+  it("loadRun restores the entity id counter past saved ids", () => {
+    const storage = new MemoryStorage();
+    const game = new Game();
+    game.getFloor(2);
+    game.getFloor(3);
+    saveRun(storage, game);
+    const savedIds = new Set<number>([game.player.id, ...[...game.monstersByFloor.values()].flat().map((m) => m.id)]);
+
+    setNextId(1); // simulate a fresh page load where the counter restarted
+
+    const loaded = new Game();
+    expect(loadRun(storage, loaded)).toBe(true);
+    loaded.getFloor(4);
+
+    for (const m of loaded.monstersByFloor.get(4)!) {
+      expect(savedIds.has(m.id)).toBe(false);
+    }
   });
 
   it("clears invalid saves", () => {

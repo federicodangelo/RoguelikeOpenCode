@@ -37,6 +37,15 @@ export interface Entity {
 
 let nextId = 1;
 
+export function getNextId(): number {
+  return nextId;
+}
+
+export function setNextId(value: number): void {
+  const n = Math.trunc(value);
+  nextId = Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
 interface Kind {
   name: string;
   sprite: number;
