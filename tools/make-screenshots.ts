@@ -18,7 +18,9 @@ import { defaultSettings } from "../src/platform/settings.ts";
 import { loadRun, saveRun, type SaveStorage } from "../src/platform/save.ts";
 import { bfsDistances, nearestOpen, type GameMap, type Point } from "../src/core/mapgen/common.ts";
 import { MAP_H, MAP_W } from "../src/core/map.ts";
-import { LOGICAL_H, LOGICAL_W } from "../src/core/constants.ts";
+import { countConsumable } from "../src/core/items.ts";
+import { LOGICAL_H, LOGICAL_W, TORCH_TURNS } from "../src/core/constants.ts";
+import { T } from "../src/core/tiles.ts";
 
 class MemoryStorage implements SaveStorage {
   private readonly values = new Map<string, string>();
@@ -138,11 +140,29 @@ function createLoadedGame(): Game {
   source.player.maxHp = 14;
   source.player.hp = 9;
   source.player.level = 2;
+  source.player.baseAtk = 2;
+  source.player.baseDef = 1;
   source.player.atk = 4;
   source.player.def = 2;
   source.player.skillPoints = 1;
-  source.inventory.torches = 1;
-  source.inventory.potions = 1;
+  source.inventory.consumables.push(
+    { kind: "potion", variant: "minor potion", quality: "common", tile: T.Potion, stat: 5, count: 1 },
+    { kind: "torch", variant: "torch", quality: "common", tile: T.Torch, stat: TORCH_TURNS, count: 1 },
+  );
+  source.inventory.equipment.weapon = {
+    kind: "weapon",
+    variant: "short sword",
+    quality: "common",
+    tile: T.Sword,
+    stat: 2,
+  };
+  source.inventory.equipment.armor = {
+    kind: "armor",
+    variant: "iron shield",
+    quality: "common",
+    tile: T.Shield,
+    stat: 1,
+  };
   source.inventory.gold = 12;
   source.kills = 3;
   source.lightTurns = 18;
@@ -224,11 +244,11 @@ function renderGameplay(showMenu: boolean): Buffer {
       cam,
       contextualHints({
         hasPickableItem: game.hasPickableItemAtPlayer(),
-        itemKind: game.itemKindAtPlayer(),
+        itemName: game.itemNameAtPlayer(),
         cell: game.map.cells[game.player.y]![game.player.x]!,
         depth: game.depth,
-        potions: game.inventory.potions,
-        torches: game.inventory.torches,
+        potions: countConsumable(game.inventory, "potion"),
+        torches: countConsumable(game.inventory, "torch"),
         hp: game.player.hp,
         maxHp: game.player.maxHp,
         skillPoints: game.player.skillPoints,

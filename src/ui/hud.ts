@@ -4,7 +4,7 @@ import { drawPixelText, drawPixelTextRight, pixelTextWidth } from "./pixel-font.
 import { drawIcon, type Iconset } from "./icons.ts";
 import { minimapRect } from "./minimap.ts";
 import type { Entity, Status, StatusKind } from "../core/entities.ts";
-import type { Inventory, ItemKind } from "../core/items.ts";
+import type { Inventory } from "../core/items.ts";
 import type { MessageLog } from "../core/messages.ts";
 
 export const HUD_HEIGHT = 52;
@@ -50,7 +50,7 @@ export function hintIconColor(icon: HintIcon): string {
 
 export interface ContextualHintInput {
   hasPickableItem: boolean;
-  itemKind?: ItemKind | null;
+  itemName?: string | null;
   cell: string;
   depth: number;
   potions: number;
@@ -65,8 +65,8 @@ export interface ContextualHintInput {
 export function contextualHints(input: ContextualHintInput): ContextualHint[] {
   const hints: ContextualHint[] = [];
 
-  if (input.itemKind && input.itemKind !== "corpse") {
-    hints.push({ text: `g: pick up ${input.itemKind}`, icon: "item" });
+  if (input.itemName) {
+    hints.push({ text: `g: pick up ${input.itemName}`, icon: "item" });
   } else if (input.hasPickableItem) {
     hints.push({ text: "g: pick up", icon: "item" });
   }
@@ -140,15 +140,29 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
   drawPixelText(bctx, lvlText, lvlX, row1Y, "#e8e4da", 2);
 
   const swordX = lvlX + pixelTextWidth(lvlText, 2) + 12;
-  drawIcon(bctx, data.icons, "sword", swordX, row1Y);
+  const weapon = data.inventory.equipment.weapon;
+  if (weapon) {
+    drawPixelText(bctx, weapon.variant, swordX, row1Y, "#e8e4da", 2);
+  } else {
+    bctx.globalAlpha = 0.35;
+    drawIcon(bctx, data.icons, "sword", swordX, row1Y);
+    bctx.globalAlpha = 1;
+  }
   const atkText = `Atk ${data.player.atk}`;
-  const atkX = swordX + 12;
+  const atkX = swordX + (weapon ? pixelTextWidth(weapon.variant, 2) + 6 : 12);
   drawPixelText(bctx, atkText, atkX, row1Y, "#e8e4da", 2);
 
   const shieldX = atkX + pixelTextWidth(atkText, 2) + 12;
-  drawIcon(bctx, data.icons, "shield", shieldX, row1Y);
+  const armor = data.inventory.equipment.armor;
+  if (armor) {
+    drawPixelText(bctx, armor.variant, shieldX, row1Y, "#e8e4da", 2);
+  } else {
+    bctx.globalAlpha = 0.35;
+    drawIcon(bctx, data.icons, "shield", shieldX, row1Y);
+    bctx.globalAlpha = 1;
+  }
   const defText = `Def ${data.player.def}`;
-  const defX = shieldX + 12;
+  const defX = shieldX + (armor ? pixelTextWidth(armor.variant, 2) + 6 : 12);
   drawPixelText(bctx, defText, defX, row1Y, "#e8e4da", 2);
 
   const goldX = defX + pixelTextWidth(defText, 2) + 12;

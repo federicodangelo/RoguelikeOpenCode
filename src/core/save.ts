@@ -1,10 +1,10 @@
 import type { Entity } from "./entities.ts";
 import type { Inventory } from "./items.ts";
 import type { GameMap } from "./mapgen/common.ts";
-import { BASE_SEED } from "./constants.ts";
+import { BASE_SEED, TORCH_TURNS } from "./constants.ts";
 import { T } from "./tiles.ts";
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface SavedFloor {
   depth: number;
@@ -92,15 +92,46 @@ function isGameMapShape(value: unknown): boolean {
   );
 }
 
+function isItemInstanceShape(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const i = value as Record<string, unknown>;
+  return (
+    typeof i.kind === "string" &&
+    typeof i.variant === "string" &&
+    typeof i.quality === "string" &&
+    typeof i.tile === "number" &&
+    typeof i.stat === "number" &&
+    (i.uid === undefined || typeof i.uid === "number")
+  );
+}
+
+function isConsumableStackShape(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const s = value as Record<string, unknown>;
+  return (
+    typeof s.kind === "string" &&
+    typeof s.variant === "string" &&
+    typeof s.quality === "string" &&
+    typeof s.tile === "number" &&
+    typeof s.stat === "number" &&
+    typeof s.count === "number"
+  );
+}
+
 function isInventoryShape(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const inv = value as Record<string, unknown>;
+  const eq = inv.equipment;
   return (
     typeof inv.gold === "number" &&
-    typeof inv.potions === "number" &&
-    typeof inv.torches === "number" &&
-    typeof inv.sword === "number" &&
-    typeof inv.shield === "number"
+    Array.isArray(inv.consumables) &&
+    inv.consumables.every(isConsumableStackShape) &&
+    Array.isArray(inv.carried) &&
+    inv.carried.every(isItemInstanceShape) &&
+    typeof eq === "object" &&
+    eq !== null &&
+    ((eq as Record<string, unknown>).weapon === null || isItemInstanceShape((eq as Record<string, unknown>).weapon)) &&
+    ((eq as Record<string, unknown>).armor === null || isItemInstanceShape((eq as Record<string, unknown>).armor))
   );
 }
 
@@ -174,7 +205,7 @@ function migrateV2toV3(v: Record<string, unknown>): Record<string, unknown> {
 
   return {
     ...v,
-    version: SAVE_VERSION,
+    version: 3,
     inventory: { ...inv, sword, shield },
     player: {
       ...player,
@@ -182,6 +213,56 @@ function migrateV2toV3(v: Record<string, unknown>): Record<string, unknown> {
       baseDef: typeof player.baseDef === "number" ? player.baseDef : def - shield,
     },
     floors,
+  };
+}
+
+function migrateV3toV4(v: Record<string, unknown>): Record<string, unknown> {
+  const inv = (typeof v.inventory === "object" && v.inventory !== null ? v.inventory : {}) as Record<string, unknown>;
+  if (Array.isArray(inv.consumables)) return { ...v, version: SAVE_VERSION };
+
+  const potions = typeof inv.potions === "number" ? inv.potions : 0;
+  const torches = typeof inv.torches === "number" ? inv.torches : 0;
+  const sword = typeof inv.sword === "number" ? inv.sword : 0;
+  const shield = typeof inv.shield === "number" ? inv.shield : 0;
+
+  const consumables: Record<string, unknown>[] = [];
+  if (potions > 0) {
+    consumables.push({
+      kind: "potion",
+      variant: "minor potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 5,
+      count: potions,
+    });
+  }
+  if (torches > 0) {
+    consumables.push({
+      kind: "torch",
+      variant: "torch",
+      quality: "common",
+      tile: T.Torch,
+      stat: TORCH_TURNS,
+      count: torches,
+    });
+  }
+
+  const equipment = {
+    weapon:
+      sword > 0 ? { kind: "weapon", variant: "short sword", quality: "common", tile: T.Sword, stat: sword } : null,
+    armor:
+      shield > 0 ? { kind: "armor", variant: "iron shield", quality: "common", tile: T.Shield, stat: shield } : null,
+  };
+
+  return {
+    ...v,
+    version: SAVE_VERSION,
+    inventory: {
+      gold: typeof inv.gold === "number" ? inv.gold : 0,
+      consumables,
+      carried: [],
+      equipment,
+    },
   };
 }
 
@@ -193,6 +274,9 @@ export function migrateSavedRun(value: unknown): unknown {
   }
   if (v.version === 2) {
     v = migrateV2toV3(v);
+  }
+  if (v.version === 3) {
+    v = migrateV3toV4(v);
   }
   return v;
 }

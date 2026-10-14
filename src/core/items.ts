@@ -1,10 +1,15 @@
 import { T } from "./tiles.ts";
 import type { RNG } from "./rng.ts";
 import type { Entity } from "./entities.ts";
+import { CARRIED_CAP, TORCH_TURNS } from "./constants.ts";
 
 export type ItemKind = "potion" | "gold" | "weapon" | "armor" | "torch" | "corpse";
 
 export type Quality = "common" | "uncommon" | "rare";
+
+export type EquipSlot = "weapon" | "armor";
+
+export type ConsumableKind = "potion" | "torch";
 
 export interface ItemDef {
   kind: ItemKind;
@@ -19,8 +24,8 @@ export const ITEM_DEFS: ItemDef[] = [
   { kind: "gold", variant: "gold", tile: T.Gold, baseStat: 1, minDepth: 1, weight: 12 },
   { kind: "potion", variant: "minor potion", tile: T.Potion, baseStat: 5, minDepth: 1, weight: 14 },
   { kind: "potion", variant: "major potion", tile: T.Potion, baseStat: 9, minDepth: 3, weight: 5 },
-  { kind: "torch", variant: "torch", tile: T.Torch, baseStat: 0, minDepth: 1, weight: 12 },
-  { kind: "torch", variant: "bullseye lantern", tile: T.Torch, baseStat: 0, minDepth: 3, weight: 4 },
+  { kind: "torch", variant: "torch", tile: T.Torch, baseStat: TORCH_TURNS, minDepth: 1, weight: 12 },
+  { kind: "torch", variant: "bullseye lantern", tile: T.Torch, baseStat: 30, minDepth: 3, weight: 4 },
   { kind: "weapon", variant: "dagger", tile: T.Sword, baseStat: 1, minDepth: 1, weight: 8 },
   { kind: "weapon", variant: "short sword", tile: T.Sword, baseStat: 2, minDepth: 1, weight: 7 },
   { kind: "weapon", variant: "long sword", tile: T.Sword, baseStat: 3, minDepth: 3, weight: 4 },
@@ -36,9 +41,20 @@ export interface ItemInstance {
   quality: Quality;
   tile: number;
   stat: number;
+  uid?: number;
 }
 
 export const QUALITY_BONUS: Record<Quality, number> = { common: 0, uncommon: 1, rare: 2 };
+
+let nextUid = 1;
+
+export function setNextUid(value: number): void {
+  if (value > nextUid) nextUid = value;
+}
+
+function takeUid(): number {
+  return nextUid++;
+}
 
 export function rollQuality(rng: RNG, depth: number): Quality {
   const rare = Math.min(0.04 + depth * 0.02, 0.24);
@@ -84,58 +100,149 @@ export function makeGold(stat: number): ItemInstance {
   return { kind: "gold", variant: "gold", quality: "common", tile: T.Gold, stat };
 }
 
+export function itemName(item: ItemInstance): string {
+  return item.quality === "common" ? item.variant : `${item.quality} ${item.variant}`;
+}
+
+export interface ConsumableStack {
+  kind: ConsumableKind;
+  variant: string;
+  quality: Quality;
+  tile: number;
+  stat: number;
+  count: number;
+}
+
+export interface EquipmentSlots {
+  weapon: ItemInstance | null;
+  armor: ItemInstance | null;
+}
+
 export interface Inventory {
   gold: number;
-  potions: number;
-  torches: number;
-  sword: number;
-  shield: number;
+  consumables: ConsumableStack[];
+  carried: ItemInstance[];
+  equipment: EquipmentSlots;
 }
 
 export function makeInventory(): Inventory {
-  return { gold: 0, potions: 0, torches: 0, sword: 0, shield: 0 };
+  return { gold: 0, consumables: [], carried: [], equipment: { weapon: null, armor: null } };
+}
+
+export function countConsumable(inv: Inventory, kind: ConsumableKind): number {
+  return inv.consumables.reduce((n, s) => (s.kind === kind ? n + s.count : n), 0);
 }
 
 export function recalcStats(player: Entity, inv: Inventory): void {
-  player.atk = player.baseAtk + inv.sword;
-  player.def = player.baseDef + inv.shield;
+  player.atk = player.baseAtk + (inv.equipment.weapon?.stat ?? 0);
+  player.def = player.baseDef + (inv.equipment.armor?.stat ?? 0);
 }
 
-export function pickUp(player: Entity, inv: Inventory, item: ItemInstance): string | null {
+export interface PickupResult {
+  message: string;
+  took: boolean;
+}
+
+function addConsumable(inv: Inventory, item: ItemInstance): void {
+  const stack = inv.consumables.find(
+    (s) => s.kind === item.kind && s.variant === item.variant && s.quality === item.quality,
+  );
+  if (stack) {
+    stack.count += 1;
+    return;
+  }
+  inv.consumables.push({
+    kind: item.kind as ConsumableKind,
+    variant: item.variant,
+    quality: item.quality,
+    tile: item.tile,
+    stat: item.stat,
+    count: 1,
+  });
+}
+
+export function pickUp(player: Entity, inv: Inventory, item: ItemInstance): PickupResult | null {
   if (item.kind === "corpse") return null;
   switch (item.kind) {
     case "gold":
       inv.gold += item.stat;
-      return `You pick up ${item.stat} gold.`;
+      return { message: `You pick up ${item.stat} gold.`, took: true };
     case "potion":
-      inv.potions += 1;
-      return `You pick up a ${item.variant}.`;
-    case "weapon":
-      if (inv.sword > 0) return "You already have a weapon equipped.";
-      inv.sword = item.stat;
-      recalcStats(player, inv);
-      return `You equip the ${item.variant} (+${item.stat} ATK).`;
-    case "armor":
-      if (inv.shield > 0) return "You already have an armor equipped.";
-      inv.shield = item.stat;
-      recalcStats(player, inv);
-      return `You equip the ${item.variant} (+${item.stat} DEF).`;
     case "torch":
-      inv.torches += 1;
-      return `You pick up a ${item.variant}.`;
+      addConsumable(inv, item);
+      return { message: `You pick up a ${item.variant}.`, took: true };
+    case "weapon":
+    case "armor": {
+      const slot: EquipSlot = item.kind;
+      if (inv.equipment[slot] === null) {
+        if (item.uid === undefined) item.uid = takeUid();
+        inv.equipment[slot] = item;
+        recalcStats(player, inv);
+        const bonus = slot === "weapon" ? "ATK" : "DEF";
+        return { message: `You equip the ${item.variant} (+${item.stat} ${bonus}).`, took: true };
+      }
+      if (inv.carried.length >= CARRIED_CAP) return { message: "Your pack is full.", took: false };
+      if (item.uid === undefined) item.uid = takeUid();
+      inv.carried.push(item);
+      return { message: `You stow the ${item.variant} (${inv.carried.length}/${CARRIED_CAP}).`, took: true };
+    }
   }
 }
 
-export function useTorch(inv: Inventory): string | null {
-  if (inv.torches <= 0) return null;
-  inv.torches -= 1;
-  return "You light a torch.";
+export function equipCarried(player: Entity, inv: Inventory, index: number): string | null {
+  const item = inv.carried[index];
+  if (!item || (item.kind !== "weapon" && item.kind !== "armor")) return null;
+  const slot: EquipSlot = item.kind;
+  const old = inv.equipment[slot];
+  inv.carried.splice(index, 1);
+  inv.equipment[slot] = item;
+  if (old) inv.carried.push(old);
+  recalcStats(player, inv);
+  const bonus = slot === "weapon" ? "ATK" : "DEF";
+  return `You equip the ${item.variant} (+${item.stat} ${bonus}).`;
+}
+
+export interface UnequipResult {
+  message: string;
+  took: boolean;
+}
+
+export function unequipSlot(player: Entity, inv: Inventory, slot: EquipSlot): UnequipResult {
+  const item = inv.equipment[slot];
+  if (!item) return { message: "Nothing equipped.", took: false };
+  if (inv.carried.length >= CARRIED_CAP) return { message: "Your pack is full.", took: false };
+  inv.equipment[slot] = null;
+  inv.carried.push(item);
+  recalcStats(player, inv);
+  return { message: `You stow the ${item.variant}.`, took: true };
+}
+
+export interface TorchResult {
+  message: string;
+  turns: number;
+}
+
+function takeStack(inv: Inventory, kind: ConsumableKind): ConsumableStack | null {
+  const idx = inv.consumables.findIndex((s) => s.kind === kind);
+  if (idx === -1) return null;
+  const stack = inv.consumables[idx]!;
+  stack.count -= 1;
+  if (stack.count <= 0) inv.consumables.splice(idx, 1);
+  return stack;
 }
 
 export function usePotion(player: Entity, inv: Inventory): string | null {
-  if (inv.potions <= 0) return null;
+  const stack = inv.consumables.find((s) => s.kind === "potion");
+  if (!stack) return null;
   if (player.hp >= player.maxHp) return "You are already at full health.";
-  inv.potions -= 1;
-  player.hp = Math.min(player.maxHp, player.hp + 5);
-  return "You drink a potion (+5 HP).";
+  takeStack(inv, "potion");
+  player.hp = Math.min(player.maxHp, player.hp + stack.stat);
+  return `You drink a ${stack.variant} (+${stack.stat} HP).`;
+}
+
+export function useTorch(inv: Inventory): TorchResult | null {
+  const stack = inv.consumables.find((s) => s.kind === "torch");
+  if (!stack) return null;
+  takeStack(inv, "torch");
+  return { message: `You light a ${stack.variant}.`, turns: stack.stat };
 }

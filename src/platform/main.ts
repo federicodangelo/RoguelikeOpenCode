@@ -1,5 +1,6 @@
 import { Tileset, drawScene } from "./render.ts";
 import { Game } from "../core/game.ts";
+import { countConsumable } from "../core/items.ts";
 import { GameAudio } from "./audio.ts";
 import { cycleScalingMode, cycleVolume, loadSettings, saveSettings } from "./settings.ts";
 import { clearRun, loadRun, saveRun } from "./save.ts";
@@ -268,11 +269,11 @@ async function main(): Promise<void> {
           cam,
           contextualHints({
             hasPickableItem: game.hasPickableItemAtPlayer(),
-            itemKind: game.itemKindAtPlayer(),
+            itemName: game.itemNameAtPlayer(),
             cell: game.map.cells[game.player.y]![game.player.x]!,
             depth: game.depth,
-            potions: game.inventory.potions,
-            torches: game.inventory.torches,
+            potions: countConsumable(game.inventory, "potion"),
+            torches: countConsumable(game.inventory, "torch"),
             hp: game.player.hp,
             maxHp: game.player.maxHp,
             skillPoints: game.player.skillPoints,

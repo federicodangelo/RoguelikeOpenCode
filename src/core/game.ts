@@ -4,6 +4,8 @@ import { attack, gainXp, makePlayer, xpNeeded, type Entity } from "./entities.ts
 import { computeFOV } from "./fov.ts";
 import { hasStatus } from "./status.ts";
 import {
+  equipCarried,
+  itemName,
   makeCorpse,
   makeGold,
   makeInstance,
@@ -12,14 +14,16 @@ import {
   pickUp,
   recalcStats,
   rollQuality,
+  unequipSlot,
   usePotion,
   useTorch,
+  type EquipSlot,
   type Inventory,
   type ItemDef,
   type ItemKind,
 } from "./items.ts";
 import { MessageLog } from "./messages.ts";
-import { BASE_SEED, CORPSE_CAP, TORCH_RADIUS, TORCH_TURNS } from "./constants.ts";
+import { BASE_SEED, CORPSE_CAP, TORCH_RADIUS } from "./constants.ts";
 import type { Effect } from "./effects.ts";
 import type { CellView } from "./scene.ts";
 import type { SavedRun } from "./save.ts";
@@ -142,6 +146,11 @@ export class Game {
   itemKindAtPlayer(): ItemKind | null {
     const item = this.map.items.find((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
     return item ? item.kind : null;
+  }
+
+  itemNameAtPlayer(): string | null {
+    const item = this.map.items.find((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
+    return item ? itemName(item) : null;
   }
 
   adjacentInteractables(): { doorClosed: boolean; trap: boolean; monster: Entity | null } {
@@ -322,11 +331,27 @@ export class Game {
   pickup(): boolean {
     const idx = this.map.items.findIndex((i) => i.kind !== "corpse" && i.x === this.player.x && i.y === this.player.y);
     if (idx === -1) return false;
-    const msg = pickUp(this.player, this.inventory, this.map.items[idx]!);
-    if (!msg) return false;
-    this.map.items.splice(idx, 1);
-    this.logMessage(msg);
+    const result = pickUp(this.player, this.inventory, this.map.items[idx]!);
+    if (!result) return false;
+    if (result.took) this.map.items.splice(idx, 1);
+    this.logMessage(result.message);
     this.events.pickup?.();
+    return true;
+  }
+
+  equipCarried(index: number): boolean {
+    const msg = equipCarried(this.player, this.inventory, index);
+    if (!msg) return false;
+    this.logMessage(msg);
+    this.dirty = true;
+    return true;
+  }
+
+  unequip(slot: EquipSlot): boolean {
+    const result = unequipSlot(this.player, this.inventory, slot);
+    this.logMessage(result.message);
+    if (!result.took) return false;
+    this.dirty = true;
     return true;
   }
 
@@ -339,10 +364,10 @@ export class Game {
   }
 
   useTorch(): boolean {
-    const msg = useTorch(this.inventory);
-    if (!msg) return false;
-    this.lightTurns = TORCH_TURNS;
-    this.logMessage(`${msg} Your light radius expands for ${TORCH_TURNS} turns.`);
+    const result = useTorch(this.inventory);
+    if (!result) return false;
+    this.lightTurns = result.turns;
+    this.logMessage(`${result.message} Your light radius expands for ${result.turns} turns.`);
     this.events.pickup?.();
     return true;
   }

@@ -2,17 +2,21 @@ import { describe, expect, it } from "bun:test";
 import { makePlayer } from "../../src/core/entities.ts";
 import {
   ITEM_DEFS,
+  equipCarried,
   makeCorpse,
   makeGold,
   makeInstance,
   makeInventory,
   pickDef,
   pickUp,
+  recalcStats,
   rollQuality,
+  unequipSlot,
   usePotion,
   useTorch,
   type ItemInstance,
 } from "../../src/core/items.ts";
+import { CARRIED_CAP, TORCH_TURNS } from "../../src/core/constants.ts";
 import { RNG } from "../../src/core/rng.ts";
 import { T } from "../../src/core/tiles.ts";
 
@@ -26,6 +30,13 @@ describe("ITEM_DEFS", () => {
     expect(ITEM_DEFS.filter((d) => d.kind === "armor").length).toBeGreaterThanOrEqual(3);
     expect(ITEM_DEFS.filter((d) => d.kind === "potion").length).toBeGreaterThanOrEqual(2);
     expect(ITEM_DEFS.filter((d) => d.kind === "torch").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("torch variants define their light duration as the stat", () => {
+    const torch = ITEM_DEFS.find((d) => d.kind === "torch" && d.variant === "torch")!;
+    const lantern = ITEM_DEFS.find((d) => d.kind === "torch" && d.variant === "bullseye lantern")!;
+    expect(torch.baseStat).toBe(TORCH_TURNS);
+    expect(lantern.baseStat).toBeGreaterThan(TORCH_TURNS);
   });
 
   it("pickDef only returns defs unlocked at the given depth", () => {
@@ -67,44 +78,77 @@ describe("pickUp", () => {
   it("gold adds the pile amount to inventory", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    expect(pickUp(p, inv, makeGold(7))).toContain("gold");
+    const result = pickUp(p, inv, makeGold(7));
+    expect(result?.message).toContain("gold");
+    expect(result?.took).toBe(true);
     expect(inv.gold).toBe(7);
   });
 
-  it("potions accumulate across multiple pickups", () => {
+  it("consumables merge into stacks keyed by variant and quality", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
     pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
     pickUp(p, inv, inst("potion", "major potion", 9, T.Potion));
-    expect(inv.potions).toBe(2);
+    expect(inv.consumables.length).toBe(2);
+    expect(inv.consumables[0]!.count).toBe(2);
+    expect(inv.consumables[1]!.variant).toBe("major potion");
   });
 
-  it("weapons equip once and grant their stat as ATK", () => {
+  it("weapons auto-equip when the slot is empty", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    const result = pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    expect(result?.took).toBe(true);
+    expect(p.atk).toBe(p.baseAtk + 2);
+    expect(inv.equipment.weapon?.stat).toBe(2);
+    expect(inv.carried.length).toBe(0);
+  });
+
+  it("a second weapon goes to the carried list", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
     pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    const result = pickUp(p, inv, inst("weapon", "dagger", 1, T.Sword));
+    expect(result?.took).toBe(true);
+    expect(result?.message).toContain("stow");
     expect(p.atk).toBe(p.baseAtk + 2);
-    expect(inv.sword).toBe(2);
-    expect(pickUp(p, inv, inst("weapon", "dagger", 1, T.Sword))).toContain("already");
-    expect(p.atk).toBe(p.baseAtk + 2);
-    expect(inv.sword).toBe(2);
+    expect(inv.carried.length).toBe(1);
+    expect(inv.carried[0]!.variant).toBe("dagger");
   });
 
-  it("armor equips once and grants its stat as DEF", () => {
+  it("refuses equipment when the carried list is full", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    for (let i = 0; i < CARRIED_CAP; i++) {
+      pickUp(p, inv, inst("weapon", "dagger", 1, T.Sword));
+    }
+    expect(inv.carried.length).toBe(CARRIED_CAP);
+    const result = pickUp(p, inv, inst("weapon", "long sword", 3, T.Sword));
+    expect(result?.took).toBe(false);
+    expect(result?.message).toContain("full");
+    expect(inv.carried.length).toBe(CARRIED_CAP);
+  });
+
+  it("armor equips once and extra armor is carried", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
     pickUp(p, inv, inst("armor", "iron shield", 2, T.Shield));
     expect(p.def).toBe(p.baseDef + 2);
-    expect(inv.shield).toBe(2);
-    expect(pickUp(p, inv, inst("armor", "buckler", 1, T.Shield))).toContain("already");
+    expect(inv.equipment.armor?.stat).toBe(2);
+    const result = pickUp(p, inv, inst("armor", "buckler", 1, T.Shield));
+    expect(result?.took).toBe(true);
     expect(p.def).toBe(p.baseDef + 2);
+    expect(inv.carried.length).toBe(1);
   });
 
   it("torches accumulate in inventory", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    expect(pickUp(p, inv, inst("torch", "bullseye lantern", 0, T.Torch))).toContain("lantern");
-    expect(inv.torches).toBe(1);
+    const result = pickUp(p, inv, inst("torch", "bullseye lantern", 30, T.Torch));
+    expect(result?.message).toContain("lantern");
+    expect(inv.consumables[0]!.count).toBe(1);
   });
 
   it("corpses are not pickable", () => {
@@ -114,36 +158,120 @@ describe("pickUp", () => {
   });
 });
 
+describe("equip and unequip", () => {
+  it("equipping a carried item swaps the old piece back into carried", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    pickUp(p, inv, inst("weapon", "dagger", 1, T.Sword));
+    const msg = equipCarried(p, inv, 0);
+    expect(msg).toContain("dagger");
+    expect(inv.equipment.weapon?.variant).toBe("dagger");
+    expect(inv.carried.length).toBe(1);
+    expect(inv.carried[0]!.variant).toBe("short sword");
+    expect(p.atk).toBe(p.baseAtk + 1);
+  });
+
+  it("equipping armor swaps and recalculates DEF", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("armor", "iron shield", 2, T.Shield));
+    pickUp(p, inv, inst("armor", "kite shield", 3, T.Shield));
+    equipCarried(p, inv, 0);
+    expect(inv.equipment.armor?.variant).toBe("kite shield");
+    expect(p.def).toBe(p.baseDef + 3);
+    expect(inv.carried[0]!.variant).toBe("iron shield");
+  });
+
+  it("unequipping stows the piece and drops the bonus", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    const result = unequipSlot(p, inv, "weapon");
+    expect(result.message).toContain("stow");
+    expect(result.took).toBe(true);
+    expect(inv.equipment.weapon).toBeNull();
+    expect(inv.carried.length).toBe(1);
+    expect(p.atk).toBe(p.baseAtk);
+  });
+
+  it("unequipping an empty slot or a full pack is refused", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    expect(unequipSlot(p, inv, "weapon").took).toBe(false);
+    pickUp(p, inv, inst("weapon", "short sword", 2, T.Sword));
+    for (let i = 0; i < CARRIED_CAP; i++) {
+      inv.carried.push(inst("weapon", "dagger", 1, T.Sword));
+    }
+    expect(unequipSlot(p, inv, "weapon").took).toBe(false);
+    expect(inv.equipment.weapon?.variant).toBe("short sword");
+  });
+
+  it("recalcStats keeps atk/def aligned with base plus equipment", () => {
+    const p = makePlayer(0, 0);
+    const inv = makeInventory();
+    inv.equipment.weapon = inst("weapon", "battle axe", 4, T.Sword);
+    inv.equipment.armor = inst("armor", "kite shield", 3, T.Shield);
+    recalcStats(p, inv);
+    expect(p.atk).toBe(p.baseAtk + 4);
+    expect(p.def).toBe(p.baseDef + 3);
+    inv.equipment.weapon = null;
+    recalcStats(p, inv);
+    expect(p.atk).toBe(p.baseAtk);
+  });
+});
+
 describe("usePotion", () => {
-  it("heals 5 HP up to max and consumes the potion", () => {
+  it("heals by the stack stat and consumes one charge", () => {
     const p = makePlayer(0, 0);
     p.hp = 3;
     const inv = makeInventory();
-    inv.potions = 2;
-    expect(usePotion(p, inv)).toContain("potion");
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    expect(usePotion(p, inv)).toContain("minor potion");
     expect(p.hp).toBe(8);
-    expect(inv.potions).toBe(1);
+    expect(inv.consumables[0]!.count).toBe(1);
     expect(usePotion(p, inv)).toContain("potion");
     expect(p.hp).toBe(12);
-    expect(inv.potions).toBe(0);
+    expect(inv.consumables.length).toBe(0);
   });
 
-  it("consumes torches", () => {
+  it("major potions heal their own amount", () => {
+    const p = makePlayer(0, 0);
+    p.hp = 1;
     const inv = makeInventory();
-    inv.torches = 2;
-    expect(useTorch(inv)).toContain("torch");
-    expect(inv.torches).toBe(1);
-    expect(useTorch(inv)).toContain("torch");
-    expect(inv.torches).toBe(0);
-    expect(useTorch(inv)).toBeNull();
+    pickUp(p, inv, inst("potion", "major potion", 9, T.Potion));
+    usePotion(p, inv);
+    expect(p.hp).toBe(10);
   });
 
   it("does nothing without potions or at full HP", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
     expect(usePotion(p, inv)).toBeNull();
-    inv.potions = 1;
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
     expect(usePotion(p, inv)).toContain("full health");
-    expect(inv.potions).toBe(1);
+    expect(inv.consumables[0]!.count).toBe(1);
+  });
+});
+
+describe("useTorch", () => {
+  it("returns the stack stat as light turns and consumes a charge", () => {
+    const inv = makeInventory();
+    pickUp(makePlayer(0, 0), inv, inst("torch", "torch", TORCH_TURNS, T.Torch));
+    pickUp(makePlayer(0, 0), inv, inst("torch", "torch", TORCH_TURNS, T.Torch));
+    const first = useTorch(inv);
+    expect(first?.message).toContain("torch");
+    expect(first?.turns).toBe(TORCH_TURNS);
+    expect(inv.consumables[0]!.count).toBe(1);
+    expect(useTorch(inv)?.turns).toBe(TORCH_TURNS);
+    expect(useTorch(inv)).toBeNull();
+    expect(inv.consumables.length).toBe(0);
+  });
+
+  it("lanterns light for their longer duration", () => {
+    const inv = makeInventory();
+    pickUp(makePlayer(0, 0), inv, inst("torch", "bullseye lantern", 30, T.Torch));
+    expect(useTorch(inv)?.turns).toBe(30);
   });
 });

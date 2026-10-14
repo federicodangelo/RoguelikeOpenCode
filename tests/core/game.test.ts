@@ -37,9 +37,16 @@ function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity 
 describe("Game torches", () => {
   it("lighting a torch consumes it and sets temporary light turns", () => {
     const game = new Game();
-    game.inventory.torches = 1;
+    game.inventory.consumables.push({
+      kind: "torch",
+      variant: "torch",
+      quality: "common",
+      tile: T.Torch,
+      stat: TORCH_TURNS,
+      count: 1,
+    });
     expect(game.useTorch()).toBe(true);
-    expect(game.inventory.torches).toBe(0);
+    expect(game.inventory.consumables.length).toBe(0);
     expect(game.lightTurns).toBe(TORCH_TURNS);
     game.monstersAct();
     expect(game.lightTurns).toBe(TORCH_TURNS - 1);
@@ -110,6 +117,61 @@ describe("Game pickups", () => {
 
     expect(game.hasPickableItemAtPlayer()).toBe(false);
     expect(game.pickup()).toBe(false);
+  });
+
+  it("stows a second weapon and removes it from the floor", () => {
+    const game = new Game();
+    const x = game.player.x;
+    const y = game.player.y;
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 2, "short sword"));
+    expect(game.pickup()).toBe(true);
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 1, "dagger"));
+    expect(game.pickup()).toBe(true);
+    expect(game.inventory.equipment.weapon?.variant).toBe("short sword");
+    expect(game.inventory.carried.length).toBe(1);
+    expect(game.map.items.some((i) => i.kind === "weapon" && i.x === x && i.y === y)).toBe(false);
+  });
+
+  it("leaves equipment on the floor when the pack is full", () => {
+    const game = new Game();
+    const x = game.player.x;
+    const y = game.player.y;
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 2, "short sword"));
+    game.pickup();
+    for (let i = 0; i < 6; i++) {
+      game.map.items.push(placedItem(x, y, "weapon", T.Sword, 1, "dagger"));
+      game.pickup();
+    }
+    expect(game.inventory.carried.length).toBe(6);
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 3, "long sword"));
+    expect(game.pickup()).toBe(true);
+    expect(game.inventory.carried.length).toBe(6);
+    expect(game.map.items.some((i) => i.variant === "long sword" && i.x === x && i.y === y)).toBe(true);
+  });
+
+  it("equips a carried weapon and swaps the old piece back", () => {
+    const game = new Game();
+    const x = game.player.x;
+    const y = game.player.y;
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 2, "short sword"));
+    game.pickup();
+    game.map.items.push(placedItem(x, y, "weapon", T.Sword, 3, "long sword"));
+    game.pickup();
+    expect(game.equipCarried(0)).toBe(true);
+    expect(game.inventory.equipment.weapon?.variant).toBe("long sword");
+    expect(game.inventory.carried[0]!.variant).toBe("short sword");
+    expect(game.player.atk).toBe(game.player.baseAtk + 3);
+  });
+
+  it("unequipping stows the piece and updates ATK", () => {
+    const game = new Game();
+    game.map.items.push(placedItem(game.player.x, game.player.y, "weapon", T.Sword, 2, "short sword"));
+    game.pickup();
+    expect(game.unequip("weapon")).toBe(true);
+    expect(game.inventory.equipment.weapon).toBeNull();
+    expect(game.inventory.carried.length).toBe(1);
+    expect(game.player.atk).toBe(game.player.baseAtk);
+    expect(game.unequip("weapon")).toBe(false);
   });
 });
 

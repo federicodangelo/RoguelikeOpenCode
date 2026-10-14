@@ -8,8 +8,15 @@ import {
 } from "../../src/core/mapgen/common.ts";
 import type { ItemKind } from "../../src/core/items.ts";
 
-export function placedItem(x: number, y: number, kind: ItemKind, tile: number, stat = 0): PlacedItem {
-  return { x, y, kind, variant: kind, quality: "common", tile, stat };
+export function placedItem(
+  x: number,
+  y: number,
+  kind: ItemKind,
+  tile: number,
+  stat = 0,
+  variant: string = kind,
+): PlacedItem {
+  return { x, y, kind, variant, quality: "common", tile, stat };
 }
 
 export function mkMap(cells: CellType[][], spawn = { x: 1, y: 1 }, stairs = { x: 1, y: 1 }): GameMap {

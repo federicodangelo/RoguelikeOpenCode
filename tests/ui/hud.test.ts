@@ -17,11 +17,11 @@ describe("contextual hints", () => {
     ).toEqual([{ text: "g: pick up", icon: "item" }]);
   });
 
-  it("names the item kind when known", () => {
+  it("names the item when known", () => {
     expect(
       contextualHints({
         hasPickableItem: true,
-        itemKind: "potion",
+        itemName: "potion",
         cell: "floor",
         depth: 1,
         potions: 0,
@@ -142,7 +142,7 @@ describe("contextual hints", () => {
   it("caps contextual hints to avoid clutter", () => {
     const hints = contextualHints({
       hasPickableItem: true,
-      itemKind: "gold",
+      itemName: "gold",
       cell: "stairs",
       depth: 2,
       potions: 1,

@@ -115,25 +115,25 @@ Note: 2.4 can be done early as an independent quick win.
 
 PHASE 3 - Equipment, inventory, and swapping
 --------------------------------------------
-[ ] 3.1 New Inventory shape: { gold, consumables: Stack[], carried:
+[x] 3.1 New Inventory shape: { gold, consumables: Stack[], carried:
         ItemInstance[] (cap 6), equipment: { weapon, armor } }
-[ ] 3.2 Wire recalcStats into equip/unequip, level up, skill spend, and
+[x] 3.2 Wire recalcStats into equip/unequip, level up, skill spend, and
         save load so atk/def never drift from base + equipment
-[ ] 3.3 pickUp: empty slot auto-equips; otherwise equipment goes to carried
+[x] 3.3 pickUp: empty slot auto-equips; otherwise equipment goes to carried
         (message + refuse if carried is full); consumables merge into stacks
-[ ] 3.4 Game.equip(item) swap flow: equipping a carried item puts the old
+[x] 3.4 Game.equip(item) swap flow: equipping a carried item puts the old
         piece back into carried
-[ ] 3.5 Inventory menu (src/platform/menuTree.ts): entries for equipment
+[x] 3.5 Inventory menu (src/platform/menuTree.ts): entries for equipment
         slots, carried items, and stacks; Enter on a carried item equips
         (swap), Enter on a slot unequips to carried; keep potion/torch use;
         give each entry a stable id (instance id) for MenuNav memory
-[ ] 3.6 Update contextual hints (src/ui/hud.ts) to show variant + quality
+[x] 3.6 Update contextual hints (src/ui/hud.ts) to show variant + quality
         names and the equip hint; keep "i" shortcut working
-[ ] 3.7 HUD row 1: show equipped weapon/armor names instead of the
+[x] 3.7 HUD row 1: show equipped weapon/armor names instead of the
         sword/shield boolean icons
-[ ] 3.8 Save: validate the new inventory shape; round-trip test with
+[x] 3.8 Save: validate the new inventory shape; round-trip test with
         equipment, stacks, and carried items
-[ ] 3.9 Tests: items.test.ts equip/swap/stat recalculation and full-carried
+[x] 3.9 Tests: items.test.ts equip/swap/stat recalculation and full-carried
         edge case; menuTree.test.ts inventory entries and ids; game.test.ts
         pickup flow; stunned-action wrapper still applies (consume() in
         menuTree.ts)

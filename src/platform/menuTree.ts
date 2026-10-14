@@ -1,4 +1,6 @@
 import type { Game } from "../core/game.ts";
+import { CARRIED_CAP } from "../core/constants.ts";
+import { countConsumable, itemName } from "../core/items.ts";
 import type { MenuEntry } from "../ui/menu.ts";
 import type { Settings } from "./settings.ts";
 
@@ -43,47 +45,74 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
       hint: ["Enter to open inventory", "I: open inventory directly"],
       submenu: () => {
         const inv = game.inventory;
-        return [
-          {
-            label: `Sword: ${inv.sword > 0 ? "equipped" : "none"}`,
+        const entries: MenuEntry[] = [];
+
+        const weapon = inv.equipment.weapon;
+        entries.push({
+          id: "slot-weapon",
+          label: `Weapon: ${weapon ? itemName(weapon) : "none"}`,
+          hint: weapon
+            ? ["Enter: unequip weapon", `Grants +${weapon.stat} ATK`, `Current ATK: ${game.player.atk}`]
+            : ["No weapon equipped", "Pick up a weapon to equip it", `Current ATK: ${game.player.atk}`],
+          action: weapon ? consume(() => game.unequip("weapon")) : undefined,
+        });
+
+        const armor = inv.equipment.armor;
+        entries.push({
+          id: "slot-armor",
+          label: `Armor: ${armor ? itemName(armor) : "none"}`,
+          hint: armor
+            ? ["Enter: unequip armor", `Grants +${armor.stat} DEF`, `Current DEF: ${game.player.def}`]
+            : ["No armor equipped", "Pick up armor to equip it", `Current DEF: ${game.player.def}`],
+          action: armor ? consume(() => game.unequip("armor")) : undefined,
+        });
+
+        for (const item of inv.carried) {
+          entries.push({
+            id: `carried-${item.uid ?? item.variant}`,
+            label: `${itemName(item)} (${item.kind})`,
             hint: [
-              inv.sword > 0 ? "Equipped sword" : "No sword equipped",
-              inv.sword > 0 ? `Grants +${inv.sword} ATK` : "Find a sword to equip",
-              `Current ATK: ${game.player.atk}`,
+              "Enter: equip, swapping the current piece back",
+              `+${item.stat} ${item.kind === "weapon" ? "ATK" : "DEF"}`,
+              `Carried: ${inv.carried.length}/${CARRIED_CAP}`,
             ],
-          },
-          {
-            label: `Shield: ${inv.shield > 0 ? "equipped" : "none"}`,
-            hint: [
-              inv.shield > 0 ? "Equipped shield" : "No shield equipped",
-              inv.shield > 0 ? `Grants +${inv.shield} DEF` : "Find a shield to equip",
-              `Current DEF: ${game.player.def}`,
-            ],
-          },
-          {
-            label: `Potions: ${inv.potions}`,
-            hint: [
-              inv.potions > 0 ? "Enter: drink potion (+5 HP)" : "No potions",
-              `Current HP: ${game.player.hp}/${game.player.maxHp}`,
-              inv.potions > 0 ? `Potions: ${inv.potions}` : "Find potions to drink",
-            ],
-            action: inv.potions > 0 ? consume(() => game.drink()) : undefined,
-          },
-          {
-            label: `Torches: ${inv.torches}`,
-            hint: [
-              inv.torches > 0 ? "Enter: light torch" : "No torches",
-              `Light turns: ${game.lightTurns}`,
-              inv.torches > 0 ? `Torches: ${inv.torches}` : "Find torches to light",
-            ],
-            action: inv.torches > 0 ? consume(() => game.useTorch()) : undefined,
-          },
-          {
-            label: `Gold: ${inv.gold}`,
-            hint: ["Gold collected", `Current gold: ${inv.gold}`, "No current spending"],
-          },
-          { label: "Back", hint: "Enter to return to the menu", action: actions.back },
-        ];
+            action: consume(() => game.equipCarried(inv.carried.indexOf(item))),
+          });
+        }
+
+        for (const stack of inv.consumables) {
+          if (stack.kind === "potion") {
+            entries.push({
+              id: `stack-potion-${stack.variant}`,
+              label: `Potions: ${stack.variant} x${stack.count}`,
+              hint: [
+                `Enter: drink (+${stack.stat} HP)`,
+                `Current HP: ${game.player.hp}/${game.player.maxHp}`,
+                `Potions: ${countConsumable(inv, "potion")}`,
+              ],
+              action: consume(() => game.drink()),
+            });
+          } else {
+            entries.push({
+              id: `stack-torch-${stack.variant}`,
+              label: `Torches: ${stack.variant} x${stack.count}`,
+              hint: [
+                `Enter: light (+${stack.stat} turns)`,
+                `Light turns: ${game.lightTurns}`,
+                `Torches: ${countConsumable(inv, "torch")}`,
+              ],
+              action: consume(() => game.useTorch()),
+            });
+          }
+        }
+
+        entries.push({
+          id: "gold",
+          label: `Gold: ${inv.gold}`,
+          hint: ["Gold collected", `Current gold: ${inv.gold}`, "No current spending"],
+        });
+        entries.push({ label: "Back", hint: "Enter to return to the menu", action: actions.back });
+        return entries;
       },
     },
     {

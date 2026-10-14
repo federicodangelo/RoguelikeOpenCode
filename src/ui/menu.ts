@@ -20,7 +20,7 @@ export interface MenuEntry {
 export class MenuNav {
   path: number[] = [];
   index = 0;
-  private memory = new Map<string, number>();
+  private memory = new Map<string, string>();
 
   constructor(private readonly root: () => MenuEntry[]) {}
 
@@ -33,13 +33,35 @@ export class MenuNav {
   }
 
   entries(): MenuEntry[] {
+    return this.entriesAt(this.path);
+  }
+
+  private entriesAt(path: number[]): MenuEntry[] {
     let entries = this.root();
-    for (const idx of this.path) {
+    for (const idx of path) {
       const entry = entries[idx];
       if (!entry?.submenu) break;
       entries = typeof entry.submenu === "function" ? entry.submenu() : entry.submenu;
     }
     return entries;
+  }
+
+  private entryId(): string | undefined {
+    const entry = this.entries()[this.index];
+    return entry ? (entry.id ?? entry.label) : undefined;
+  }
+
+  private resolveIndex(path: number[], id: string | undefined): number {
+    if (id !== undefined) {
+      const idx = this.entriesAt(path).findIndex((entry) => (entry.id ?? entry.label) === id);
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  }
+
+  private clamp(): void {
+    const n = this.entries().length;
+    if (this.index >= n) this.index = Math.max(0, n - 1);
   }
 
   selectedEntry(): MenuEntry | undefined {
@@ -77,12 +99,14 @@ export class MenuNav {
   }
 
   open(): void {
-    if (this.path.length === 0) this.memory.set("", this.index);
+    const id = this.entryId();
+    if (this.path.length === 0 && id !== undefined) this.memory.set("", id);
     this.path = [];
-    this.index = this.memory.get("") ?? 0;
+    this.index = this.resolveIndex([], this.memory.get(""));
   }
 
   up(): void {
+    this.clamp();
     const n = this.entries().length;
     if (n === 0) {
       this.index = 0;
@@ -92,6 +116,7 @@ export class MenuNav {
   }
 
   down(): void {
+    this.clamp();
     const n = this.entries().length;
     if (n === 0) {
       this.index = 0;
@@ -101,12 +126,14 @@ export class MenuNav {
   }
 
   enter(): "submenu" | "action" | "none" {
+    this.clamp();
     const entry = this.entries()[this.index];
     if (!entry) return "none";
     if (entry.submenu) {
-      this.memory.set(this.key(), this.index);
+      const id = this.entryId();
+      if (id !== undefined) this.memory.set(this.key(), id);
       this.path.push(this.index);
-      this.index = this.memory.get(this.key()) ?? 0;
+      this.index = this.resolveIndex(this.path, this.memory.get(this.key()));
       return "submenu";
     }
     if (entry.action) {
@@ -128,9 +155,10 @@ export class MenuNav {
 
   back(): boolean {
     if (this.path.length === 0) return false;
-    this.memory.set(this.key(), this.index);
+    const id = this.entryId();
+    if (id !== undefined) this.memory.set(this.key(), id);
     this.path.pop();
-    this.index = this.memory.get(this.key()) ?? 0;
+    this.index = this.resolveIndex(this.path, this.memory.get(this.key()));
     return true;
   }
 

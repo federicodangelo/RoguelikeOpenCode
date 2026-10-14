@@ -53,9 +53,9 @@ describe("isSavedRun validation", () => {
     expect(isSavedRun(save)).toBe(false);
   });
 
-  it("rejects inventories with legacy boolean sword", () => {
+  it("rejects inventories in the legacy flat shape", () => {
     const save = validSave();
-    (save.inventory as Record<string, unknown>).sword = true;
+    save.inventory = { gold: 0, potions: 0, torches: 0, sword: 0, shield: 0 };
     expect(isSavedRun(save)).toBe(false);
   });
 
@@ -84,7 +84,7 @@ describe("save seed and migration", () => {
     save.version = 1;
     delete save.seed;
     const migrated = migrateSavedRun(save) as Record<string, unknown>;
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.seed).toBe(BASE_SEED);
     expect(isSavedRun(migrated)).toBe(true);
   });
@@ -105,7 +105,7 @@ describe("save seed and migration", () => {
     }
 
     const migrated = migrateSavedRun(save) as Record<string, unknown>;
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(isSavedRun(migrated)).toBe(true);
 
     const items = (floorsOf(migrated)[0]!.map as Record<string, unknown>).items as Record<string, unknown>[];
@@ -116,11 +116,34 @@ describe("save seed and migration", () => {
     const mp = migrated.player as Record<string, unknown>;
     expect(mp.baseAtk).toBe((mp.atk as number) - 1);
     expect(mp.baseDef).toBe((mp.def as number) - 0);
-    expect((migrated.inventory as Record<string, unknown>).sword).toBe(1);
-    expect((migrated.inventory as Record<string, unknown>).shield).toBe(0);
 
     const monster = (floorsOf(migrated)[0]!.monsters as Record<string, unknown>[])[0]!;
     expect(monster.baseAtk).toBe(monster.atk);
     expect(monster.baseDef).toBe(monster.def);
+  });
+
+  it("migrates version 3 saves to the equipment and stack model", () => {
+    const save = validSave();
+    save.version = 3;
+    save.inventory = { gold: 3, potions: 2, torches: 1, sword: 2, shield: 0 };
+
+    const migrated = migrateSavedRun(save) as Record<string, unknown>;
+    expect(migrated.version).toBe(4);
+    expect(isSavedRun(migrated)).toBe(true);
+
+    const inv = migrated.inventory as Record<string, unknown>;
+    const consumables = inv.consumables as Record<string, unknown>[];
+    expect(consumables.length).toBe(2);
+    expect(consumables[0]!.kind).toBe("potion");
+    expect(consumables[0]!.count).toBe(2);
+    expect(consumables[1]!.kind).toBe("torch");
+    expect(consumables[1]!.count).toBe(1);
+
+    const equipment = inv.equipment as Record<string, unknown>;
+    const weapon = equipment.weapon as Record<string, unknown>;
+    expect(weapon.variant).toBe("short sword");
+    expect(weapon.stat).toBe(2);
+    expect(equipment.armor).toBeNull();
+    expect(inv.carried).toEqual([]);
   });
 });

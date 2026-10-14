@@ -1,7 +1,7 @@
 import type { FloorCache } from "./floorCache.ts";
 import { setNextId, type Entity } from "./entities.ts";
 import type { Effect } from "./effects.ts";
-import { recalcStats, type Inventory } from "./items.ts";
+import { recalcStats, setNextUid, type Inventory } from "./items.ts";
 import type { GameMap } from "./map.ts";
 import type { MessageLog } from "./messages.ts";
 import type { RNG } from "./rng.ts";
@@ -75,6 +75,15 @@ export function applySavedRun(state: RunState, saved: SavedRun): void {
     for (const m of monsters) maxId = Math.max(maxId, m.id);
   }
   setNextId(maxId + 1);
+
+  let maxUid = 0;
+  const owned = [...state.inventory.carried];
+  if (state.inventory.equipment.weapon) owned.push(state.inventory.equipment.weapon);
+  if (state.inventory.equipment.armor) owned.push(state.inventory.equipment.armor);
+  for (const it of owned) maxUid = Math.max(maxUid, it.uid ?? 0);
+  setNextUid(maxUid + 1);
+
+  recalcStats(state.player, state.inventory);
 
   state.messages.restore(saved.messages);
   state.effects.length = 0;
