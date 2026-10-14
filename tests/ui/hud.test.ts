@@ -90,12 +90,8 @@ describe("contextual hints", () => {
         maxHp: 10,
         skillPoints: 0,
         adjacentDoorClosed: true,
-        adjacentTrap: true,
       }),
-    ).toEqual([
-      { text: "bump: open door", icon: "door" },
-      { text: "trap: danger", icon: "trap" },
-    ]);
+    ).toEqual([{ text: "bump: open door", icon: "door" }]);
   });
 
   it("shows drink hint only below 50 percent HP", () => {
@@ -168,12 +164,11 @@ describe("contextual hints", () => {
       maxHp: 10,
       skillPoints: 1,
       adjacentDoorClosed: true,
-      adjacentTrap: true,
     });
     expect(hints.length).toBe(4);
     expect(hints[0]).toEqual({ text: "g: pick up gold", icon: "item" });
     expect(hints[2]).toEqual({ text: "bump: open door", icon: "door" });
-    expect(hints[3]).toEqual({ text: "trap: danger", icon: "trap" });
+    expect(hints[3]).toEqual({ text: "u: drink potion", icon: "potion" });
   });
 });
 

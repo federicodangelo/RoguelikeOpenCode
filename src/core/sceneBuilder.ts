@@ -55,7 +55,6 @@ export function buildScene(ctx: SceneContext): CellView[][] {
       else if (cell === "stairsUp") view.feature = T.StairsUp;
       else if (cell === "doorClosed") view.feature = T.DoorClosed;
       else if (cell === "doorOpen") view.feature = T.DoorOpen;
-      else if (cell === "trap") view.feature = T.Trap;
 
       const item = itemByPos.get(key);
       if (item !== undefined) {

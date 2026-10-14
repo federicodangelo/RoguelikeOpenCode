@@ -4,7 +4,7 @@ import { ICON_SHEET_H, ICON_SHEET_W, iconSheet } from "../../tools/make-icons.ts
 
 describe("iconset", () => {
   it("has one sheet cell for every icon", () => {
-    expect(ICON_NAMES.length).toBe(17);
+    expect(ICON_NAMES.length).toBe(16);
     expect(ICON_W).toBe(5);
     expect(ICON_H).toBe(7);
     expect(ICON_SHEET_W).toBe(ICON_COLS * ICON_W);

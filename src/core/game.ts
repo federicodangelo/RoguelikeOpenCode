@@ -162,9 +162,8 @@ export class Game {
     return item ? item.quality : null;
   }
 
-  adjacentInteractables(): { doorClosed: boolean; trap: boolean; monster: Entity | null } {
+  adjacentInteractables(): { doorClosed: boolean; monster: Entity | null } {
     let doorClosed = false;
-    let trap = false;
     let monster: Entity | null = null;
 
     const dirs: [number, number][] = [
@@ -181,7 +180,6 @@ export class Game {
       const visible = this.visible.has(key);
 
       if (visible && cell === "doorClosed") doorClosed = true;
-      if (visible && cell === "trap") trap = true;
 
       if (!monster) {
         const target = this.monsters().find((m) => m.alive && m.x === nx && m.y === ny && visible);
@@ -189,7 +187,7 @@ export class Game {
       }
     }
 
-    return { doorClosed, trap, monster };
+    return { doorClosed, monster };
   }
 
   danger(): boolean {
@@ -297,21 +295,6 @@ export class Game {
 
     this.player.x = nx;
     this.player.y = ny;
-    if (cell === "trap") {
-      const dmg = this.battleRng.int(1, 3);
-      this.player.hp = Math.max(0, this.player.hp - dmg);
-      this.protectPlayer();
-      this.map.cells[ny]![nx] = "floor";
-      this.mapVersion++;
-      this.logMessage(`You trigger a trap and take ${dmg} damage.`);
-      this.spawnEffect(this.player.x, this.player.y, `-${dmg}`, "#ff9a4a");
-      this.playerFlashUntil = this.clock() + 250;
-      this.events.hurt?.();
-      if (!this.player.alive) {
-        this.gameOver = true;
-        this.events.death?.();
-      }
-    }
     return true;
   }
 

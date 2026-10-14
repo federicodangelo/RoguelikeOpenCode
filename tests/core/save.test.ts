@@ -84,7 +84,7 @@ describe("save seed and migration", () => {
     save.version = 1;
     delete save.seed;
     const migrated = migrateSavedRun(save) as Record<string, unknown>;
-    expect(migrated.version).toBe(4);
+    expect(migrated.version).toBe(5);
     expect(migrated.seed).toBe(BASE_SEED);
     expect(isSavedRun(migrated)).toBe(true);
   });
@@ -105,7 +105,7 @@ describe("save seed and migration", () => {
     }
 
     const migrated = migrateSavedRun(save) as Record<string, unknown>;
-    expect(migrated.version).toBe(4);
+    expect(migrated.version).toBe(5);
     expect(isSavedRun(migrated)).toBe(true);
 
     const items = (floorsOf(migrated)[0]!.map as Record<string, unknown>).items as Record<string, unknown>[];
@@ -128,7 +128,7 @@ describe("save seed and migration", () => {
     save.inventory = { gold: 3, potions: 2, torches: 1, sword: 2, shield: 0 };
 
     const migrated = migrateSavedRun(save) as Record<string, unknown>;
-    expect(migrated.version).toBe(4);
+    expect(migrated.version).toBe(5);
     expect(isSavedRun(migrated)).toBe(true);
 
     const inv = migrated.inventory as Record<string, unknown>;
@@ -145,5 +145,46 @@ describe("save seed and migration", () => {
     expect(weapon.stat).toBe(2);
     expect(equipment.armor).toBeNull();
     expect(inv.carried).toEqual([]);
+  });
+
+  it("migrates version 4 saves by removing traps and shifting tile indices", () => {
+    const save = validSave();
+    save.version = 4;
+    const map = floorsOf(save)[0]!.map as Record<string, unknown>;
+    map.cells = [
+      ["wall", "wall", "wall", "wall", "wall"],
+      ["wall", "trap", "floor", "trap", "wall"],
+      ["wall", "floor", "floor", "floor", "wall"],
+      ["wall", "wall", "wall", "wall", "wall"],
+    ];
+    map.items = [
+      { x: 1, y: 1, tile: 30, kind: "light", variant: "lantern", quality: "common", stat: 0, uid: 1 },
+      { x: 3, y: 1, tile: 11, kind: "gold", variant: "gold", quality: "common", stat: 0, uid: 2 },
+    ];
+    save.inventory = {
+      gold: 0,
+      consumables: [{ kind: "potion", variant: "major", tile: 29, quality: "uncommon", stat: 0, count: 1 }],
+      carried: [{ kind: "weapon", variant: "dagger", tile: 24, quality: "common", stat: 1, uid: 3 }],
+      equipment: {
+        weapon: { kind: "weapon", variant: "long sword", tile: 25, quality: "rare", stat: 3, uid: 4 },
+        armor: null,
+      },
+    };
+
+    const migrated = migrateSavedRun(save) as Record<string, unknown>;
+    expect(migrated.version).toBe(5);
+    expect(isSavedRun(migrated)).toBe(true);
+
+    const cells = (floorsOf(migrated)[0]!.map as Record<string, unknown>).cells as string[][];
+    expect(cells[1]).toEqual(["wall", "floor", "floor", "floor", "wall"]);
+
+    const items = (floorsOf(migrated)[0]!.map as Record<string, unknown>).items as Record<string, unknown>[];
+    expect(items[0]!.tile).toBe(29);
+    expect(items[1]!.tile).toBe(11);
+
+    const inv = migrated.inventory as Record<string, unknown>;
+    expect((inv.consumables as Record<string, unknown>[])[0]!.tile).toBe(28);
+    expect((inv.carried as Record<string, unknown>[])[0]!.tile).toBe(23);
+    expect(((inv.equipment as Record<string, unknown>).weapon as Record<string, unknown>).tile).toBe(24);
   });
 });

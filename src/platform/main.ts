@@ -280,7 +280,6 @@ async function main(): Promise<void> {
             maxHp: game.player.maxHp,
             skillPoints: game.player.skillPoints,
             adjacentDoorClosed: interact.doorClosed,
-            adjacentTrap: interact.trap,
           }),
         );
       }

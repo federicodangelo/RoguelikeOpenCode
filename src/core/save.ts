@@ -4,7 +4,7 @@ import type { GameMap } from "./mapgen/common.ts";
 import { BASE_SEED, TORCH_TURNS } from "./constants.ts";
 import { T } from "./tiles.ts";
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface SavedFloor {
   depth: number;
@@ -218,7 +218,7 @@ function migrateV2toV3(v: Record<string, unknown>): Record<string, unknown> {
 
 function migrateV3toV4(v: Record<string, unknown>): Record<string, unknown> {
   const inv = (typeof v.inventory === "object" && v.inventory !== null ? v.inventory : {}) as Record<string, unknown>;
-  if (Array.isArray(inv.consumables)) return { ...v, version: SAVE_VERSION };
+  if (Array.isArray(inv.consumables)) return { ...v, version: 4 };
 
   const potions = typeof inv.potions === "number" ? inv.potions : 0;
   const torches = typeof inv.torches === "number" ? inv.torches : 0;
@@ -256,13 +256,60 @@ function migrateV3toV4(v: Record<string, unknown>): Record<string, unknown> {
 
   return {
     ...v,
-    version: SAVE_VERSION,
+    version: 4,
     inventory: {
       gold: typeof inv.gold === "number" ? inv.gold : 0,
       consumables,
       carried: [],
       equipment,
     },
+  };
+}
+
+function shiftTile(tile: unknown): unknown {
+  return typeof tile === "number" && tile > 21 ? tile - 1 : tile;
+}
+
+function migrateItemTiles(item: unknown): unknown {
+  if (typeof item !== "object" || item === null) return item;
+  const it = item as Record<string, unknown>;
+  return { ...it, tile: shiftTile(it.tile) };
+}
+
+function migrateV4toV5(v: Record<string, unknown>): Record<string, unknown> {
+  const inv = (typeof v.inventory === "object" && v.inventory !== null ? v.inventory : {}) as Record<string, unknown>;
+  const eq = (typeof inv.equipment === "object" && inv.equipment !== null ? inv.equipment : {}) as Record<
+    string,
+    unknown
+  >;
+
+  const floors = Array.isArray(v.floors)
+    ? v.floors.map((f) => {
+        if (typeof f !== "object" || f === null) return f;
+        const fl = f as Record<string, unknown>;
+        const map = (typeof fl.map === "object" && fl.map !== null ? fl.map : {}) as Record<string, unknown>;
+        const cells = Array.isArray(map.cells)
+          ? map.cells.map((row) => (Array.isArray(row) ? row.map((c) => (c === "trap" ? "floor" : c)) : row))
+          : map.cells;
+        const items = Array.isArray(map.items) ? map.items.map(migrateItemTiles) : map.items;
+        return { ...fl, map: { ...map, cells, items } };
+      })
+    : v.floors;
+
+  return {
+    ...v,
+    version: SAVE_VERSION,
+    inventory: {
+      ...inv,
+      consumables: Array.isArray(inv.consumables) ? inv.consumables.map(migrateItemTiles) : inv.consumables,
+      carried: Array.isArray(inv.carried) ? inv.carried.map(migrateItemTiles) : inv.carried,
+      equipment: {
+        ...eq,
+        weapon: eq.weapon === null ? null : migrateItemTiles(eq.weapon),
+        armor: eq.armor === null ? null : migrateItemTiles(eq.armor),
+      },
+    },
+    floors,
   };
 }
 
@@ -277,6 +324,9 @@ export function migrateSavedRun(value: unknown): unknown {
   }
   if (v.version === 3) {
     v = migrateV3toV4(v);
+  }
+  if (v.version === 4) {
+    v = migrateV4toV5(v);
   }
   return v;
 }

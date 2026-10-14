@@ -566,32 +566,6 @@ const arts: TileArt[] = [
     ],
   },
   {
-    name: "trap",
-    pal: {
-      F: C(46, 42, 38),
-      s: C(122, 126, 138),
-      S: C(184, 188, 196),
-    },
-    rows: [
-      rep(16, "F"),
-      rep(16, "F"),
-      rep(16, "F"),
-      line("FFF", rep(10, "s"), "FFF"),
-      line("FFs", rep(10, " "), "sFF"),
-      line("FFs", "..S", rep(4, "."), "S..", "sFF"),
-      line("FFs", rep(4, "."), "SS", rep(4, "."), "sFF"),
-      line("FFs", rep(4, "."), "SS", rep(4, "."), "sFF"),
-      line("FFs", "..S", rep(4, "."), "S..", "sFF"),
-      line("FFs", rep(10, " "), "sFF"),
-      line("FFF", rep(10, "s"), "FFF"),
-      rep(16, "F"),
-      rep(16, "F"),
-      rep(16, "F"),
-      rep(16, "F"),
-      rep(16, "F"),
-    ],
-  },
-  {
     name: "torch",
     pal: {
       B: C(138, 90, 43),

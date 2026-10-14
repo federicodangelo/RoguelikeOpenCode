@@ -172,7 +172,7 @@ export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
   for (let y = 1; y < map.height - 1; y++) {
     for (let x = 1; x < map.width - 1; x++) {
       const c = map.cells[y]![x]!;
-      if (c === "wall" || c === "doorClosed" || c === "trap" || c === "stairs" || c === "stairsUp") continue;
+      if (c === "wall" || c === "doorClosed" || c === "stairs" || c === "stairsUp") continue;
       if (map.items.some((i) => i.x === x && i.y === y)) continue;
       if ((dist[y * MAP_W + x] ?? -1) < 6) continue;
       candidates.push({ x, y });

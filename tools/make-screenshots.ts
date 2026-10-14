@@ -253,7 +253,6 @@ function renderGameplay(showMenu: boolean): Buffer {
         maxHp: game.player.maxHp,
         skillPoints: game.player.skillPoints,
         adjacentDoorClosed: interact.doorClosed,
-        adjacentTrap: interact.trap,
       }),
     );
   }

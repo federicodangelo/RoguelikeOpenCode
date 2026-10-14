@@ -74,22 +74,6 @@ export function runMonsterTurn(ctx: TurnContext): void {
       }
     }
 
-    const monsterCell = ctx.map.cells[m.y]?.[m.x];
-    if (monsterCell === "trap") {
-      const dmg = ctx.battleRng.int(1, 3);
-      m.hp = Math.max(0, m.hp - dmg);
-      if (m.hp === 0) m.alive = false;
-      ctx.map.cells[m.y]![m.x] = "floor";
-      ctx.mapVersion++;
-      ctx.spawnEffect(m.x, m.y, `-${dmg}`, "#ff9a4a");
-      if (m.alive) {
-        ctx.logMessage(`The ${m.name} triggers a trap.`);
-      } else {
-        ctx.logMessage(`The ${m.name} triggers a trap and dies.`);
-        ctx.handleMonsterDeath(m);
-      }
-    }
-
     if (!ctx.player.alive) {
       ctx.gameOver = true;
       ctx.events.death?.();

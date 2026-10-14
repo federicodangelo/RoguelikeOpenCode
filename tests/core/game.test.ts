@@ -230,7 +230,6 @@ describe("Game interactables", () => {
     const y = game.player.y;
 
     game.map.cells[y + 1]![x] = "doorClosed";
-    game.map.cells[y]![x + 1] = "trap";
     game.monstersByFloor.get(game.depth)!.push({
       id: 999,
       name: "test rat",
@@ -259,7 +258,6 @@ describe("Game interactables", () => {
 
     const adjacent = game.adjacentInteractables();
     expect(adjacent.doorClosed).toBe(true);
-    expect(adjacent.trap).toBe(true);
     expect(adjacent.monster?.name).toBe("test rat");
   });
 
@@ -269,27 +267,14 @@ describe("Game interactables", () => {
     const x = game.player.x;
     const y = game.player.y;
 
-    game.map.cells[y + 1]![x + 1] = "trap";
+    game.map.cells[y + 1]![x + 1] = "doorClosed";
     game.visible = new Set([(y + 1) * MAP_W + (x + 1)]);
 
-    expect(game.adjacentInteractables().trap).toBe(false);
+    expect(game.adjacentInteractables().doorClosed).toBe(false);
   });
 });
 
 describe("Game cheats", () => {
-  it("god mode prevents death from traps", () => {
-    const game = new Game();
-    game.monstersByFloor.set(game.depth, []);
-    game.godMode = true;
-    game.player.hp = 1;
-    game.map.cells[game.player.y + 1]![game.player.x] = "trap";
-
-    expect(game.tryMove(0, 1)).toBe(true);
-    expect(game.player.alive).toBe(true);
-    expect(game.player.hp).toBe(1);
-    expect(game.gameOver).toBe(false);
-  });
-
   it("god mode prevents death from status effects", () => {
     const game = new Game();
     game.monstersByFloor.set(game.depth, []);
@@ -404,27 +389,6 @@ describe("Game scene lookup", () => {
 });
 
 describe("Game kill rewards", () => {
-  it("trap kills grant kills, xp, and loot", () => {
-    const game = new Game();
-    game.map.cells = openInterior();
-    game.monstersByFloor.set(game.depth, []);
-    const m = monster(25, 20, { hp: 1, maxHp: 12, xpValue: 2, atk: 0 });
-    game.map.cells[20]![25] = "trap";
-    game.map.cells[19]![25] = "wall";
-    game.map.cells[21]![25] = "wall";
-    game.map.cells[20]![24] = "wall";
-    game.map.cells[20]![26] = "wall";
-    game.monstersByFloor.get(game.depth)!.push(m);
-    game.battleRng.setState(0);
-
-    game.monstersAct();
-    expect(m.alive).toBe(false);
-    expect(game.kills).toBe(1);
-    expect(game.player.xp).toBe(2);
-    expect(game.map.items.some((i) => i.x === 25 && i.y === 20)).toBe(true);
-    expect(game.map.cells[20]![25] as string).toBe("floor");
-  });
-
   it("status-effect kills grant kills, xp, and loot", () => {
     const game = new Game();
     game.map.cells = openInterior();

@@ -41,8 +41,6 @@ export function minimapCellColor(game: Game, x: number, y: number): string | nul
       return "#8a5a2a";
     case "doorOpen":
       return "#5a3a1a";
-    case "trap":
-      return "#c0392b";
     case "floor":
       return "#2a2620";
     default:

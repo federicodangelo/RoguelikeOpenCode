@@ -20,7 +20,7 @@ export interface HudData {
   icons: Iconset;
 }
 
-export type HintIcon = "item" | "stairs" | "stairsUp" | "trap" | "door" | "potion" | "torch" | "skill";
+export type HintIcon = "item" | "stairs" | "stairsUp" | "door" | "potion" | "torch" | "skill";
 
 export interface ContextualHint {
   text: string;
@@ -36,8 +36,6 @@ export function hintIconColor(icon: HintIcon): string {
       return "#ffd97a";
     case "stairsUp":
       return "#7ab8ff";
-    case "trap":
-      return "#ff6a6a";
     case "door":
       return "#c98a4a";
     case "potion":
@@ -61,7 +59,6 @@ export interface ContextualHintInput {
   maxHp: number;
   skillPoints: number;
   adjacentDoorClosed?: boolean;
-  adjacentTrap?: boolean;
 }
 
 export function contextualHints(input: ContextualHintInput): ContextualHint[] {
@@ -80,9 +77,6 @@ export function contextualHints(input: ContextualHintInput): ContextualHint[] {
   }
   if (input.adjacentDoorClosed) {
     hints.push({ text: "bump: open door", icon: "door" });
-  }
-  if (input.adjacentTrap) {
-    hints.push({ text: "trap: danger", icon: "trap" });
   }
   if (input.potions > 0 && input.hp * 2 < input.maxHp) {
     hints.push({ text: "u: drink potion", icon: "potion" });

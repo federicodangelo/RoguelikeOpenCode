@@ -12,7 +12,6 @@ export type IconName =
   | "item"
   | "monster"
   | "door"
-  | "trap"
   | "potion"
   | "stairs"
   | "stairsUp";
@@ -31,7 +30,6 @@ export const ICON_NAMES: IconName[] = [
   "item",
   "monster",
   "door",
-  "trap",
   "potion",
   "stairs",
   "stairsUp",

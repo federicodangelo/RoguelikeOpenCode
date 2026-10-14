@@ -4,7 +4,7 @@ import { makeInstance, pickDef, rollQuality, type ItemKind, type Quality } from 
 export const MAP_W = 40;
 export const MAP_H = 30;
 
-export type CellType = "wall" | "floor" | "stairs" | "stairsUp" | "doorClosed" | "doorOpen" | "trap";
+export type CellType = "wall" | "floor" | "stairs" | "stairsUp" | "doorClosed" | "doorOpen";
 
 export interface Point {
   x: number;
@@ -256,26 +256,6 @@ export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserve
     if (inst.kind === "gold") inst.stat = rng.int(5 + 2 * depth, 10 + 4 * depth);
     return { x: p.x, y: p.y, ...inst };
   });
-}
-
-export function placeTraps(cells: CellType[][], rng: RNG, depth: number, reserved: Point[], items: PlacedItem[]): void {
-  const count = Math.min(rng.int(1, 2) + Math.floor(depth / 2), 6);
-  const floors: Point[] = [];
-  for (let y = 1; y < MAP_H - 1; y++) {
-    for (let x = 1; x < MAP_W - 1; x++) {
-      if (cells[y]![x] !== "floor") continue;
-      if (reserved.some((p) => p.x === x && p.y === y)) continue;
-      if (items.some((i) => i.x === x && i.y === y)) continue;
-      floors.push({ x, y });
-    }
-  }
-  for (let i = floors.length - 1; i > 0; i--) {
-    const j = rng.int(0, i);
-    [floors[i], floors[j]] = [floors[j]!, floors[i]!];
-  }
-  for (const p of floors.slice(0, count)) {
-    cells[p.y]![p.x] = "trap";
-  }
 }
 
 export function makeMap(
