@@ -43,7 +43,7 @@ PHASE 19 - Input and UI robustness
 [x] 19.1 Ignore keyboard repeat events for turn-based actions
 [x] 19.2 Replace label-based menu coupling with stable menu/action IDs
 [x] 19.3 Add user-facing error handling for asset loading failures
-[ ] 19.4 Add integration coverage for src/platform/main.ts startup wiring
+[x] 19.4 Add integration coverage for src/platform/main.ts startup wiring
 [ ] 19.5 Document asset regeneration workflow in CONTRIBUTING.md or README.md
 
 PHASE 20 - Maintainability
