@@ -11,8 +11,9 @@ import {
   spawnMonsters,
 } from "../../src/core/entities.ts";
 import { generateMap } from "../../src/core/map.ts";
-import { bfsDistances, MAP_W } from "../../src/core/mapgen/common.ts";
+import { bfsDistances, MAP_H, MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
+import { mkMap, openInterior } from "./helpers.ts";
 
 const KIND_BY_NAME = new Map([...MONSTER_KINDS, BOSS_KIND].map((kind) => [kind.name, kind]));
 
@@ -139,4 +140,33 @@ describe("spawnMonsters", () => {
       }
     });
   }
+
+  it("never spawns on stairs, up-stairs, or item tiles", () => {
+    const cells = openInterior();
+    const map = mkMap(cells, { x: 1, y: 1 }, { x: 1, y: 1 });
+    const dist = bfsDistances(cells, map.spawn);
+    for (let y = 1; y < MAP_H - 1; y++) {
+      for (let x = 1; x < MAP_W - 1; x++) {
+        if ((dist[y * MAP_W + x] ?? -1) >= 6) cells[y]![x] = "stairs";
+      }
+    }
+    for (const [x, y] of [
+      [12, 1],
+      [13, 1],
+      [14, 1],
+      [15, 1],
+      [16, 1],
+      [17, 1],
+    ] as const)
+      cells[y]![x] = "floor";
+    cells[1]![18] = "stairsUp";
+    map.items.push({ x: 10, y: 1, tile: T.Gold }, { x: 11, y: 1, tile: T.Potion });
+
+    const monsters = spawnMonsters(map, new RNG(3), 1);
+    expect(monsters.length).toBe(4);
+    for (const m of monsters) {
+      expect(cells[m.y]![m.x]).toBe("floor");
+      expect(map.items.some((i) => i.x === m.x && i.y === m.y)).toBe(false);
+    }
+  });
 });

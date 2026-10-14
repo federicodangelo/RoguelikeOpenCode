@@ -155,15 +155,17 @@ export class Game {
 
     for (const m of this.monsters()) {
       if (!m.alive) continue;
-      if (m.hp * 3 < m.maxHp && !hasStatus(m, "fear")) addStatus(m, "fear", 3, 1);
+      if (m.hp * 3 < m.maxHp && !m.panicked) {
+        m.panicked = true;
+        addStatus(m, "fear", 3, 1);
+      }
       const tick = tickStatuses(m);
       if (tick.damage > 0) {
         this.spawnEffect(m.x, m.y, `-${tick.damage}`, "#9be56f");
         for (const msg of tick.messages) this.logMessage(msg);
         if (!m.alive) {
-          this.dropLoot(m);
-          this.kills++;
           this.logMessage(`The ${m.name} dies from status effects.`);
+          this.handleMonsterDeath(m);
         }
       }
     }
@@ -209,9 +211,8 @@ export class Game {
         if (m.alive) {
           this.logMessage(`The ${m.name} triggers a trap.`);
         } else {
-          this.dropLoot(m);
-          this.kills++;
           this.logMessage(`The ${m.name} triggers a trap and dies.`);
+          this.handleMonsterDeath(m);
         }
       }
 
@@ -246,6 +247,18 @@ export class Game {
     });
   }
 
+  private handleMonsterDeath(m: Entity): void {
+    this.dropLoot(m);
+    this.kills++;
+    const levels = gainXp(this.player, m.xpValue);
+    if (levels > 0) {
+      this.logMessage(`Level up! You are now level ${this.player.level}.`);
+      this.events.level?.();
+    } else {
+      this.events.kill?.();
+    }
+  }
+
   tryMove(dx: number, dy: number): boolean {
     const nx = this.player.x + dx;
     const ny = this.player.y + dy;
@@ -264,16 +277,8 @@ export class Game {
         this.logMessage(`You hit the ${target.name} for ${dmg}.`);
         this.events.hit?.();
       } else {
-        this.dropLoot(target);
-        this.kills++;
-        const levels = gainXp(this.player, target.xpValue);
         this.logMessage(`You slay the ${target.name}.`);
-        if (levels > 0) {
-          this.logMessage(`Level up! You are now level ${this.player.level}.`);
-          this.events.level?.();
-        } else {
-          this.events.kill?.();
-        }
+        this.handleMonsterDeath(target);
       }
       return true;
     }

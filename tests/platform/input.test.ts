@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
+import { addStatus } from "../../src/core/status.ts";
 import { buildMenuTree } from "../../src/platform/menuTree.ts";
 import { defaultSettings } from "../../src/platform/settings.ts";
 import { handleKeydown, MOVE_KEYS, type InputContext } from "../../src/platform/input.ts";
@@ -90,5 +91,38 @@ describe("input", () => {
     handleKeydown(key("Escape"), makeContext(game, menu));
 
     expect(game.menuOpen).toBe(false);
+  });
+
+  it("non-action keys do not consume a turn while stunned", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.dirty = false;
+    game.lightTurns = 5;
+    addStatus(game.player, "stun", 2, 1);
+    const messages = game.messages.length;
+    const menu = makeMenu(game);
+
+    handleKeydown(key("Home"), makeContext(game, menu));
+
+    expect(game.lightTurns).toBe(5);
+    expect(game.dirty).toBe(false);
+    expect(game.messages.length).toBe(messages);
+  });
+
+  it("action keys consume a turn while stunned", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.dirty = false;
+    game.lightTurns = 5;
+    addStatus(game.player, "stun", 2, 1);
+    const before = { x: game.player.x, y: game.player.y };
+    const menu = makeMenu(game);
+
+    handleKeydown(key("ArrowUp"), makeContext(game, menu));
+
+    expect(game.lightTurns).toBe(4);
+    expect(game.player.x).toBe(before.x);
+    expect(game.player.y).toBe(before.y);
+    expect(game.dirty).toBe(true);
   });
 });

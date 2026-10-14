@@ -73,6 +73,22 @@ describe("save/load", () => {
     expect(storage.getItem(SAVE_KEY)).toBeNull();
   });
 
+  it("rejects corrupt nested saves without mutating the game", () => {
+    const storage = new MemoryStorage();
+    const source = new Game();
+    saveRun(storage, source);
+    const raw = JSON.parse(storage.getItem(SAVE_KEY)!) as { floors: { map: unknown }[] };
+    raw.floors[0]!.map = null;
+    storage.setItem(SAVE_KEY, JSON.stringify(raw));
+
+    const game = new Game();
+    const before = game.map;
+    expect(loadRun(storage, game)).toBe(false);
+    expect(storage.getItem(SAVE_KEY)).toBeNull();
+    expect(game.depth).toBe(1);
+    expect(game.map).toBe(before);
+  });
+
   it("clearRun removes the saved run", () => {
     const storage = new MemoryStorage();
     const game = new Game();

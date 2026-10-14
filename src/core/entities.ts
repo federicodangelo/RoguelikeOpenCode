@@ -33,6 +33,7 @@ export interface Entity {
   speed: number;
   range: number;
   statuses: Status[];
+  panicked?: boolean;
 }
 
 let nextId = 1;
@@ -162,7 +163,8 @@ export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
   for (let y = 1; y < map.height - 1; y++) {
     for (let x = 1; x < map.width - 1; x++) {
       const c = map.cells[y]![x]!;
-      if (c === "wall" || c === "doorClosed" || c === "trap") continue;
+      if (c === "wall" || c === "doorClosed" || c === "trap" || c === "stairs" || c === "stairsUp") continue;
+      if (map.items.some((i) => i.x === x && i.y === y)) continue;
       if ((dist[y * MAP_W + x] ?? -1) < 6) continue;
       candidates.push({ x, y });
     }

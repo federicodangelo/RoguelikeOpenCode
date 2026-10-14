@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
 import { TORCH_TURNS } from "../../src/core/constants.ts";
+import { addStatus } from "../../src/core/status.ts";
 import { buildMenuTree } from "../../src/platform/menuTree.ts";
 import { defaultSettings } from "../../src/platform/settings.ts";
 import { MenuNav } from "../../src/ui/menu.ts";
@@ -76,6 +77,30 @@ describe("inventory menu", () => {
 
     expect(game.inventory.torches).toBe(0);
     expect(game.lightTurns).toBe(TORCH_TURNS - 1);
+  });
+
+  it("a stunned player loses a turn attempting to drink but keeps the potion", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.inventory.potions = 1;
+    game.player.hp = 1;
+    game.lightTurns = 5;
+    addStatus(game.player, "stun", 2, 1);
+    const menu = makeMenu(game);
+    menu.open();
+
+    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.index = inventoryIdx;
+    menu.enter();
+
+    const potionIdx = menu.entries().findIndex((entry) => entry.label.startsWith("Potions:"));
+    expect(potionIdx).toBeGreaterThanOrEqual(0);
+    menu.index = potionIdx;
+    menu.enter();
+
+    expect(game.inventory.potions).toBe(1);
+    expect(game.player.hp).toBe(1);
+    expect(game.lightTurns).toBe(4);
   });
 });
 

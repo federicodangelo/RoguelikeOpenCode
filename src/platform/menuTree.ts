@@ -18,6 +18,9 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
   const consume = (fn: () => boolean) => () => {
     if (game.playerStunned()) {
       game.logMessage("You are stunned and cannot act.");
+      game.monstersAct();
+      game.refreshFOV();
+      if (game.gameOver) game.menuOpen = false;
       return;
     }
     if (fn()) {

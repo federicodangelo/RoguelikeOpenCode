@@ -4,6 +4,33 @@ import { TORCH_TURNS } from "../../src/core/constants.ts";
 import { MAP_W } from "../../src/core/map.ts";
 import { T } from "../../src/core/tiles.ts";
 import { addStatus, hasStatus } from "../../src/core/status.ts";
+import { type Entity } from "../../src/core/entities.ts";
+import { openInterior } from "./helpers.ts";
+
+function monster(x: number, y: number, overrides: Partial<Entity> = {}): Entity {
+  return {
+    id: 1,
+    name: "rat",
+    x,
+    y,
+    hp: 4,
+    maxHp: 4,
+    atk: 2,
+    def: 0,
+    sprite: T.Rat,
+    isPlayer: false,
+    alive: true,
+    xp: 0,
+    level: 1,
+    xpValue: 2,
+    skillPoints: 0,
+    archetype: "normal",
+    speed: 1,
+    range: 0,
+    statuses: [],
+    ...overrides,
+  };
+}
 
 describe("Game torches", () => {
   it("lighting a torch consumes it and sets temporary light turns", () => {
@@ -181,5 +208,63 @@ describe("Game cheats", () => {
     game.cheatNextDepth();
     expect(game.depth).toBe(2);
     expect(game.map).toBe(game.floors.get(2)!);
+  });
+});
+
+describe("Game fear", () => {
+  it("applies fear once to a wounded monster and lets it expire without refreshing", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const m = monster(25, 20, { hp: 1, maxHp: 12 });
+    game.monstersByFloor.get(game.depth)!.push(m);
+
+    game.monstersAct();
+    expect(hasStatus(m, "fear")).toBe(true);
+    expect(m.statuses.find((s) => s.kind === "fear")!.turns).toBe(2);
+
+    game.monstersAct();
+    game.monstersAct();
+    expect(hasStatus(m, "fear")).toBe(false);
+
+    game.monstersAct();
+    expect(hasStatus(m, "fear")).toBe(false);
+  });
+});
+
+describe("Game kill rewards", () => {
+  it("trap kills grant kills, xp, and loot", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const m = monster(25, 20, { hp: 1, maxHp: 12, xpValue: 2, atk: 0 });
+    game.map.cells[20]![25] = "trap";
+    game.map.cells[19]![25] = "wall";
+    game.map.cells[21]![25] = "wall";
+    game.map.cells[20]![24] = "wall";
+    game.map.cells[20]![26] = "wall";
+    game.monstersByFloor.get(game.depth)!.push(m);
+
+    game.monstersAct();
+    expect(m.alive).toBe(false);
+    expect(game.kills).toBe(1);
+    expect(game.player.xp).toBe(2);
+    expect(game.map.items.some((i) => i.x === 25 && i.y === 20)).toBe(true);
+    expect(game.map.cells[20]![25] as string).toBe("floor");
+  });
+
+  it("status-effect kills grant kills, xp, and loot", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const m = monster(25, 20, { hp: 1, maxHp: 12, xpValue: 2 });
+    addStatus(m, "poison", 1, 2);
+    game.monstersByFloor.get(game.depth)!.push(m);
+
+    game.monstersAct();
+    expect(m.alive).toBe(false);
+    expect(game.kills).toBe(1);
+    expect(game.player.xp).toBe(2);
+    expect(game.map.items.some((i) => i.x === 25 && i.y === 20)).toBe(true);
   });
 });

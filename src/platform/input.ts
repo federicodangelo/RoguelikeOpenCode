@@ -9,6 +9,8 @@ export const MOVE_KEYS: Record<string, [number, number]> = {
   ArrowRight: [1, 0],
 };
 
+const ACTION_KEYS = new Set([".", "Enter", ",", "g", "u", "t"]);
+
 export interface InputContext {
   game: Game;
   menu: MenuNav;
@@ -107,6 +109,8 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
   }
 
   if (game.playerStunned()) {
+    if (MOVE_KEYS[e.key] === undefined && !ACTION_KEYS.has(e.key)) return;
+    e.preventDefault();
     game.logMessage("You are stunned and cannot act.");
     game.monstersAct();
     game.refreshFOV();
