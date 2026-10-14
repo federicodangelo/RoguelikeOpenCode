@@ -102,6 +102,18 @@ Regenerate the tileset:
 bun run tiles
 ```
 
+Regenerate the icon sheet:
+
+```bash
+bun run icons
+```
+
+Regenerate the pixel font atlas:
+
+```bash
+bun run font
+```
+
 Regenerate README screenshots:
 
 ```bash

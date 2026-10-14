@@ -76,6 +76,45 @@ If rendering, menu text, HUD layout, tile art, icon art, or screenshot generatio
 bun run screenshots
 ```
 
+## Asset regeneration workflow
+
+Generated assets are committed so the browser build and screenshot tests are reproducible.
+
+Regenerate the tileset:
+
+```bash
+bun run tiles
+```
+
+This writes `public/assets/tiles.png` from `tools/make-tiles.ts`. If tile art is added, removed, or reordered, update `src/core/tiles.ts` and the tile count/index tests in `tests/core/tiles.test.ts`.
+
+Regenerate the icon sheet:
+
+```bash
+bun run icons
+```
+
+This writes `public/assets/icons.png` from `tools/make-icons.ts`. The sheet order follows `ICON_NAMES` in `src/ui/icons.ts`; keep that list and `tests/ui/icons.test.ts` in sync.
+
+Regenerate the pixel font atlas:
+
+```bash
+bun run font
+```
+
+This writes `public/assets/font.png` from `tools/make-font.ts`. If glyphs are added, removed, or reordered, update the atlas order tests in `tests/ui/pixel-font.test.ts`.
+
+After changing any generated asset, regenerate screenshots and run the asset checks:
+
+```bash
+bun run screenshots
+bun test
+bun run build
+bun run verify
+```
+
+Commit the regenerated files under `public/assets` and `public/screenshots`.
+
 If formatting or lint issues appear, run:
 
 ```bash
