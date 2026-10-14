@@ -11,7 +11,7 @@ WORK RULES
 - Run bun test, bun run typecheck, bun run lint, bun run build, and bun run verify after each phase
 - Prefer small commits per step or milestone
 
-STATUS: PHASE 18 next
+STATUS: PHASE 19 next
 
 PHASE 16 - Architecture boundaries and core purity
 --------------------------------------------------
@@ -32,11 +32,11 @@ PHASE 17 - Replayability and save robustness
 
 PHASE 18 - Runtime performance
 ------------------------------
-[ ] 18.1 Cache saved-run presence instead of parsing localStorage during title draw
-[ ] 18.2 Autosave only after state-changing actions, or debounce autosave
-[ ] 18.3 Optimize Game.buildScene with position lookup maps for items and monsters
-[ ] 18.4 Cache minimap rendering per floor and invalidate on exploration changes
-[ ] 18.5 Add focused performance or behavior tests for scene and minimap caching
+[x] 18.1 Cache saved-run presence instead of parsing localStorage during title draw
+[x] 18.2 Autosave only after state-changing actions, or debounce autosave
+[x] 18.3 Optimize Game.buildScene with position lookup maps for items and monsters
+[x] 18.4 Cache minimap rendering per floor and invalidate on exploration changes
+[x] 18.5 Add focused performance or behavior tests for scene and minimap caching
 
 PHASE 19 - Input and UI robustness
 ----------------------------------

@@ -1,5 +1,5 @@
 import { LOGICAL_W, VIEW_COLS, VIEW_ROWS } from "../core/constants.ts";
-import { MAP_H, MAP_W } from "../core/map.ts";
+import { MAP_H, MAP_W, type GameMap } from "../core/map.ts";
 import { T } from "../core/tiles.ts";
 import { drawPixelText } from "./pixel-font.ts";
 import type { Game } from "../core/game.ts";
@@ -69,6 +69,63 @@ export function minimapItemColor(tile: number): string | null {
   }
 }
 
+interface MinimapCache {
+  map: GameMap;
+  explored: Set<number> | null;
+  mapVersion: number;
+  exploredVersion: number;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+}
+
+const minimapCaches = new WeakMap<Game, MinimapCache>();
+
+function drawMinimapStatic(ctx: CanvasRenderingContext2D, game: Game): void {
+  ctx.clearRect(0, 0, MINIMAP_W, MINIMAP_H);
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      const color = minimapCellColor(game, x, y);
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(x * MINIMAP_SCALE, y * MINIMAP_SCALE, MINIMAP_SCALE, MINIMAP_SCALE);
+    }
+  }
+}
+
+function getMinimapCache(bctx: CanvasRenderingContext2D, game: Game): MinimapCache {
+  const explored = game.exploredByFloor.get(game.depth) ?? null;
+  let cache = minimapCaches.get(game);
+  if (!cache) {
+    const canvas = bctx.canvas.cloneNode(false) as HTMLCanvasElement;
+    canvas.width = MINIMAP_W;
+    canvas.height = MINIMAP_H;
+    const ctx = canvas.getContext("2d")!;
+    ctx.imageSmoothingEnabled = false;
+    cache = {
+      map: game.map,
+      explored,
+      mapVersion: game.mapVersion,
+      exploredVersion: game.exploredVersion,
+      canvas,
+      ctx,
+    };
+    minimapCaches.set(game, cache);
+    drawMinimapStatic(cache.ctx, game);
+  } else if (
+    cache.map !== game.map ||
+    cache.explored !== explored ||
+    cache.mapVersion !== game.mapVersion ||
+    cache.exploredVersion !== game.exploredVersion
+  ) {
+    cache.map = game.map;
+    cache.explored = explored;
+    cache.mapVersion = game.mapVersion;
+    cache.exploredVersion = game.exploredVersion;
+    drawMinimapStatic(cache.ctx, game);
+  }
+  return cache;
+}
+
 export function drawMinimap(bctx: CanvasRenderingContext2D, game: Game): MinimapRect {
   const rect = minimapRect();
   const mapX = rect.x + 6;
@@ -80,14 +137,8 @@ export function drawMinimap(bctx: CanvasRenderingContext2D, game: Game): Minimap
   bctx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w, rect.h);
   drawPixelText(bctx, "MAP", rect.x + 6, rect.y + 6, "#9a958c", 2);
 
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      const color = minimapCellColor(game, x, y);
-      if (!color) continue;
-      bctx.fillStyle = color;
-      bctx.fillRect(mapX + x * MINIMAP_SCALE, mapY + y * MINIMAP_SCALE, MINIMAP_SCALE, MINIMAP_SCALE);
-    }
-  }
+  const cache = getMinimapCache(bctx, game);
+  bctx.drawImage(cache.canvas, mapX, mapY);
 
   const cam = game.camera();
   bctx.strokeStyle = "rgba(232,228,218,0.55)";

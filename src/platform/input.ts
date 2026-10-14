@@ -20,7 +20,7 @@ export interface InputContext {
   openInventory(): void;
 }
 
-export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
+export function handleKeydown(e: KeyboardEvent, ctx: InputContext): boolean {
   const { game, menu, audio, toggleSound, openInventory } = ctx;
 
   if (game.screen === "title") {
@@ -29,8 +29,9 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       audio.unlock();
       audio.sfx("select");
       ctx.startGame();
+      return true;
     }
-    return;
+    return false;
   }
 
   if (game.gameOver) {
@@ -39,15 +40,16 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       audio.stopMusic();
       game.screen = "title";
       game.dirty = true;
+      return true;
     }
-    return;
+    return false;
   }
 
   if (e.key === "m") {
     e.preventDefault();
     toggleSound();
     game.dirty = true;
-    return;
+    return false;
   }
 
   if (e.key === "Escape") {
@@ -62,7 +64,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       if (game.menuOpen) menu.open();
     }
     game.dirty = true;
-    return;
+    return false;
   }
 
   if (e.key === "i") {
@@ -74,7 +76,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
     }
     audio.sfx("menu");
     game.dirty = true;
-    return;
+    return false;
   }
 
   if (game.menuOpen) {
@@ -83,11 +85,13 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
       menu.up();
       audio.sfx("menu");
       game.dirty = true;
+      return false;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       menu.down();
       audio.sfx("menu");
       game.dirty = true;
+      return false;
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Backspace") {
       e.preventDefault();
       const delta = e.key === "ArrowRight" ? 1 : -1;
@@ -99,23 +103,25 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
         audio.sfx("menu");
         game.dirty = true;
       }
+      return false;
     } else if (e.key === "Enter") {
       e.preventDefault();
       menu.enter();
       audio.sfx("select");
       game.dirty = true;
+      return true;
     }
-    return;
+    return false;
   }
 
   if (game.playerStunned()) {
-    if (MOVE_KEYS[e.key] === undefined && !ACTION_KEYS.has(e.key)) return;
+    if (MOVE_KEYS[e.key] === undefined && !ACTION_KEYS.has(e.key)) return false;
     e.preventDefault();
     game.logMessage("You are stunned and cannot act.");
     game.monstersAct();
     game.refreshFOV();
     game.dirty = true;
-    return;
+    return true;
   }
 
   let acted = false;
@@ -144,5 +150,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
     game.monstersAct();
     game.refreshFOV();
     game.dirty = true;
+    return true;
   }
+  return false;
 }

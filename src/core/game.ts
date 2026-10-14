@@ -45,6 +45,8 @@ export class Game {
   godMode = false;
   menuOpen = false;
   dirty = true;
+  mapVersion = 0;
+  exploredVersion = 0;
   events: GameEvents = {};
   private readonly clock: () => number;
 
@@ -64,6 +66,7 @@ export class Game {
       m = generateMap(new RNG(this.runSeed + d * 7919), d, { upAt });
       this.floors.set(d, m);
       this.monstersByFloor.set(d, spawnMonsters(m, new RNG(this.runSeed + d * 7919 + 17), d));
+      this.mapVersion++;
     }
     return m;
   }
@@ -83,8 +86,11 @@ export class Game {
     if (!explored) {
       explored = new Set<number>();
       this.exploredByFloor.set(this.depth, explored);
+      this.exploredVersion++;
     }
+    const before = explored.size;
     for (const k of this.visible) explored.add(k);
+    if (explored.size !== before) this.exploredVersion++;
   }
 
   logMessage(msg: string): void {
@@ -213,6 +219,7 @@ export class Game {
         m.hp = Math.max(0, m.hp - dmg);
         if (m.hp === 0) m.alive = false;
         this.map.cells[m.y]![m.x] = "floor";
+        this.mapVersion++;
         this.spawnEffect(m.x, m.y, `-${dmg}`, "#ff9a4a");
         if (m.alive) {
           this.logMessage(`The ${m.name} triggers a trap.`);
@@ -272,6 +279,7 @@ export class Game {
     if (!cell || cell === "wall") return false;
     if (cell === "doorClosed") {
       this.map.cells[ny]![nx] = "doorOpen";
+      this.mapVersion++;
       return true;
     }
 
@@ -296,6 +304,7 @@ export class Game {
       this.player.hp = Math.max(0, this.player.hp - dmg);
       this.protectPlayer();
       this.map.cells[ny]![nx] = "floor";
+      this.mapVersion++;
       this.logMessage(`You trigger a trap and take ${dmg} damage.`);
       this.spawnEffect(this.player.x, this.player.y, `-${dmg}`, "#ff9a4a");
       this.playerFlashUntil = this.clock() + 250;
@@ -427,6 +436,8 @@ export class Game {
     this.menuOpen = false;
     this.map = this.getFloor(1);
     this.player = makePlayer(this.map.spawn.x, this.map.spawn.y);
+    this.mapVersion++;
+    this.exploredVersion++;
     this.refreshFOV();
     this.dirty = true;
   }
@@ -490,6 +501,8 @@ export class Game {
     this.effects.length = 0;
     this.playerFlashUntil = 0;
     this.menuOpen = false;
+    this.mapVersion++;
+    this.exploredVersion++;
     this.refreshFOV();
     this.dirty = true;
   }
@@ -504,6 +517,17 @@ export class Game {
   buildScene(): CellView[][] {
     const cam = this.camera();
     const scene: CellView[][] = [];
+    const itemByPos = new Map<number, number>();
+    for (const item of this.map.items) {
+      const key = item.y * MAP_W + item.x;
+      if (!itemByPos.has(key)) itemByPos.set(key, item.tile);
+    }
+    const monsterByPos = new Map<number, number>();
+    for (const m of this.monsters()) {
+      if (!m.alive) continue;
+      monsterByPos.set(m.y * MAP_W + m.x, m.sprite);
+    }
+
     for (let vy = 0; vy < VIEW_ROWS; vy++) {
       const row: CellView[] = [];
       for (let vx = 0; vx < VIEW_COLS; vx++) {
@@ -525,13 +549,13 @@ export class Game {
         else if (cell === "doorOpen") view.feature = T.DoorOpen;
         else if (cell === "trap") view.feature = T.Trap;
 
-        const item = this.map.items.find((i) => i.x === mx && i.y === my);
-        if (item) view.feature = item.tile;
+        const itemTile = itemByPos.get(key);
+        if (itemTile !== undefined) view.feature = itemTile;
 
         const isVisible = this.visible.has(key);
         if (isVisible) {
-          const monster = this.monsters().find((m) => m.alive && m.x === mx && m.y === my);
-          if (monster) view.entity = monster.sprite;
+          const monsterSprite = monsterByPos.get(key);
+          if (monsterSprite !== undefined) view.entity = monsterSprite;
         } else {
           view.dim = true;
         }

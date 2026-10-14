@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
 import { addStatus } from "../../src/core/status.ts";
+import { openInterior } from "../core/helpers.ts";
 import { buildMenuTree } from "../../src/platform/menuTree.ts";
 import { defaultSettings } from "../../src/platform/settings.ts";
 import { handleKeydown, MOVE_KEYS, type InputContext } from "../../src/platform/input.ts";
@@ -118,11 +119,60 @@ describe("input", () => {
     const before = { x: game.player.x, y: game.player.y };
     const menu = makeMenu(game);
 
-    handleKeydown(key("ArrowUp"), makeContext(game, menu));
+    expect(handleKeydown(key("ArrowUp"), makeContext(game, menu))).toBe(true);
 
     expect(game.lightTurns).toBe(4);
     expect(game.player.x).toBe(before.x);
     expect(game.player.y).toBe(before.y);
+    expect(game.dirty).toBe(true);
+  });
+
+  it("returns true when title Enter starts a run", () => {
+    const game = new Game();
+    game.screen = "title";
+    const menu = makeMenu(game);
+
+    expect(handleKeydown(key("Enter"), makeContext(game, menu))).toBe(true);
+  });
+
+  it("returns true when game-over Enter returns to the title", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.gameOver = true;
+    const menu = makeMenu(game);
+
+    expect(handleKeydown(key("Enter"), makeContext(game, menu))).toBe(true);
+    expect(game.screen as string).toBe("title");
+  });
+
+  it("returns false for settings and menu navigation", () => {
+    const game = new Game();
+    game.screen = "game";
+    const menu = makeMenu(game);
+
+    expect(handleKeydown(key("m"), makeContext(game, menu))).toBe(false);
+
+    game.menuOpen = true;
+    menu.open();
+    expect(handleKeydown(key("ArrowDown"), makeContext(game, menu))).toBe(false);
+    expect(handleKeydown(key("Enter"), makeContext(game, menu))).toBe(true);
+  });
+
+  it("returns false for blocked movement and true for successful movement", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.dirty = false;
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    game.player.x = 25;
+    game.player.y = 1;
+    const menu = makeMenu(game);
+
+    expect(handleKeydown(key("ArrowUp"), makeContext(game, menu))).toBe(false);
+    expect(game.dirty).toBe(false);
+
+    game.player.y = 20;
+    expect(handleKeydown(key("ArrowUp"), makeContext(game, menu))).toBe(true);
     expect(game.dirty).toBe(true);
   });
 });

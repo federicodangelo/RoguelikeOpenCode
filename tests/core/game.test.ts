@@ -232,6 +232,46 @@ describe("Game fear", () => {
   });
 });
 
+describe("Game scene lookup", () => {
+  it("uses the first item when multiple items share a cell", () => {
+    const game = new Game();
+    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Gold });
+    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Potion });
+
+    const cam = game.camera();
+    const scene = game.buildScene();
+    expect(scene[game.player.y - cam.y]![game.player.x - cam.x]!.feature).toBe(T.Gold);
+  });
+
+  it("draws visible monsters through the lookup map", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.player.x = 25;
+    game.player.y = 20;
+    game.monstersByFloor.set(game.depth, []);
+    game.refreshFOV();
+    game.monstersByFloor.get(game.depth)!.push(monster(26, 20));
+
+    const cam = game.camera();
+    const scene = game.buildScene();
+    expect(scene[20 - cam.y]![26 - cam.x]!.entity).toBe(T.Rat);
+  });
+
+  it("ignores dead monsters in the lookup map", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.player.x = 25;
+    game.player.y = 20;
+    game.monstersByFloor.set(game.depth, []);
+    game.refreshFOV();
+    game.monstersByFloor.get(game.depth)!.push(monster(26, 20, { alive: false }));
+
+    const cam = game.camera();
+    const scene = game.buildScene();
+    expect(scene[20 - cam.y]![26 - cam.x]!.entity).toBeUndefined();
+  });
+});
+
 describe("Game kill rewards", () => {
   it("trap kills grant kills, xp, and loot", () => {
     const game = new Game();

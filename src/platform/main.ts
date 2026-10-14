@@ -2,7 +2,7 @@ import { Tileset, drawScene } from "./render.ts";
 import { Game } from "../core/game.ts";
 import { GameAudio } from "./audio.ts";
 import { cycleScalingMode, cycleVolume, loadSettings, saveSettings } from "./settings.ts";
-import { clearRun, hasSavedRun, loadRun, saveRun } from "./save.ts";
+import { clearRun, loadRun, saveRun } from "./save.ts";
 import { handleKeydown } from "./input.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
 import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
@@ -29,6 +29,7 @@ bctx.imageSmoothingEnabled = false;
 
 const settings = loadSettings(localStorage);
 const audio = new GameAudio();
+let savedRunExists = false;
 
 function applyAudioSettings(): void {
   audio.setEnabled(settings.soundEnabled);
@@ -64,9 +65,25 @@ game.events = {
   potion: () => audio.sfx("potion"),
 };
 
-if (loadRun(localStorage, game)) {
+function saveCurrentRun(): void {
+  saveRun(localStorage, game);
+  savedRunExists = true;
+}
+
+function clearCurrentRun(): void {
+  clearRun(localStorage);
+  savedRunExists = false;
+}
+
+function loadCurrentRun(): boolean {
+  const loaded = loadRun(localStorage, game);
+  savedRunExists = loaded;
+  return loaded;
+}
+
+if (loadCurrentRun()) {
   if (game.gameOver) {
-    clearRun(localStorage);
+    clearCurrentRun();
     game.reset(newRunSeed());
   }
   game.screen = "title";
@@ -115,21 +132,21 @@ function toggleAutosave(): void {
   settings.autosave = !settings.autosave;
   saveSettings(localStorage, settings);
   if (settings.autosave && game.screen === "game" && !game.gameOver) {
-    saveRun(localStorage, game);
+    saveCurrentRun();
   }
 }
 
 function resetGame(): void {
   game.reset(newRunSeed());
-  clearRun(localStorage);
-  saveRun(localStorage, game);
+  clearCurrentRun();
+  saveCurrentRun();
   applyAudioSettings();
   startMusicIfAudible();
   game.dirty = true;
 }
 
 function resumeGame(): void {
-  if (!loadRun(localStorage, game) || game.gameOver) {
+  if (!loadCurrentRun() || game.gameOver) {
     resetGame();
     game.screen = "game";
     return;
@@ -141,7 +158,7 @@ function resumeGame(): void {
 }
 
 function startGame(): void {
-  if (hasSavedRun(localStorage)) {
+  if (savedRunExists) {
     resumeGame();
   } else {
     resetGame();
@@ -158,9 +175,9 @@ menu = new MenuNav(() =>
     cycleVolume: cycleVolumeSetting,
     setVolume: setVolumeSetting,
     toggleAutosave,
-    save: () => saveRun(localStorage, game),
+    save: () => saveCurrentRun(),
     load: () => {
-      if (loadRun(localStorage, game)) {
+      if (loadCurrentRun()) {
         startMusicIfAudible();
       }
     },
@@ -181,14 +198,21 @@ function openInventoryMenu(): void {
 
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("keydown", (e) => {
-  handleKeydown(e, { game, menu, audio, startGame, toggleSound, openInventory: openInventoryMenu });
+  const changed = handleKeydown(e, {
+    game,
+    menu,
+    audio,
+    startGame,
+    toggleSound,
+    openInventory: openInventoryMenu,
+  });
   if (game.screen === "game" && !game.gameOver) {
     audio.setMusicContext(game.depth, game.danger());
-    if (settings.autosave) {
-      saveRun(localStorage, game);
+    if (settings.autosave && changed) {
+      saveCurrentRun();
     }
   } else if (game.gameOver) {
-    clearRun(localStorage);
+    clearCurrentRun();
   }
 });
 window.addEventListener("pointerdown", () => {
@@ -206,7 +230,7 @@ async function main(): Promise<void> {
 
   function draw(): void {
     if (game.screen === "title") {
-      drawTitle(bctx, tiles, hasSavedRun(localStorage));
+      drawTitle(bctx, tiles, savedRunExists);
     } else {
       const cam = game.camera();
       drawScene(bctx, tiles, game.buildScene());
