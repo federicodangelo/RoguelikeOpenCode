@@ -433,3 +433,75 @@ describe("Game drop budget", () => {
     expect(gold!.stat).toBeLessThanOrEqual(30);
   });
 });
+
+describe("Game determinism", () => {
+  it("same seed yields identical item instances across floors", () => {
+    const a = new Game(() => 0, 777);
+    const b = new Game(() => 0, 777);
+    for (let d = 1; d <= 5; d++) {
+      expect(b.map.items.map((i) => [i.x, i.y, i.kind, i.variant, i.quality, i.stat])).toEqual(
+        a.map.items.map((i) => [i.x, i.y, i.kind, i.variant, i.quality, i.stat]),
+      );
+      for (const g of [a, b]) {
+        g.player.x = g.map.stairs.x;
+        g.player.y = g.map.stairs.y;
+        g.descend();
+      }
+    }
+  });
+});
+
+describe("Game equipment persistence", () => {
+  it("keeps equipment and stats through descend and ascend", () => {
+    const game = new Game(() => 0, 4242);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "long sword",
+      quality: "uncommon",
+      tile: T.LongSword,
+      stat: 5,
+    });
+    game.pickup();
+    expect(game.inventory.equipment.weapon?.stat).toBe(5);
+    const atk = game.player.atk;
+
+    game.player.x = game.map.stairs.x;
+    game.player.y = game.map.stairs.y;
+    expect(game.descend()).toBe(true);
+    expect(game.inventory.equipment.weapon?.variant).toBe("long sword");
+    expect(game.player.atk).toBe(atk);
+
+    const up = game.map.upStairs;
+    expect(up).not.toBeNull();
+    game.player.x = up!.x;
+    game.player.y = up!.y;
+    expect(game.ascend()).toBe(true);
+    expect(game.inventory.equipment.weapon?.variant).toBe("long sword");
+    expect(game.player.atk).toBe(atk);
+  });
+
+  it("save/load mid-swap keeps the unequipped state and stats", () => {
+    const game = new Game(() => 0, 4242);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "short sword",
+      quality: "common",
+      tile: T.Sword,
+      stat: 2,
+    });
+    game.pickup();
+    expect(game.unequip("weapon")).toBe(true);
+    expect(game.inventory.equipment.weapon).toBeNull();
+    expect(game.player.atk).toBe(game.player.baseAtk);
+
+    const loaded = new Game(() => 0, 1);
+    loaded.loadRun(game.serialize());
+    expect(loaded.inventory.equipment.weapon).toBeNull();
+    expect(loaded.inventory.carried.length).toBe(1);
+    expect(loaded.player.atk).toBe(loaded.player.baseAtk);
+  });
+});

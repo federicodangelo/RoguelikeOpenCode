@@ -11,6 +11,8 @@ Pure game rules and data.
 - No DOM, canvas, Web Audio, localStorage, or browser globals.
 - Owns map generation, RNG, entities, items, status effects, FOV, tile constants, save schema, and game state transitions.
 - Core code should be deterministic when given a seed or saved state.
+- `src/core/items.ts` owns item variants, quality tiers (`common` / `uncommon` / `rare`), equipment slots, the carried pack, and consumable stacks; `qualityColor()` there is shared by core scene pips and UI coloring.
+- When the save shape changes, bump `SAVE_VERSION` in `src/core/save.ts` and add a migration step to the `migrateSavedRun` chain instead of editing older migrations.
 
 ### `src/platform`
 

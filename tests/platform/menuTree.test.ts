@@ -215,6 +215,46 @@ describe("inventory menu", () => {
     expect(game.player.hp).toBe(1);
     expect(game.lightTurns).toBe(4);
   });
+
+  it("a stunned player cannot equip but keeps the carried item", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "short sword",
+      quality: "common",
+      tile: T.Sword,
+      stat: 2,
+    });
+    game.pickup();
+    game.map.items.push({
+      x: game.player.x,
+      y: game.player.y,
+      kind: "weapon",
+      variant: "long sword",
+      quality: "common",
+      tile: T.LongSword,
+      stat: 3,
+    });
+    game.pickup();
+    addStatus(game.player, "stun", 2, 1);
+    const menu = makeMenu(game);
+    menu.open();
+
+    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.index = inventoryIdx;
+    menu.enter();
+
+    const carriedIdx = menu.entries().findIndex((entry) => entry.id?.startsWith("carried-"));
+    expect(carriedIdx).toBeGreaterThanOrEqual(0);
+    menu.index = carriedIdx;
+    menu.enter();
+
+    expect(game.inventory.equipment.weapon?.variant).toBe("short sword");
+    expect(game.inventory.carried[0]?.variant).toBe("long sword");
+  });
 });
 
 describe("settings menu", () => {

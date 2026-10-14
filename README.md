@@ -28,7 +28,13 @@ This project is also a small test for the capabilities of open source coding mod
 
 Explore procedurally generated dungeon levels, fight monsters with bump combat, collect items, and descend deeper through stairs. The game uses tile-based rendering, field of view, explored map memory, simple monster AI, inventory, potions, gold, equipment pickups, level ups, and a keyboard-driven menu.
 
-Monsters include rats, goblins, and skeletons. Items include potions, swords, shields, gold, and corpses.
+Monsters include rats, goblins, and skeletons. Items include potions, torches, weapons, armor, gold, and corpses.
+
+## Items
+
+Weapons and armor come in multiple variants that unlock with depth (dagger, short sword, long sword, battle axe; buckler, iron shield, kite shield), and consumables have variants too (minor/major potion, torch/bullseye lantern). Each drop also rolls a quality tier - common, uncommon (green), or rare (blue) - granting +1/+2 stat bonuses; uncommon and rare floor items show a colored corner pip, and names are color-coded in the inventory menu, pickup messages, and contextual hints.
+
+Pickup auto-equips empty weapon/armor slots; further gear goes into a 6-slot carried pack. Open the inventory (`i`) to equip a carried piece (the old one swaps back) or unequip a slot.
 
 ## Controls
 
@@ -39,7 +45,8 @@ Monsters include rats, goblins, and skeletons. Items include potions, swords, sh
 | `,` | Ascend stairs |
 | `g` | Pick up item |
 | `u` | Drink potion |
-| `i` | Open inventory menu |
+| `t` | Light torch or lantern |
+| `i` | Open inventory menu (equip/unequip with Enter) |
 | `Esc` | Open or close menu |
 | `Enter` | Start game, confirm menu, or restart after death |
 
