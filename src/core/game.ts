@@ -1,35 +1,27 @@
 import { T } from "./tiles.ts";
-import { generateMap, MAP_H, MAP_W, type GameMap } from "./map.ts";
+import { MAP_W, type GameMap } from "./map.ts";
 import { RNG } from "./rng.ts";
-import { attack, gainXp, makePlayer, setNextId, spawnMonsters, xpNeeded, type Entity } from "./entities.ts";
+import { attack, gainXp, makePlayer, xpNeeded, type Entity } from "./entities.ts";
 import { computeFOV } from "./fov.ts";
-import { chaseDistances, monsterStep } from "./ai.ts";
-import { addStatus, hasStatus, tickStatuses } from "./status.ts";
+import { hasStatus } from "./status.ts";
 import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory, type ItemKind } from "./items.ts";
 import { MessageLog } from "./messages.ts";
-import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
-import { spawnEffect, type Effect } from "./effects.ts";
+import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS } from "./constants.ts";
+import type { Effect } from "./effects.ts";
 import type { CellView } from "./scene.ts";
-import { SAVE_VERSION, type SavedRun } from "./save.ts";
+import type { SavedRun } from "./save.ts";
+import { FloorCache } from "./floorCache.ts";
+import type { GameEvents } from "./events.ts";
+import { runMonsterTurn, type TurnContext } from "./turnPipeline.ts";
+import { buildScene, camera } from "./sceneBuilder.ts";
+import { applySavedRun, serializeRun } from "./saveDto.ts";
 
-export interface GameEvents {
-  hit?: () => void;
-  kill?: () => void;
-  level?: () => void;
-  hurt?: () => void;
-  death?: () => void;
-  stairs?: () => void;
-  pickup?: () => void;
-  potion?: () => void;
-}
+export type { GameEvents } from "./events.ts";
 
 export class Game {
   depth = 1;
   map: GameMap;
   player: Entity;
-  floors = new Map<number, GameMap>();
-  monstersByFloor = new Map<number, Entity[]>();
-  exploredByFloor = new Map<number, Set<number>>();
   visible = new Set<number>();
   runSeed: number;
   aiRng: RNG;
@@ -45,14 +37,14 @@ export class Game {
   godMode = false;
   menuOpen = false;
   dirty = true;
-  mapVersion = 0;
-  exploredVersion = 0;
   events: GameEvents = {};
   private readonly clock: () => number;
+  private readonly cache: FloorCache;
 
   constructor(clock: () => number = () => 0, runSeed: number = BASE_SEED) {
     this.clock = clock;
     this.runSeed = runSeed;
+    this.cache = new FloorCache(runSeed);
     this.aiRng = new RNG(runSeed + 999);
     this.battleRng = new RNG(runSeed + 555);
     this.map = this.getFloor(1);
@@ -60,19 +52,44 @@ export class Game {
     this.refreshFOV();
   }
 
+  get floorCache(): FloorCache {
+    return this.cache;
+  }
+
+  get floors(): Map<number, GameMap> {
+    return this.cache.maps;
+  }
+
+  get monstersByFloor(): Map<number, Entity[]> {
+    return this.cache.monsters;
+  }
+
+  get exploredByFloor(): Map<number, Set<number>> {
+    return this.cache.explored;
+  }
+
+  get mapVersion(): number {
+    return this.cache.version;
+  }
+
+  set mapVersion(value: number) {
+    this.cache.version = value;
+  }
+
+  get exploredVersion(): number {
+    return this.cache.exploredVersion;
+  }
+
+  set exploredVersion(value: number) {
+    this.cache.exploredVersion = value;
+  }
+
   getFloor(d: number, upAt?: { x: number; y: number }): GameMap {
-    let m = this.floors.get(d);
-    if (!m) {
-      m = generateMap(new RNG(this.runSeed + d * 7919), d, { upAt });
-      this.floors.set(d, m);
-      this.monstersByFloor.set(d, spawnMonsters(m, new RNG(this.runSeed + d * 7919 + 17), d));
-      this.mapVersion++;
-    }
-    return m;
+    return this.cache.get(d, upAt);
   }
 
   monsters(): Entity[] {
-    return this.monstersByFloor.get(this.depth)!;
+    return this.cache.monstersAt(this.depth);
   }
 
   playerStunned(): boolean {
@@ -82,15 +99,10 @@ export class Game {
   refreshFOV(): void {
     const radius = this.lightTurns > 0 ? TORCH_RADIUS : undefined;
     this.visible = computeFOV(this.map, this.player.x, this.player.y, radius);
-    let explored = this.exploredByFloor.get(this.depth);
-    if (!explored) {
-      explored = new Set<number>();
-      this.exploredByFloor.set(this.depth, explored);
-      this.exploredVersion++;
-    }
+    const explored = this.cache.ensureExplored(this.depth);
     const before = explored.size;
     for (const k of this.visible) explored.add(k);
-    if (explored.size !== before) this.exploredVersion++;
+    if (explored.size !== before) this.cache.exploredVersion++;
   }
 
   logMessage(msg: string): void {
@@ -106,7 +118,7 @@ export class Game {
   }
 
   spawnEffect(x: number, y: number, text: string, color: string): void {
-    spawnEffect(this.effects, x, y, text, color, this.clock());
+    this.effects.push({ x, y, text, color, born: this.clock() });
     this.dirty = true;
   }
 
@@ -163,93 +175,30 @@ export class Game {
   }
 
   monstersAct(): void {
-    if (this.lightTurns > 0) this.lightTurns--;
+    const ctx: TurnContext = {
+      map: this.map,
+      player: this.player,
+      monsters: () => this.monsters(),
+      aiRng: this.aiRng,
+      battleRng: this.battleRng,
+      lightTurns: this.lightTurns,
+      gameOver: this.gameOver,
+      events: this.events,
+      mapVersion: this.mapVersion,
+      playerFlashUntil: this.playerFlashUntil,
+      clock: this.clock,
+      spawnEffect: (x, y, text, color) => this.spawnEffect(x, y, text, color),
+      logMessage: (msg) => this.logMessage(msg),
+      handleMonsterDeath: (m) => this.handleMonsterDeath(m),
+      protectPlayer: () => this.protectPlayer(),
+    };
 
-    for (const m of this.monsters()) {
-      if (!m.alive) continue;
-      if (m.hp * 3 < m.maxHp && !m.panicked) {
-        m.panicked = true;
-        addStatus(m, "fear", 3, 1);
-      }
-      const tick = tickStatuses(m);
-      if (tick.damage > 0) {
-        this.spawnEffect(m.x, m.y, `-${tick.damage}`, "#9be56f");
-        for (const msg of tick.messages) this.logMessage(msg);
-        if (!m.alive) {
-          this.logMessage(`The ${m.name} dies from status effects.`);
-          this.handleMonsterDeath(m);
-        }
-      }
-    }
+    runMonsterTurn(ctx);
 
-    const dist = chaseDistances(this.map, this.player);
-    for (const m of this.monsters()) {
-      if (!m.alive) continue;
-      const before = this.player.hp;
-      monsterStep(m, {
-        player: this.player,
-        map: this.map,
-        rng: this.aiRng,
-        dist,
-        monsters: this.monsters(),
-      });
-      this.protectPlayer();
-      if (this.player.hp < before) {
-        const verb = m.archetype === "ranged" ? "shoots" : "hits";
-        this.logMessage(`The ${m.name} ${verb} you for ${before - this.player.hp}.`);
-        this.spawnEffect(this.player.x, this.player.y, `-${before - this.player.hp}`, "#ff6a6a");
-        this.playerFlashUntil = this.clock() + 250;
-        this.events.hurt?.();
-
-        if (m.archetype === "summoner") {
-          addStatus(this.player, "poison", 3, 1);
-          this.logMessage("You are poisoned.");
-        } else if (m.archetype === "boss") {
-          addStatus(this.player, "bleeding", 3, 1);
-          this.logMessage("You are bleeding.");
-        } else if (m.archetype === "tank" && this.battleRng.next() < 0.35) {
-          addStatus(this.player, "stun", 1, 1);
-          this.logMessage("You are stunned.");
-        }
-      }
-
-      const monsterCell = this.map.cells[m.y]?.[m.x];
-      if (monsterCell === "trap") {
-        const dmg = this.battleRng.int(1, 3);
-        m.hp = Math.max(0, m.hp - dmg);
-        if (m.hp === 0) m.alive = false;
-        this.map.cells[m.y]![m.x] = "floor";
-        this.mapVersion++;
-        this.spawnEffect(m.x, m.y, `-${dmg}`, "#ff9a4a");
-        if (m.alive) {
-          this.logMessage(`The ${m.name} triggers a trap.`);
-        } else {
-          this.logMessage(`The ${m.name} triggers a trap and dies.`);
-          this.handleMonsterDeath(m);
-        }
-      }
-
-      if (!this.player.alive) {
-        this.gameOver = true;
-        this.events.death?.();
-        break;
-      }
-    }
-
-    if (this.player.alive) {
-      const playerTick = tickStatuses(this.player);
-      this.protectPlayer();
-      if (playerTick.damage > 0) {
-        this.spawnEffect(this.player.x, this.player.y, `-${playerTick.damage}`, "#9be56f");
-        for (const msg of playerTick.messages) this.logMessage(msg);
-        this.playerFlashUntil = this.clock() + 250;
-        this.events.hurt?.();
-        if (!this.player.alive) {
-          this.gameOver = true;
-          this.events.death?.();
-        }
-      }
-    }
+    this.lightTurns = ctx.lightTurns;
+    this.gameOver = ctx.gameOver;
+    this.mapVersion = ctx.mapVersion;
+    this.playerFlashUntil = ctx.playerFlashUntil;
   }
 
   dropLoot(m: Entity): void {
@@ -421,9 +370,8 @@ export class Game {
     this.godMode = false;
     this.depth = 1;
     this.kills = 0;
-    this.floors.clear();
-    this.monstersByFloor.clear();
-    this.exploredByFloor.clear();
+    this.cache.clear();
+    this.cache.setSeed(seed);
     this.runSeed = seed;
     this.aiRng = new RNG(seed + 999);
     this.battleRng = new RNG(seed + 555);
@@ -443,132 +391,18 @@ export class Game {
   }
 
   serialize(): SavedRun {
-    return {
-      version: SAVE_VERSION,
-      seed: this.runSeed,
-      depth: this.depth,
-      kills: this.kills,
-      gameOver: this.gameOver,
-      screen: this.screen,
-      player: this.player,
-      inventory: this.inventory,
-      lightTurns: this.lightTurns,
-      godMode: this.godMode,
-      aiRng: this.aiRng.getState(),
-      battleRng: this.battleRng.getState(),
-      floors: [...this.floors.entries()].map(([depth, map]) => ({
-        depth,
-        map,
-        monsters: this.monstersByFloor.get(depth) ?? [],
-        explored: [...(this.exploredByFloor.get(depth) ?? [])],
-      })),
-      messages: this.messages.snapshot(),
-    };
+    return serializeRun(this);
   }
 
   loadRun(saved: SavedRun): void {
-    this.runSeed = saved.seed;
-    this.depth = saved.depth;
-    this.kills = saved.kills;
-    this.gameOver = saved.gameOver;
-    this.screen = saved.screen;
-    this.player = saved.player;
-    this.inventory = saved.inventory;
-    this.lightTurns = saved.lightTurns;
-    this.godMode = saved.godMode;
-    this.aiRng.setState(saved.aiRng);
-    this.battleRng.setState(saved.battleRng);
-
-    this.floors.clear();
-    this.monstersByFloor.clear();
-    this.exploredByFloor.clear();
-    for (const floor of saved.floors) {
-      this.floors.set(floor.depth, floor.map);
-      this.monstersByFloor.set(floor.depth, floor.monsters);
-      this.exploredByFloor.set(floor.depth, new Set(floor.explored));
-    }
-
-    this.map = this.floors.get(this.depth) ?? this.getFloor(this.depth);
-    if (!this.exploredByFloor.has(this.depth)) this.exploredByFloor.set(this.depth, new Set());
-
-    let maxId = this.player.id;
-    for (const monsters of this.monstersByFloor.values()) {
-      for (const m of monsters) maxId = Math.max(maxId, m.id);
-    }
-    setNextId(maxId + 1);
-
-    this.messages.restore(saved.messages);
-    this.effects.length = 0;
-    this.playerFlashUntil = 0;
-    this.menuOpen = false;
-    this.mapVersion++;
-    this.exploredVersion++;
-    this.refreshFOV();
-    this.dirty = true;
+    applySavedRun(this, saved);
   }
 
   camera(): { x: number; y: number } {
-    return {
-      x: Math.max(0, Math.min(this.player.x - ((VIEW_COLS - 1) >> 1), MAP_W - VIEW_COLS)),
-      y: Math.max(0, Math.min(this.player.y - ((VIEW_ROWS - 1) >> 1), MAP_H - VIEW_ROWS)),
-    };
+    return camera(this);
   }
 
   buildScene(): CellView[][] {
-    const cam = this.camera();
-    const scene: CellView[][] = [];
-    const itemByPos = new Map<number, number>();
-    for (const item of this.map.items) {
-      const key = item.y * MAP_W + item.x;
-      if (!itemByPos.has(key)) itemByPos.set(key, item.tile);
-    }
-    const monsterByPos = new Map<number, number>();
-    for (const m of this.monsters()) {
-      if (!m.alive) continue;
-      monsterByPos.set(m.y * MAP_W + m.x, m.sprite);
-    }
-
-    for (let vy = 0; vy < VIEW_ROWS; vy++) {
-      const row: CellView[] = [];
-      for (let vx = 0; vx < VIEW_COLS; vx++) {
-        const mx = cam.x + vx;
-        const my = cam.y + vy;
-        const key = my * MAP_W + mx;
-        const explored = this.exploredByFloor.get(this.depth)!.has(key);
-        if (!explored) {
-          row.push({ floor: T.Black });
-          continue;
-        }
-
-        const cell = this.map.cells[my]![mx]!;
-        const view: CellView = { floor: T.Floor };
-        if (cell === "wall") view.feature = T.Wall;
-        else if (cell === "stairs") view.feature = T.Stairs;
-        else if (cell === "stairsUp") view.feature = T.StairsUp;
-        else if (cell === "doorClosed") view.feature = T.DoorClosed;
-        else if (cell === "doorOpen") view.feature = T.DoorOpen;
-        else if (cell === "trap") view.feature = T.Trap;
-
-        const itemTile = itemByPos.get(key);
-        if (itemTile !== undefined) view.feature = itemTile;
-
-        const isVisible = this.visible.has(key);
-        if (isVisible) {
-          const monsterSprite = monsterByPos.get(key);
-          if (monsterSprite !== undefined) view.entity = monsterSprite;
-        } else {
-          view.dim = true;
-        }
-        row.push(view);
-      }
-      scene.push(row);
-    }
-
-    const px = this.player.x - cam.x;
-    const py = this.player.y - cam.y;
-    if (px >= 0 && px < VIEW_COLS && py >= 0 && py < VIEW_ROWS) {
-      scene[py]![px]!.entity = T.Player;
-    }
-    return scene;
+    return buildScene(this);
   }
 }

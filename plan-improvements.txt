@@ -48,7 +48,7 @@ PHASE 19 - Input and UI robustness
 
 PHASE 20 - Maintainability
 --------------------------
-[ ] 20.1 Split Game into smaller systems: floor cache, turn pipeline, scene builder, save DTO
+[x] 20.1 Split Game into smaller systems: floor cache, turn pipeline, scene builder, save DTO
 [ ] 20.2 Add a shared types module if more cross-layer types are needed
 [ ] 20.3 Add lint or custom checks that prevent future core dependency drift
 [ ] 20.4 Review remaining large modules for focused extraction opportunities
