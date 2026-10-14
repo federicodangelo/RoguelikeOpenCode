@@ -37,6 +37,45 @@ export function drawTitle(bctx: CanvasRenderingContext2D, tiles: Tileset, hasSav
   });
 }
 
+function wrapText(text: string, maxChars: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [""];
+
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (!line || candidate.length <= maxChars) {
+      line = candidate;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+export function drawErrorScreen(ctx: CanvasRenderingContext2D, message: string): void {
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+  ctx.fillStyle = "#e8e4da";
+  ctx.font = "bold 32px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Failed to load game assets", LOGICAL_W / 2, LOGICAL_H / 2 - 40);
+
+  ctx.fillStyle = "#9a958c";
+  ctx.font = "16px monospace";
+  wrapText(message, 60).forEach((line, i) => {
+    ctx.fillText(line, LOGICAL_W / 2, LOGICAL_H / 2 + i * 22);
+  });
+
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
+}
+
 export function drawGameOver(bctx: CanvasRenderingContext2D, stats: GameOverStats): void {
   bctx.fillStyle = "rgba(0,0,0,0.72)";
   bctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);

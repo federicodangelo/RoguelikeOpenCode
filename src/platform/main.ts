@@ -5,7 +5,7 @@ import { cycleScalingMode, cycleVolume, loadSettings, saveSettings } from "./set
 import { clearRun, loadRun, saveRun } from "./save.ts";
 import { handleKeydown } from "./input.ts";
 import { contextualHints, drawContextHints, drawHUD } from "../ui/hud.ts";
-import { drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
+import { drawErrorScreen, drawGameOver, drawMenu, drawTitle } from "../ui/screens.ts";
 import { drawEffects } from "../ui/effects.ts";
 import { drawMinimap } from "../ui/minimap.ts";
 import { Iconset } from "../ui/icons.ts";
@@ -222,11 +222,24 @@ window.addEventListener("pointerdown", () => {
 
 fitCanvas();
 
+async function loadAssets(): Promise<{ tiles: Tileset; icons: Iconset; font: Fontset } | null> {
+  try {
+    const tiles = await Tileset.load("assets/tiles.png");
+    const icons = await Iconset.load("assets/icons.png");
+    const font = await Fontset.load("assets/font.png");
+    setFontset(font);
+    return { tiles, icons, font };
+  } catch (err) {
+    console.error(err);
+    drawErrorScreen(ctx, err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
+
 async function main(): Promise<void> {
-  const tiles = await Tileset.load("assets/tiles.png");
-  const icons = await Iconset.load("assets/icons.png");
-  const font = await Fontset.load("assets/font.png");
-  setFontset(font);
+  const assets = await loadAssets();
+  if (!assets) return;
+  const { tiles, icons } = assets;
 
   function draw(): void {
     if (game.screen === "title") {
@@ -296,4 +309,7 @@ async function main(): Promise<void> {
   requestAnimationFrame(frame);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  drawErrorScreen(ctx, err instanceof Error ? err.message : String(err));
+});
