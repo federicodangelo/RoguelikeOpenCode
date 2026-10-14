@@ -121,7 +121,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): void {
     acted = game.tryMove(move[0], move[1]);
   } else if (e.key === "." || e.key === "Enter") {
     e.preventDefault();
-    acted = game.descend() || true;
+    acted = game.descend();
   } else if (e.key === ",") {
     e.preventDefault();
     acted = game.ascend();

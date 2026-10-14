@@ -61,6 +61,21 @@ describe("input", () => {
     expect(game.dirty).toBe(false);
   });
 
+  for (const keyName of ["Enter", "."]) {
+    it(`pressing ${keyName} off the stairs does not consume a turn`, () => {
+      const game = new Game();
+      game.screen = "game";
+      game.dirty = false;
+      game.lightTurns = 5;
+      const menu = makeMenu(game);
+
+      handleKeydown(key(keyName), makeContext(game, menu));
+
+      expect(game.lightTurns).toBe(5);
+      expect(game.dirty).toBe(false);
+    });
+  }
+
   it("closes the inventory menu with escape", () => {
     const game = new Game();
     game.screen = "game";
