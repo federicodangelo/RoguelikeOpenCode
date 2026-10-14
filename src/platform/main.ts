@@ -45,7 +45,11 @@ function startMusicIfAudible(): void {
 
 applyAudioSettings();
 
-const game = new Game(() => performance.now());
+function newRunSeed(): number {
+  return (Math.random() * 0xffffffff) >>> 0;
+}
+
+const game = new Game(() => performance.now(), newRunSeed());
 game.events = {
   hit: () => audio.sfx("hit"),
   kill: () => audio.sfx("kill"),
@@ -63,7 +67,7 @@ game.events = {
 if (loadRun(localStorage, game)) {
   if (game.gameOver) {
     clearRun(localStorage);
-    game.reset();
+    game.reset(newRunSeed());
   }
   game.screen = "title";
   game.dirty = true;
@@ -116,7 +120,7 @@ function toggleAutosave(): void {
 }
 
 function resetGame(): void {
-  game.reset();
+  game.reset(newRunSeed());
   clearRun(localStorage);
   saveRun(localStorage, game);
   applyAudioSettings();

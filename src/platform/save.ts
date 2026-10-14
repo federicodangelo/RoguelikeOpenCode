@@ -1,4 +1,4 @@
-import { isSavedRun, SAVE_VERSION, type SavedRun } from "../core/save.ts";
+import { isSavedRun, migrateSavedRun, type SavedRun } from "../core/save.ts";
 import type { Game } from "../core/game.ts";
 
 export const SAVE_KEY = "roguelike.save";
@@ -21,7 +21,7 @@ export function loadRun(storage: SaveStorage, game: Game): boolean {
   try {
     const raw = storage.getItem(SAVE_KEY);
     if (!raw) return false;
-    const parsed = JSON.parse(raw) as unknown;
+    const parsed = migrateSavedRun(JSON.parse(raw) as unknown);
     if (!isSavedRun(parsed)) {
       storage.removeItem(SAVE_KEY);
       return false;
@@ -46,19 +46,8 @@ export function hasSavedRun(storage: SaveStorage): boolean {
   try {
     const raw = storage.getItem(SAVE_KEY);
     if (!raw) return false;
-    return isSavedRun(JSON.parse(raw) as unknown);
+    return isSavedRun(migrateSavedRun(JSON.parse(raw) as unknown));
   } catch {
     return false;
-  }
-}
-
-export function savedRunVersion(storage: SaveStorage): number | null {
-  try {
-    const raw = storage.getItem(SAVE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { version?: number };
-    return parsed.version === SAVE_VERSION ? SAVE_VERSION : null;
-  } catch {
-    return null;
   }
 }

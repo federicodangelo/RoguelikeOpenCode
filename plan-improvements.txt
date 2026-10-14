@@ -1,0 +1,71 @@
+ROGUELIKE GAME - IMPROVEMENT PLAN
+=================================
+
+This plan tracks architecture, performance, robustness, and maintainability
+improvements found during code review. It is separate from plan.txt.
+
+WORK RULES
+----------
+- [x] = done, [ ] = pending
+- Keep behavior unchanged unless the step explicitly changes gameplay
+- Run bun test, bun run typecheck, bun run lint, bun run build, and bun run verify after each phase
+- Prefer small commits per step or milestone
+
+STATUS: PHASE 18 next
+
+PHASE 16 - Architecture boundaries and core purity
+--------------------------------------------------
+[x] 16.1 Move MessageLog out of src/ui/menu.ts into src/core/messages.ts
+[x] 16.2 Move Effect and spawnEffect out of src/ui/effects.ts into src/core/effects.ts
+[x] 16.3 Move CellView out of src/platform/render.ts into src/core/scene.ts
+[x] 16.4 Remove performance.now() calls from src/core/game.ts by injecting a clock
+[x] 16.5 Add an automated import-boundary test for src/core, src/ui, and src/platform
+[x] 16.6 Verify core no longer imports from src/ui or src/platform
+
+PHASE 17 - Replayability and save robustness
+--------------------------------------------
+[x] 17.1 Add a per-run seed instead of relying only on fixed BASE_SEED
+[x] 17.2 Persist the run seed in the save schema
+[x] 17.3 Add save migration support for future SAVE_VERSION changes
+[x] 17.4 Remove or use dead helpers such as savedRunVersion and statusPower
+[x] 17.5 Add tests for seed persistence and save migration behavior
+
+PHASE 18 - Runtime performance
+------------------------------
+[ ] 18.1 Cache saved-run presence instead of parsing localStorage during title draw
+[ ] 18.2 Autosave only after state-changing actions, or debounce autosave
+[ ] 18.3 Optimize Game.buildScene with position lookup maps for items and monsters
+[ ] 18.4 Cache minimap rendering per floor and invalidate on exploration changes
+[ ] 18.5 Add focused performance or behavior tests for scene and minimap caching
+
+PHASE 19 - Input and UI robustness
+----------------------------------
+[ ] 19.1 Ignore keyboard repeat events for turn-based actions
+[ ] 19.2 Replace label-based menu coupling with stable menu/action IDs
+[ ] 19.3 Add user-facing error handling for asset loading failures
+[ ] 19.4 Add integration coverage for src/platform/main.ts startup wiring
+[ ] 19.5 Document asset regeneration workflow in CONTRIBUTING.md or README.md
+
+PHASE 20 - Maintainability
+--------------------------
+[ ] 20.1 Split Game into smaller systems: floor cache, turn pipeline, scene builder, save DTO
+[ ] 20.2 Add a shared types module if more cross-layer types are needed
+[ ] 20.3 Add lint or custom checks that prevent future core dependency drift
+[ ] 20.4 Review remaining large modules for focused extraction opportunities
+
+HIGH-IMPACT FINDINGS
+--------------------
+- src/core/game.ts currently imports UI and platform code:
+  - MessageLog from src/ui/menu.ts
+  - Effect and spawnEffect from src/ui/effects.ts
+  - CellView from src/platform/render.ts
+- src/core/game.ts uses performance.now(), which couples core logic to the browser
+- All runs currently use fixed BASE_SEED, so restarts repeat layouts and spawns
+- Autosave runs after every keydown while in game
+- Title drawing parses saved-run presence every frame
+- buildScene uses linear find calls for items and monsters per rendered cell
+- drawMinimap redraws every explored cell every dirty frame
+- input.ts does not ignore e.repeat
+- menu behavior depends on labels such as "Inventory"
+- save version validation exists, but there is no migration path
+- savedRunVersion and statusPower are currently unused

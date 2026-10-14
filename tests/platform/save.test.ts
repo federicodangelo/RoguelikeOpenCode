@@ -1,7 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
+import { BASE_SEED } from "../../src/core/constants.ts";
 import { setNextId } from "../../src/core/entities.ts";
-import { clearRun, loadRun, saveRun, SAVE_KEY, type SaveStorage } from "../../src/platform/save.ts";
+import { clearRun, hasSavedRun, loadRun, saveRun, SAVE_KEY, type SaveStorage } from "../../src/platform/save.ts";
 
 class MemoryStorage implements SaveStorage {
   private items = new Map<string, string>();
@@ -87,6 +88,31 @@ describe("save/load", () => {
     expect(storage.getItem(SAVE_KEY)).toBeNull();
     expect(game.depth).toBe(1);
     expect(game.map).toBe(before);
+  });
+
+  it("round-trips the run seed", () => {
+    const storage = new MemoryStorage();
+    const game = new Game(() => 0, 4242);
+    saveRun(storage, game);
+
+    const loaded = new Game();
+    expect(loadRun(storage, loaded)).toBe(true);
+    expect(loaded.runSeed).toBe(4242);
+  });
+
+  it("migrates version 1 saves during loadRun", () => {
+    const storage = new MemoryStorage();
+    const source = new Game(() => 0, 4242);
+    saveRun(storage, source);
+    const raw = JSON.parse(storage.getItem(SAVE_KEY)!) as Record<string, unknown>;
+    raw.version = 1;
+    delete raw.seed;
+    storage.setItem(SAVE_KEY, JSON.stringify(raw));
+
+    const loaded = new Game();
+    expect(hasSavedRun(storage)).toBe(true);
+    expect(loadRun(storage, loaded)).toBe(true);
+    expect(loaded.runSeed).toBe(BASE_SEED);
   });
 
   it("clearRun removes the saved run", () => {

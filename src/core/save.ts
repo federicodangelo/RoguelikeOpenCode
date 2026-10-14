@@ -1,8 +1,9 @@
 import type { Entity } from "./entities.ts";
 import type { Inventory } from "./items.ts";
 import type { GameMap } from "./mapgen/common.ts";
+import { BASE_SEED } from "./constants.ts";
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface SavedFloor {
   depth: number;
@@ -13,6 +14,7 @@ export interface SavedFloor {
 
 export interface SavedRun {
   version: number;
+  seed: number;
   depth: number;
   kills: number;
   gameOver: boolean;
@@ -101,11 +103,25 @@ function isSavedFloorShape(value: unknown): boolean {
   );
 }
 
+export function migrateSavedRun(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) return value;
+  const v = value as Record<string, unknown>;
+  if (v.version === 1) {
+    return {
+      ...v,
+      version: SAVE_VERSION,
+      seed: typeof v.seed === "number" ? v.seed : BASE_SEED,
+    };
+  }
+  return v;
+}
+
 export function isSavedRun(value: unknown): value is SavedRun {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Partial<SavedRun>;
   return (
     v.version === SAVE_VERSION &&
+    typeof v.seed === "number" &&
     typeof v.depth === "number" &&
     typeof v.kills === "number" &&
     typeof v.gameOver === "boolean" &&

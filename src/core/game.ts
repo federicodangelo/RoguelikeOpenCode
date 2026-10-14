@@ -31,8 +31,9 @@ export class Game {
   monstersByFloor = new Map<number, Entity[]>();
   exploredByFloor = new Map<number, Set<number>>();
   visible = new Set<number>();
-  aiRng = new RNG(BASE_SEED + 999);
-  battleRng = new RNG(BASE_SEED + 555);
+  runSeed: number;
+  aiRng: RNG;
+  battleRng: RNG;
   gameOver = false;
   screen: "title" | "game" = "title";
   kills = 0;
@@ -47,8 +48,11 @@ export class Game {
   events: GameEvents = {};
   private readonly clock: () => number;
 
-  constructor(clock: () => number = () => 0) {
+  constructor(clock: () => number = () => 0, runSeed: number = BASE_SEED) {
     this.clock = clock;
+    this.runSeed = runSeed;
+    this.aiRng = new RNG(runSeed + 999);
+    this.battleRng = new RNG(runSeed + 555);
     this.map = this.getFloor(1);
     this.player = makePlayer(this.map.spawn.x, this.map.spawn.y);
     this.refreshFOV();
@@ -57,9 +61,9 @@ export class Game {
   getFloor(d: number, upAt?: { x: number; y: number }): GameMap {
     let m = this.floors.get(d);
     if (!m) {
-      m = generateMap(new RNG(BASE_SEED + d * 7919), d, { upAt });
+      m = generateMap(new RNG(this.runSeed + d * 7919), d, { upAt });
       this.floors.set(d, m);
-      this.monstersByFloor.set(d, spawnMonsters(m, new RNG(BASE_SEED + d * 7919 + 17), d));
+      this.monstersByFloor.set(d, spawnMonsters(m, new RNG(this.runSeed + d * 7919 + 17), d));
     }
     return m;
   }
@@ -404,15 +408,16 @@ export class Game {
     this.dirty = true;
   }
 
-  reset(): void {
+  reset(seed: number = this.runSeed): void {
     this.godMode = false;
     this.depth = 1;
     this.kills = 0;
     this.floors.clear();
     this.monstersByFloor.clear();
     this.exploredByFloor.clear();
-    this.aiRng = new RNG(BASE_SEED + 999);
-    this.battleRng = new RNG(BASE_SEED + 555);
+    this.runSeed = seed;
+    this.aiRng = new RNG(seed + 999);
+    this.battleRng = new RNG(seed + 555);
     this.gameOver = false;
     this.inventory = makeInventory();
     this.messages.clear();
@@ -429,6 +434,7 @@ export class Game {
   serialize(): SavedRun {
     return {
       version: SAVE_VERSION,
+      seed: this.runSeed,
       depth: this.depth,
       kills: this.kills,
       gameOver: this.gameOver,
@@ -450,6 +456,7 @@ export class Game {
   }
 
   loadRun(saved: SavedRun): void {
+    this.runSeed = saved.seed;
     this.depth = saved.depth;
     this.kills = saved.kills;
     this.gameOver = saved.gameOver;

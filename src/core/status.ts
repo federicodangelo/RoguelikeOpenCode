@@ -14,10 +14,6 @@ export function hasStatus(entity: Entity, kind: StatusKind): boolean {
   return entity.statuses.some((s) => s.kind === kind);
 }
 
-export function statusPower(entity: Entity, kind: StatusKind): number {
-  return entity.statuses.find((s) => s.kind === kind)?.power ?? 0;
-}
-
 export function effectiveSpeed(entity: Entity): number {
   return entity.speed + (hasStatus(entity, "haste") ? 1 : 0);
 }

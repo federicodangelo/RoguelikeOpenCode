@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
-import { isSavedRun } from "../../src/core/save.ts";
+import { BASE_SEED } from "../../src/core/constants.ts";
+import { isSavedRun, migrateSavedRun } from "../../src/core/save.ts";
 
 function validSave(): Record<string, unknown> {
   return new Game().serialize() as unknown as Record<string, unknown>;
@@ -49,5 +50,29 @@ describe("isSavedRun validation", () => {
     const save = validSave();
     (save.inventory as Record<string, unknown>).gold = "7";
     expect(isSavedRun(save)).toBe(false);
+  });
+});
+
+describe("save seed and migration", () => {
+  it("serializes the run seed", () => {
+    const game = new Game(() => 0, 4242);
+    expect(game.serialize().seed).toBe(4242);
+  });
+
+  it("loadRun restores the run seed", () => {
+    const source = new Game(() => 0, 4242);
+    const loaded = new Game();
+    loaded.loadRun(source.serialize());
+    expect(loaded.runSeed).toBe(4242);
+  });
+
+  it("migrates version 1 saves by adding the default seed", () => {
+    const save = validSave();
+    save.version = 1;
+    delete save.seed;
+    const migrated = migrateSavedRun(save) as Record<string, unknown>;
+    expect(migrated.version).toBe(2);
+    expect(migrated.seed).toBe(BASE_SEED);
+    expect(isSavedRun(migrated)).toBe(true);
   });
 });
