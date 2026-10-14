@@ -11,6 +11,8 @@ export const BASE_SEED = 1337;
 export const TORCH_RADIUS = 12;
 export const TORCH_TURNS = 20;
 
+export const CORPSE_CAP = 6;
+
 export const HELP_LINES: [string, string][] = [
   ["arrows", "move / bump attack"],
   [".", "stairs down"],

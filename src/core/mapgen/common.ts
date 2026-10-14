@@ -250,12 +250,12 @@ export function placeItems(cells: CellType[][], rng: RNG, depth: number, reserve
     const j = rng.int(0, i);
     [floors[i], floors[j]] = [floors[j]!, floors[i]!];
   }
-  const count = Math.min(rng.int(3, 5) + Math.min(depth, 3), floors.length);
-  return floors.slice(0, count).map((p) => ({
-    x: p.x,
-    y: p.y,
-    ...makeInstance(pickDef(rng, depth), rollQuality(rng, depth)),
-  }));
+  const count = Math.min(rng.int(2, 3) + Math.min(depth, 2), floors.length);
+  return floors.slice(0, count).map((p) => {
+    const inst = makeInstance(pickDef(rng, depth), rollQuality(rng, depth));
+    if (inst.kind === "gold") inst.stat = rng.int(5 + 2 * depth, 10 + 4 * depth);
+    return { x: p.x, y: p.y, ...inst };
+  });
 }
 
 export function placeTraps(cells: CellType[][], rng: RNG, depth: number, reserved: Point[], items: PlacedItem[]): void {

@@ -288,6 +288,7 @@ describe("Game kill rewards", () => {
     game.map.cells[20]![24] = "wall";
     game.map.cells[20]![26] = "wall";
     game.monstersByFloor.get(game.depth)!.push(m);
+    game.battleRng.setState(0);
 
     game.monstersAct();
     expect(m.alive).toBe(false);
@@ -304,11 +305,45 @@ describe("Game kill rewards", () => {
     const m = monster(25, 20, { hp: 1, maxHp: 12, xpValue: 2 });
     addStatus(m, "poison", 1, 2);
     game.monstersByFloor.get(game.depth)!.push(m);
+    game.battleRng.setState(0);
 
     game.monstersAct();
     expect(m.alive).toBe(false);
     expect(game.kills).toBe(1);
     expect(game.player.xp).toBe(2);
     expect(game.map.items.some((i) => i.x === 25 && i.y === 20)).toBe(true);
+  });
+});
+
+describe("Game drop budget", () => {
+  it("kills do not drop an item every time", () => {
+    const game = new Game();
+    game.battleRng.setState(0);
+    let drops = 0;
+    for (let i = 0; i < 40; i++) {
+      const before = game.map.items.length;
+      game.dropLoot(monster(2 + i, 2));
+      if (game.map.items.length > before) drops++;
+    }
+    expect(drops).toBeGreaterThan(0);
+    expect(drops).toBeLessThan(40);
+  });
+
+  it("caps corpses at 6 per floor", () => {
+    const game = new Game();
+    game.battleRng.setState(0);
+    for (let i = 0; i < 60; i++) game.dropLoot(monster(2 + i, 2));
+    expect(game.map.items.filter((i) => i.kind === "corpse").length).toBeLessThanOrEqual(6);
+  });
+
+  it("gold drops scale with depth", () => {
+    const game = new Game();
+    game.depth = 5;
+    game.battleRng.setState(0);
+    game.dropLoot(monster(10, 10));
+    const gold = game.map.items.find((i) => i.kind === "gold");
+    expect(gold).toBeDefined();
+    expect(gold!.stat).toBeGreaterThanOrEqual(15);
+    expect(gold!.stat).toBeLessThanOrEqual(30);
   });
 });

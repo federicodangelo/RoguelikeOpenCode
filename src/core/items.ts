@@ -49,8 +49,9 @@ export function rollQuality(rng: RNG, depth: number): Quality {
   return "common";
 }
 
-export function pickDef(rng: RNG, depth: number): ItemDef {
-  const pool = ITEM_DEFS.filter((d) => d.minDepth <= depth);
+export function pickDefWhere(rng: RNG, depth: number, pred: (d: ItemDef) => boolean): ItemDef | null {
+  const pool = ITEM_DEFS.filter((d) => d.minDepth <= depth && pred(d));
+  if (pool.length === 0) return null;
   let total = 0;
   for (const d of pool) total += d.weight;
   let r = rng.next() * total;
@@ -59,6 +60,10 @@ export function pickDef(rng: RNG, depth: number): ItemDef {
     if (r < 0) return d;
   }
   return pool[pool.length - 1]!;
+}
+
+export function pickDef(rng: RNG, depth: number): ItemDef {
+  return pickDefWhere(rng, depth, () => true) ?? ITEM_DEFS[0]!;
 }
 
 export function makeInstance(def: ItemDef, quality: Quality): ItemInstance {
@@ -101,7 +106,7 @@ export function pickUp(player: Entity, inv: Inventory, item: ItemInstance): stri
   switch (item.kind) {
     case "gold":
       inv.gold += item.stat;
-      return "You pick up some gold.";
+      return `You pick up ${item.stat} gold.`;
     case "potion":
       inv.potions += 1;
       return `You pick up a ${item.variant}.`;

@@ -6,16 +6,20 @@ import { hasStatus } from "./status.ts";
 import {
   makeCorpse,
   makeGold,
+  makeInstance,
   makeInventory,
+  pickDefWhere,
   pickUp,
   recalcStats,
+  rollQuality,
   usePotion,
   useTorch,
   type Inventory,
+  type ItemDef,
   type ItemKind,
 } from "./items.ts";
 import { MessageLog } from "./messages.ts";
-import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS } from "./constants.ts";
+import { BASE_SEED, CORPSE_CAP, TORCH_RADIUS, TORCH_TURNS } from "./constants.ts";
 import type { Effect } from "./effects.ts";
 import type { CellView } from "./scene.ts";
 import type { SavedRun } from "./save.ts";
@@ -203,8 +207,36 @@ export class Game {
   }
 
   dropLoot(m: Entity): void {
-    const loot = this.battleRng.next() < 0.3 ? makeGold(1) : makeCorpse();
-    this.map.items.push({ x: m.x, y: m.y, ...loot });
+    const rng = this.battleRng;
+    const roll = rng.next();
+    if (roll < 0.35) {
+      const sub = rng.next();
+      if (sub < 0.5) {
+        this.map.items.push({ x: m.x, y: m.y, ...makeGold(rng.int(5 + 2 * this.depth, 10 + 4 * this.depth)) });
+      } else {
+        const pred =
+          sub < 0.8
+            ? (d: ItemDef) => d.kind === "potion" || d.kind === "torch"
+            : (d: ItemDef) => d.kind === "weapon" || d.kind === "armor";
+        const def = pickDefWhere(rng, this.depth, pred);
+        if (def) this.map.items.push({ x: m.x, y: m.y, ...makeInstance(def, rollQuality(rng, this.depth)) });
+      }
+      return;
+    }
+    if (roll < 0.75) {
+      this.map.items.push({ x: m.x, y: m.y, ...makeCorpse() });
+      this.capCorpses();
+    }
+  }
+
+  private capCorpses(): void {
+    let count = 0;
+    for (const i of this.map.items) if (i.kind === "corpse") count++;
+    while (count > CORPSE_CAP) {
+      const idx = this.map.items.findIndex((i) => i.kind === "corpse");
+      this.map.items.splice(idx, 1);
+      count--;
+    }
   }
 
   private handleMonsterDeath(m: Entity): void {

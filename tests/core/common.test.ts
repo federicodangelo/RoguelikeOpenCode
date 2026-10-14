@@ -138,8 +138,8 @@ describe("placeItems", () => {
       { x: 30, y: 20 },
     ];
     const items = placeItems(cells, rng, 1, reserved);
-    expect(items.length).toBeGreaterThanOrEqual(4);
-    expect(items.length).toBeLessThanOrEqual(8);
+    expect(items.length).toBeGreaterThanOrEqual(3);
+    expect(items.length).toBeLessThanOrEqual(4);
     for (const item of items) {
       expect(cells[item.y]![item.x]).toBe("floor");
       expect(reserved.some((p) => p.x === item.x && p.y === item.y)).toBe(false);
@@ -147,6 +147,10 @@ describe("placeItems", () => {
       expect(typeof item.variant).toBe("string");
       expect(["common", "uncommon", "rare"]).toContain(item.quality);
       expect(typeof item.stat).toBe("number");
+      if (item.kind === "gold") {
+        expect(item.stat).toBeGreaterThanOrEqual(7);
+        expect(item.stat).toBeLessThanOrEqual(14);
+      }
     }
   });
 

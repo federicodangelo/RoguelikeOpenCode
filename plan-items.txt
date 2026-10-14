@@ -100,17 +100,17 @@ PHASE 1 - Item data model and save migration
 PHASE 2 - Fewer, better drops
 -----------------------------
 Note: 2.4 can be done early as an independent quick win.
-[ ] 2.1 Reduce floor placement: count = rng.int(2,3) + min(depth,2),
+[x] 2.1 Reduce floor placement: count = rng.int(2,3) + min(depth,2),
         weighted by ITEM_DEFS weight (consumables common, equipment rare)
-[ ] 2.2 Gold piles carry an amount (5 + 2*depth .. 10 + 4*depth) instead of 1
-[ ] 2.3 Rework dropLoot (src/core/game.ts:204-210): one roll per kill:
+[x] 2.2 Gold piles carry an amount (5 + 2*depth .. 10 + 4*depth) instead of 1
+[x] 2.3 Rework dropLoot (src/core/game.ts:204-210): one roll per kill:
         ~35% loot (weighted gold / consumable / equipment, depth-scaled),
         ~40% corpse, otherwise nothing
-[ ] 2.4 Cap corpses per floor (e.g. 6): when exceeded, remove the oldest
+[x] 2.4 Cap corpses per floor (e.g. 6): when exceeded, remove the oldest
         corpse from map.items so floors stop littering
-[ ] 2.5 Verify spawnMonsters and placeTraps reserved-position checks still
+[x] 2.5 Verify spawnMonsters and placeTraps reserved-position checks still
         work with the new PlacedItem shape
-[ ] 2.6 Tests: generators.test.ts placement count bounds; game.test.ts
+[x] 2.6 Tests: generators.test.ts placement count bounds; game.test.ts
         dropLoot distribution and corpse cap with a fixed seed
 
 PHASE 3 - Equipment, inventory, and swapping
