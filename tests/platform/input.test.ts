@@ -29,8 +29,8 @@ function makeMenu(game: Game): MenuNav {
   return new MenuNav(() => buildMenuTree(game, defaultSettings(), actions));
 }
 
-function key(keyName: string): KeyboardEvent {
-  return { key: keyName, preventDefault: () => {} } as unknown as KeyboardEvent;
+function key(keyName: string, repeat = false): KeyboardEvent {
+  return { key: keyName, repeat, preventDefault: () => {} } as unknown as KeyboardEvent;
 }
 
 function makeContext(game: Game, menu: MenuNav): InputContext {
@@ -174,5 +174,22 @@ describe("input", () => {
     game.player.y = 20;
     expect(handleKeydown(key("ArrowUp"), makeContext(game, menu))).toBe(true);
     expect(game.dirty).toBe(true);
+  });
+
+  it("ignores repeated turn-based keys while playing", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.dirty = false;
+    game.lightTurns = 5;
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    game.player.x = 25;
+    game.player.y = 20;
+    const menu = makeMenu(game);
+
+    expect(handleKeydown(key("ArrowUp", true), makeContext(game, menu))).toBe(false);
+    expect(game.player.y).toBe(20);
+    expect(game.lightTurns).toBe(5);
+    expect(game.dirty).toBe(false);
   });
 });

@@ -23,6 +23,10 @@ export interface InputContext {
 export function handleKeydown(e: KeyboardEvent, ctx: InputContext): boolean {
   const { game, menu, audio, toggleSound, openInventory } = ctx;
 
+  if (e.repeat && game.screen === "game" && !game.gameOver && !game.menuOpen) {
+    return false;
+  }
+
   if (game.screen === "title") {
     if (e.key === "Enter") {
       e.preventDefault();
