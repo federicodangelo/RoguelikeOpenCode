@@ -51,6 +51,39 @@ describe("Game skills", () => {
   });
 });
 
+describe("Game pickups", () => {
+  it("picks up loot stacked under a corpse at the player tile", () => {
+    const game = new Game();
+    const x = game.player.x;
+    const y = game.player.y;
+    game.map.items.push({ x, y, tile: T.Corpse });
+    game.map.items.push({ x, y, tile: T.Gold });
+
+    expect(game.pickup()).toBe(true);
+    expect(game.inventory.gold).toBe(1);
+    expect(game.map.items.some((i) => i.tile === T.Corpse && i.x === x && i.y === y)).toBe(true);
+  });
+
+  it("reports the pickable item kind when a corpse is on top", () => {
+    const game = new Game();
+    const x = game.player.x;
+    const y = game.player.y;
+    game.map.items.push({ x, y, tile: T.Corpse });
+    game.map.items.push({ x, y, tile: T.Potion });
+
+    expect(game.hasPickableItemAtPlayer()).toBe(true);
+    expect(game.itemKindAtPlayer()).toBe("potion");
+  });
+
+  it("does not pick up a lone corpse", () => {
+    const game = new Game();
+    game.map.items.push({ x: game.player.x, y: game.player.y, tile: T.Corpse });
+
+    expect(game.hasPickableItemAtPlayer()).toBe(false);
+    expect(game.pickup()).toBe(false);
+  });
+});
+
 describe("Game interactables", () => {
   it("reports the item kind at the player", () => {
     const game = new Game();

@@ -107,7 +107,11 @@ export class Game {
   }
 
   itemKindAtPlayer(): ItemKind | null {
-    const item = this.map.items.find((i) => i.x === this.player.x && i.y === this.player.y);
+    const item = this.map.items.find((i) => {
+      if (i.x !== this.player.x || i.y !== this.player.y) return false;
+      const kind = kindOfTile(i.tile);
+      return kind !== null && kind !== "corpse";
+    });
     return item ? kindOfTile(item.tile) : null;
   }
 
@@ -316,7 +320,11 @@ export class Game {
   }
 
   pickup(): boolean {
-    const idx = this.map.items.findIndex((i) => i.x === this.player.x && i.y === this.player.y);
+    const idx = this.map.items.findIndex((i) => {
+      if (i.x !== this.player.x || i.y !== this.player.y) return false;
+      const kind = kindOfTile(i.tile);
+      return kind !== null && kind !== "corpse";
+    });
     if (idx === -1) return false;
     const msg = pickUp(this.player, this.inventory, this.map.items[idx]!.tile);
     if (!msg) return false;
