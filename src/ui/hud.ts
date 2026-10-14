@@ -141,28 +141,28 @@ export function drawHUD(bctx: CanvasRenderingContext2D, data: HudData): void {
 
   const swordX = lvlX + pixelTextWidth(lvlText, 2) + 12;
   const weapon = data.inventory.equipment.weapon;
-  if (weapon) {
-    drawPixelText(bctx, weapon.variant, swordX, row1Y, "#e8e4da", 2);
-  } else {
+  if (!weapon) {
     bctx.globalAlpha = 0.35;
     drawIcon(bctx, data.icons, "sword", swordX, row1Y);
     bctx.globalAlpha = 1;
+  } else {
+    drawIcon(bctx, data.icons, "sword", swordX, row1Y);
   }
   const atkText = `Atk ${data.player.atk}`;
-  const atkX = swordX + (weapon ? pixelTextWidth(weapon.variant, 2) + 6 : 12);
+  const atkX = swordX + 12;
   drawPixelText(bctx, atkText, atkX, row1Y, "#e8e4da", 2);
 
   const shieldX = atkX + pixelTextWidth(atkText, 2) + 12;
   const armor = data.inventory.equipment.armor;
-  if (armor) {
-    drawPixelText(bctx, armor.variant, shieldX, row1Y, "#e8e4da", 2);
-  } else {
+  if (!armor) {
     bctx.globalAlpha = 0.35;
     drawIcon(bctx, data.icons, "shield", shieldX, row1Y);
     bctx.globalAlpha = 1;
+  } else {
+    drawIcon(bctx, data.icons, "shield", shieldX, row1Y);
   }
   const defText = `Def ${data.player.def}`;
-  const defX = shieldX + (armor ? pixelTextWidth(armor.variant, 2) + 6 : 12);
+  const defX = shieldX + 12;
   drawPixelText(bctx, defText, defX, row1Y, "#e8e4da", 2);
 
   const goldX = defX + pixelTextWidth(defText, 2) + 12;
