@@ -45,7 +45,7 @@ function startMusicIfAudible(): void {
 
 applyAudioSettings();
 
-const game = new Game();
+const game = new Game(() => performance.now());
 game.events = {
   hit: () => audio.sfx("hit"),
   kill: () => audio.sfx("kill"),

@@ -1,18 +1,10 @@
 import { TILE_SIZE } from "../core/tiles.ts";
 import { LOGICAL_H, LOGICAL_W } from "../core/constants.ts";
 import { drawPixelTextCenter } from "./pixel-font.ts";
+import type { Effect } from "../core/effects.ts";
 
-export interface Effect {
-  x: number;
-  y: number;
-  text: string;
-  color: string;
-  born: number;
-}
-
-export function spawnEffect(effects: Effect[], x: number, y: number, text: string, color: string, now: number): void {
-  effects.push({ x, y, text, color, born: now });
-}
+export type { Effect } from "../core/effects.ts";
+export { spawnEffect } from "../core/effects.ts";
 
 export function drawEffects(
   bctx: CanvasRenderingContext2D,

@@ -5,7 +5,7 @@ import { drawIcon, type Iconset } from "./icons.ts";
 import { minimapRect } from "./minimap.ts";
 import type { Entity, Status, StatusKind } from "../core/entities.ts";
 import type { Inventory, ItemKind } from "../core/items.ts";
-import type { MessageLog } from "./menu.ts";
+import type { MessageLog } from "../core/messages.ts";
 
 export const HUD_HEIGHT = 52;
 

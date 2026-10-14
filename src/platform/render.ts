@@ -1,11 +1,7 @@
 import { SHEET_COLS, TILE_SIZE } from "../core/tiles.ts";
+import type { CellView } from "../core/scene.ts";
 
-export interface CellView {
-  floor: number;
-  feature?: number;
-  entity?: number;
-  dim?: boolean;
-}
+export type { CellView } from "../core/scene.ts";
 
 export function drawScene(ctx: CanvasRenderingContext2D, tileset: Tileset, scene: CellView[][]): void {
   for (let y = 0; y < scene.length; y++) {

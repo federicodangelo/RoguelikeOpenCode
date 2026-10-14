@@ -6,10 +6,10 @@ import { computeFOV } from "./fov.ts";
 import { chaseDistances, monsterStep } from "./ai.ts";
 import { addStatus, hasStatus, tickStatuses } from "./status.ts";
 import { kindOfTile, makeInventory, pickUp, usePotion, useTorch, type Inventory, type ItemKind } from "./items.ts";
-import { MessageLog } from "../ui/menu.ts";
+import { MessageLog } from "./messages.ts";
 import { BASE_SEED, TORCH_RADIUS, TORCH_TURNS, VIEW_COLS, VIEW_ROWS } from "./constants.ts";
-import { spawnEffect, type Effect } from "../ui/effects.ts";
-import type { CellView } from "../platform/render.ts";
+import { spawnEffect, type Effect } from "./effects.ts";
+import type { CellView } from "./scene.ts";
 import { SAVE_VERSION, type SavedRun } from "./save.ts";
 
 export interface GameEvents {
@@ -45,8 +45,10 @@ export class Game {
   menuOpen = false;
   dirty = true;
   events: GameEvents = {};
+  private readonly clock: () => number;
 
-  constructor() {
+  constructor(clock: () => number = () => 0) {
+    this.clock = clock;
     this.map = this.getFloor(1);
     this.player = makePlayer(this.map.spawn.x, this.map.spawn.y);
     this.refreshFOV();
@@ -94,7 +96,7 @@ export class Game {
   }
 
   spawnEffect(x: number, y: number, text: string, color: string): void {
-    spawnEffect(this.effects, x, y, text, color, performance.now());
+    spawnEffect(this.effects, x, y, text, color, this.clock());
     this.dirty = true;
   }
 
@@ -186,7 +188,7 @@ export class Game {
         const verb = m.archetype === "ranged" ? "shoots" : "hits";
         this.logMessage(`The ${m.name} ${verb} you for ${before - this.player.hp}.`);
         this.spawnEffect(this.player.x, this.player.y, `-${before - this.player.hp}`, "#ff6a6a");
-        this.playerFlashUntil = performance.now() + 250;
+        this.playerFlashUntil = this.clock() + 250;
         this.events.hurt?.();
 
         if (m.archetype === "summoner") {
@@ -229,7 +231,7 @@ export class Game {
       if (playerTick.damage > 0) {
         this.spawnEffect(this.player.x, this.player.y, `-${playerTick.damage}`, "#9be56f");
         for (const msg of playerTick.messages) this.logMessage(msg);
-        this.playerFlashUntil = performance.now() + 250;
+        this.playerFlashUntil = this.clock() + 250;
         this.events.hurt?.();
         if (!this.player.alive) {
           this.gameOver = true;
@@ -292,7 +294,7 @@ export class Game {
       this.map.cells[ny]![nx] = "floor";
       this.logMessage(`You trigger a trap and take ${dmg} damage.`);
       this.spawnEffect(this.player.x, this.player.y, `-${dmg}`, "#ff9a4a");
-      this.playerFlashUntil = performance.now() + 250;
+      this.playerFlashUntil = this.clock() + 250;
       this.events.hurt?.();
       if (!this.player.alive) {
         this.gameOver = true;
