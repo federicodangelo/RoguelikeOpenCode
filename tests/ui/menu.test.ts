@@ -176,6 +176,15 @@ describe("MenuNav", () => {
     expect(nav.index).toBe(1);
   });
 
+  it("up and down keep the index valid when there are no entries", () => {
+    const nav = new MenuNav(() => []);
+    nav.open();
+    nav.up();
+    expect(nav.index).toBe(0);
+    nav.down();
+    expect(nav.index).toBe(0);
+  });
+
   it("back at root returns false", () => {
     const { entries } = testTree();
     const nav = new MenuNav(() => entries);

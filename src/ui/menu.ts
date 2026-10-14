@@ -97,11 +97,19 @@ export class MenuNav {
 
   up(): void {
     const n = this.entries().length;
+    if (n === 0) {
+      this.index = 0;
+      return;
+    }
     this.index = (this.index + n - 1) % n;
   }
 
   down(): void {
     const n = this.entries().length;
+    if (n === 0) {
+      this.index = 0;
+      return;
+    }
     this.index = (this.index + 1) % n;
   }
 
