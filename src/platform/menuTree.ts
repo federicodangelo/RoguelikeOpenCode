@@ -32,11 +32,13 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
 
   return [
     {
+      id: "help",
       label: "Help",
       hint: "Enter to open help",
       submenu: () => [{ label: "Back", hint: "Enter to return to the menu", action: actions.back }],
     },
     {
+      id: "inventory",
       label: "Inventory",
       hint: ["Enter to open inventory", "I: open inventory directly"],
       submenu: () => {
@@ -85,6 +87,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
       },
     },
     {
+      id: "skills",
       label: `Skills (${game.player.skillPoints})`,
       hint: [`Enter to open skills`, `Skill points: ${game.player.skillPoints}`],
       submenu: () => [
@@ -107,6 +110,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
       ],
     },
     {
+      id: "settings",
       label: "Settings",
       hint: "Enter to open settings",
       submenu: () => [
@@ -157,17 +161,20 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
       ? []
       : [
           {
+            id: "save",
             label: "Save",
             hint: ["Enter to save now", "Autosave is off"],
             action: actions.save,
           },
           {
+            id: "load",
             label: "Load",
             hint: ["Enter to load the latest save", "Autosave is off"],
             action: actions.load,
           },
         ]),
     {
+      id: "cheats",
       label: "Cheats",
       hint: "Enter to open cheats",
       submenu: () => [
@@ -189,6 +196,6 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
         { label: "Back", hint: "Enter to return to the menu", action: actions.back },
       ],
     },
-    { label: "Restart", hint: "Enter to restart the run from depth 1", action: actions.reset },
+    { id: "restart", label: "Restart", hint: "Enter to restart the run from depth 1", action: actions.reset },
   ];
 }

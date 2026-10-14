@@ -266,6 +266,22 @@ describe("MenuNav", () => {
     expect(nav.adjustSlider(10)).toBe(true);
     expect(values).toEqual([0.6, 0, 1]);
   });
+
+  it("exposes stable ids and finds entries by id", () => {
+    const entries: MenuEntry[] = [
+      { id: "inventory", label: "Inventory", submenu: [{ label: "Back" }] },
+      { label: "Other" },
+    ];
+    const nav = new MenuNav(() => entries);
+
+    expect(nav.indexOfId("inventory")).toBe(0);
+    expect(nav.indexOfId("Other")).toBe(1);
+
+    nav.open();
+    nav.index = 0;
+    nav.enter();
+    expect(nav.ids()).toEqual(["inventory"]);
+  });
 });
 
 describe("menuDetail", () => {

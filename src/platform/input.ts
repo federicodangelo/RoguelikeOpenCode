@@ -59,7 +59,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): boolean {
   if (e.key === "Escape") {
     e.preventDefault();
     audio.sfx("menu");
-    if (game.menuOpen && menu.labels()[0] === "Inventory") {
+    if (game.menuOpen && menu.ids()[0] === "inventory") {
       game.menuOpen = false;
     } else if (game.menuOpen && menu.depth() > 0) {
       menu.back();
@@ -73,7 +73,7 @@ export function handleKeydown(e: KeyboardEvent, ctx: InputContext): boolean {
 
   if (e.key === "i") {
     e.preventDefault();
-    if (game.menuOpen && menu.labels()[0] === "Inventory") {
+    if (game.menuOpen && menu.ids()[0] === "inventory") {
       game.menuOpen = false;
     } else {
       openInventory();

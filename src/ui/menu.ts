@@ -9,6 +9,7 @@ export interface MenuSlider {
 }
 
 export interface MenuEntry {
+  id?: string;
   label: string;
   submenu?: MenuEntry[] | (() => MenuEntry[]);
   action?: () => void;
@@ -56,6 +57,23 @@ export class MenuNav {
       entries = typeof entry.submenu === "function" ? entry.submenu() : entry.submenu;
     }
     return labels;
+  }
+
+  ids(): string[] {
+    const ids: string[] = [];
+    let entries = this.root();
+    for (const idx of this.path) {
+      const entry = entries[idx];
+      if (!entry) break;
+      ids.push(entry.id ?? entry.label);
+      if (!entry.submenu) break;
+      entries = typeof entry.submenu === "function" ? entry.submenu() : entry.submenu;
+    }
+    return ids;
+  }
+
+  indexOfId(id: string): number {
+    return this.entries().findIndex((entry) => (entry.id ?? entry.label) === id);
   }
 
   open(): void {

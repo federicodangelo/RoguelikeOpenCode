@@ -189,7 +189,7 @@ menu = new MenuNav(() =>
 function openInventoryMenu(): void {
   game.menuOpen = true;
   menu.open();
-  const idx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+  const idx = menu.indexOfId("inventory");
   if (idx >= 0) {
     menu.index = idx;
     menu.enter();

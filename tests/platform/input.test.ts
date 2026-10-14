@@ -85,7 +85,7 @@ describe("input", () => {
     const menu = makeMenu(game);
     menu.open();
 
-    const inventoryIdx = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    const inventoryIdx = menu.indexOfId("inventory");
     menu.index = inventoryIdx;
     menu.enter();
 
