@@ -17,6 +17,7 @@ import {
   unequipSlot,
   usePotion,
   useTorch,
+  type ConsumableStack,
   type ItemInstance,
   type Quality,
 } from "../../src/core/items.ts";
@@ -262,15 +263,20 @@ describe("drop", () => {
     expect(inv.equipment.weapon?.variant).toBe("short sword");
   });
 
-  it("dropConsumable decrements the stack and returns the stack info", () => {
+  it("dropConsumable decrements the stack it is given and returns it", () => {
     const inv = makeInventory();
-    pickUp(makePlayer(0, 0), inv, inst("potion", "minor potion", 5, T.Potion));
-    pickUp(makePlayer(0, 0), inv, inst("potion", "minor potion", 5, T.Potion));
-    const stack = dropConsumable(inv, "potion");
-    expect(stack?.variant).toBe("minor potion");
-    expect(stack?.stat).toBe(5);
-    expect(inv.consumables[0]!.count).toBe(1);
-    expect(dropConsumable(inv, "torch")).toBeNull();
+    const p = makePlayer(0, 0);
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(p, inv, inst("potion", "major potion", 9, T.Potion));
+    const major = inv.consumables.find((s) => s.variant === "major potion")!;
+    const stack = dropConsumable(inv, major);
+    expect(stack?.variant).toBe("major potion");
+    expect(stack?.stat).toBe(9);
+    expect(inv.consumables.length).toBe(1);
+    expect(inv.consumables[0]!.variant).toBe("minor potion");
+    expect(inv.consumables[0]!.count).toBe(2);
+    expect(dropConsumable(inv, major)).toBeNull();
   });
 });
 
@@ -281,12 +287,12 @@ describe("usePotion", () => {
     const inv = makeInventory();
     pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
     pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
-    const first = usePotion(p, inv);
+    const first = usePotion(p, inv, inv.consumables[0]!);
     expect(first?.message).toContain("minor potion");
     expect(first?.took).toBe(true);
     expect(p.hp).toBe(8);
     expect(inv.consumables[0]!.count).toBe(1);
-    const second = usePotion(p, inv);
+    const second = usePotion(p, inv, inv.consumables[0]!);
     expect(second?.message).toContain("potion");
     expect(second?.took).toBe(true);
     expect(p.hp).toBe(12);
@@ -298,19 +304,58 @@ describe("usePotion", () => {
     p.hp = 1;
     const inv = makeInventory();
     pickUp(p, inv, inst("potion", "major potion", 9, T.Potion));
-    usePotion(p, inv);
+    usePotion(p, inv, inv.consumables[0]!);
     expect(p.hp).toBe(10);
   });
 
   it("reports full health as a no-op that spends no potion", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
-    expect(usePotion(p, inv)).toBeNull();
-    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
-    const result = usePotion(p, inv);
+    const potion: ConsumableStack = {
+      kind: "potion",
+      variant: "minor potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 5,
+      count: 1,
+    };
+    expect(usePotion(p, inv, potion)).toBeNull();
+    inv.consumables.push(potion);
+    const result = usePotion(p, inv, potion);
     expect(result?.took).toBe(false);
     expect(result?.message).toContain("full health");
     expect(p.hp).toBe(12);
+    expect(inv.consumables[0]!.count).toBe(1);
+  });
+
+  it("drinks the stack it is given, not the first potion in the pack", () => {
+    const p = makePlayer(0, 0);
+    p.hp = 1;
+    const inv = makeInventory();
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    pickUp(p, inv, inst("potion", "major potion", 9, T.Potion));
+    const major = inv.consumables.find((s) => s.variant === "major potion")!;
+    expect(usePotion(p, inv, major)?.message).toContain("major potion");
+    expect(p.hp).toBe(10);
+    expect(inv.consumables.length).toBe(1);
+    expect(inv.consumables[0]!.variant).toBe("minor potion");
+  });
+
+  it("refuses a stack that is not in the pack", () => {
+    const p = makePlayer(0, 0);
+    p.hp = 3;
+    const inv = makeInventory();
+    pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
+    const stranger: ConsumableStack = {
+      kind: "potion",
+      variant: "major potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 9,
+      count: 1,
+    };
+    expect(usePotion(p, inv, stranger)).toBeNull();
+    expect(p.hp).toBe(3);
     expect(inv.consumables[0]!.count).toBe(1);
   });
 });
@@ -320,18 +365,31 @@ describe("useTorch", () => {
     const inv = makeInventory();
     pickUp(makePlayer(0, 0), inv, inst("torch", "torch", TORCH_TURNS, T.Torch));
     pickUp(makePlayer(0, 0), inv, inst("torch", "torch", TORCH_TURNS, T.Torch));
-    const first = useTorch(inv);
+    const stack = inv.consumables[0]!;
+    const first = useTorch(inv, stack);
     expect(first?.message).toContain("torch");
     expect(first?.turns).toBe(TORCH_TURNS);
-    expect(inv.consumables[0]!.count).toBe(1);
-    expect(useTorch(inv)?.turns).toBe(TORCH_TURNS);
-    expect(useTorch(inv)).toBeNull();
+    expect(stack.count).toBe(1);
+    expect(useTorch(inv, stack)?.turns).toBe(TORCH_TURNS);
+    expect(useTorch(inv, stack)).toBeNull();
     expect(inv.consumables.length).toBe(0);
   });
 
   it("lanterns light for their longer duration", () => {
     const inv = makeInventory();
     pickUp(makePlayer(0, 0), inv, inst("torch", "bullseye lantern", 30, T.Torch));
-    expect(useTorch(inv)?.turns).toBe(30);
+    expect(useTorch(inv, inv.consumables[0]!)?.turns).toBe(30);
+  });
+
+  it("lights the stack it is given, not the first torch in the pack", () => {
+    const inv = makeInventory();
+    const p = makePlayer(0, 0);
+    pickUp(p, inv, inst("torch", "torch", 12, T.Torch));
+    pickUp(p, inv, inst("torch", "bullseye lantern", 30, T.Torch));
+    const lantern = inv.consumables.find((s) => s.variant === "bullseye lantern")!;
+    expect(useTorch(inv, lantern)?.turns).toBe(30);
+    expect(inv.consumables.length).toBe(1);
+    expect(inv.consumables[0]!.variant).toBe("torch");
+    expect(inv.consumables[0]!.count).toBe(1);
   });
 });

@@ -4,6 +4,7 @@ import { TORCH_TURNS } from "../../src/core/constants.ts";
 import { MAP_W } from "../../src/core/map.ts";
 import { T } from "../../src/core/tiles.ts";
 import { addStatus, hasStatus } from "../../src/core/status.ts";
+import type { ConsumableStack } from "../../src/core/items.ts";
 import { type Entity } from "../../src/core/entities.ts";
 import { openInterior, placedItem } from "./helpers.ts";
 
@@ -302,22 +303,33 @@ describe("Game pickups", () => {
     expect(game.dropCarried(0)).toBe(false);
   });
 
-  it("dropping a consumable places one item on the floor", () => {
+  it("dropping a consumable places one item from the given stack on the floor", () => {
     const game = new Game();
-    game.inventory.consumables.push({
+    const minor: ConsumableStack = {
       kind: "potion",
       variant: "minor potion",
       quality: "common",
       tile: T.Potion,
       stat: 5,
       count: 2,
-    });
-    expect(game.dropConsumable("potion")).toBe(true);
+    };
+    const major: ConsumableStack = {
+      kind: "potion",
+      variant: "major potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 9,
+      count: 1,
+    };
+    game.inventory.consumables.push(minor, major);
+    expect(game.dropConsumable(minor)).toBe(true);
     expect(game.inventory.consumables[0]!.count).toBe(1);
     const dropped = game.map.items.find((i) => i.kind === "potion" && i.x === game.player.x && i.y === game.player.y);
     expect(dropped).toBeDefined();
     expect(dropped!.variant).toBe("minor potion");
-    expect(game.dropConsumable("torch")).toBe(false);
+    expect(game.dropConsumable(major)).toBe(true);
+    expect(game.inventory.consumables.length).toBe(1);
+    expect(game.inventory.consumables[0]!.variant).toBe("minor potion");
   });
 });
 

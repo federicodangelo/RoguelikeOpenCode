@@ -261,6 +261,37 @@ describe("inventory menu", () => {
     expect(game.player.hp).toBe(6);
   });
 
+  it("drinks the stack the selected row points at, not the first potion of that kind", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.inventory.consumables.push(
+      { kind: "potion", variant: "minor potion", quality: "common", tile: T.Potion, stat: 5, count: 1 },
+      { kind: "potion", variant: "major potion", quality: "common", tile: T.Potion, stat: 9, count: 1 },
+    );
+    game.player.hp = 1;
+    const menu = makeMenu(game);
+    menu.open();
+
+    menu.index = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.enter();
+
+    const potionRows = menu.entries().filter((entry) => entry.label.startsWith("Potions:"));
+    expect(potionRows.length).toBe(2);
+    const majorIdx = menu
+      .entries()
+      .findIndex((entry) => entry.label.startsWith("Potions:") && entry.label.includes("major potion"));
+    expect(majorIdx).toBeGreaterThanOrEqual(0);
+
+    menu.index = majorIdx;
+    menu.enter();
+    menu.index = menu.entries().findIndex((entry) => entry.label === "Drink");
+    menu.enter();
+
+    expect(game.player.hp).toBe(10);
+    expect(game.inventory.consumables.length).toBe(1);
+    expect(game.inventory.consumables[0]!.variant).toBe("minor potion");
+  });
+
   it("lights torches with enter", () => {
     const game = new Game();
     game.monstersByFloor.set(game.depth, []);

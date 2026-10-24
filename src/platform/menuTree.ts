@@ -144,13 +144,13 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
                   hint: isPotion
                     ? [benefit, `Current HP: ${game.player.hp}/${game.player.maxHp}`]
                     : [benefit, `Light turns: ${game.lightTurns}`],
-                  action: consumeBack(() => (isPotion ? game.drink() : game.useTorch())),
+                  action: consumeBack(() => (isPotion ? game.drink(stack) : game.useTorch(stack))),
                 });
                 kids.push({
                   id: `stack-${stack.kind}-${stack.variant}-drop`,
                   label: "Drop one",
                   hint: "Enter: leave one on the ground",
-                  action: consumeBack(() => game.dropConsumable(stack.kind)),
+                  action: consumeBack(() => game.dropConsumable(stack)),
                 });
               }
               kids.push({ label: "Back", hint: "Enter to return to the menu", action: actions.back });

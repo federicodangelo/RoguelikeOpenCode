@@ -236,8 +236,8 @@ export function dropCarried(inv: Inventory, index: number): ItemInstance | null 
   return item;
 }
 
-export function dropConsumable(inv: Inventory, kind: ConsumableKind): ConsumableStack | null {
-  return takeStack(inv, kind);
+export function dropConsumable(inv: Inventory, stack: ConsumableStack): ConsumableStack | null {
+  return takeStack(inv, stack);
 }
 
 export interface TorchResult {
@@ -245,10 +245,9 @@ export interface TorchResult {
   turns: number;
 }
 
-function takeStack(inv: Inventory, kind: ConsumableKind): ConsumableStack | null {
-  const idx = inv.consumables.findIndex((s) => s.kind === kind);
-  if (idx === -1) return null;
-  const stack = inv.consumables[idx]!;
+function takeStack(inv: Inventory, stack: ConsumableStack): ConsumableStack | null {
+  const idx = inv.consumables.indexOf(stack);
+  if (idx === -1 || stack.count <= 0) return null;
   stack.count -= 1;
   if (stack.count <= 0) inv.consumables.splice(idx, 1);
   return stack;
@@ -259,19 +258,17 @@ export interface PotionResult {
   took: boolean;
 }
 
-export function usePotion(player: Entity, inv: Inventory): PotionResult | null {
-  const stack = inv.consumables.find((s) => s.kind === "potion");
-  if (!stack) return null;
+export function usePotion(player: Entity, inv: Inventory, stack: ConsumableStack): PotionResult | null {
+  if (!inv.consumables.includes(stack) || stack.kind !== "potion") return null;
   // A refused drink is not an action, so it must not consume the stack or the caller's turn.
   if (player.hp >= player.maxHp) return { took: false, message: "You are already at full health." };
-  takeStack(inv, "potion");
+  takeStack(inv, stack);
   player.hp = Math.min(player.maxHp, player.hp + stack.stat);
   return { took: true, message: `You drink a ${stack.variant} (+${stack.stat} HP).` };
 }
 
-export function useTorch(inv: Inventory): TorchResult | null {
-  const stack = inv.consumables.find((s) => s.kind === "torch");
-  if (!stack) return null;
-  takeStack(inv, "torch");
+export function useTorch(inv: Inventory, stack: ConsumableStack): TorchResult | null {
+  if (!inv.consumables.includes(stack) || stack.kind !== "torch") return null;
+  takeStack(inv, stack);
   return { message: `You light a ${stack.variant}.`, turns: stack.stat };
 }

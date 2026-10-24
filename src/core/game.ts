@@ -20,6 +20,8 @@ import {
   unequipSlot,
   usePotion,
   useTorch,
+  type ConsumableKind,
+  type ConsumableStack,
   type EquipSlot,
   type Inventory,
   type ItemDef,
@@ -365,25 +367,31 @@ export class Game {
     return true;
   }
 
-  dropConsumable(kind: "potion" | "torch"): boolean {
-    const stack = dropConsumableStack(this.inventory, kind);
-    if (!stack) return false;
+  private stackOf(kind: ConsumableKind): ConsumableStack | undefined {
+    return this.inventory.consumables.find((s) => s.kind === kind);
+  }
+
+  dropConsumable(stack: ConsumableStack): boolean {
+    const dropped = dropConsumableStack(this.inventory, stack);
+    if (!dropped) return false;
     this.map.items.push({
       x: this.player.x,
       y: this.player.y,
-      kind: stack.kind,
-      variant: stack.variant,
-      quality: stack.quality,
-      tile: stack.tile,
-      stat: stack.stat,
+      kind: dropped.kind,
+      variant: dropped.variant,
+      quality: dropped.quality,
+      tile: dropped.tile,
+      stat: dropped.stat,
     });
-    this.logMessage(`You drop a ${stack.variant}.`, qualityColor(stack.quality));
+    this.logMessage(`You drop a ${dropped.variant}.`, qualityColor(dropped.quality));
     this.dirty = true;
     return true;
   }
 
-  drink(): boolean {
-    const result = usePotion(this.player, this.inventory);
+  drink(stack?: ConsumableStack): boolean {
+    const target = stack ?? this.stackOf("potion");
+    if (!target) return false;
+    const result = usePotion(this.player, this.inventory, target);
     if (!result) return false;
     this.logMessage(result.message);
     if (!result.took) return false;
@@ -391,8 +399,10 @@ export class Game {
     return true;
   }
 
-  useTorch(): boolean {
-    const result = useTorch(this.inventory);
+  useTorch(stack?: ConsumableStack): boolean {
+    const target = stack ?? this.stackOf("torch");
+    if (!target) return false;
+    const result = useTorch(this.inventory, target);
     if (!result) return false;
     this.lightTurns = result.turns;
     this.logMessage(`${result.message} Your light radius expands for ${result.turns} turns.`);
