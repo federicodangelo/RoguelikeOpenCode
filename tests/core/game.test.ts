@@ -68,6 +68,71 @@ describe("Game status effects", () => {
     addStatus(game.player, "stun", 1, 1);
     expect(game.playerStunned()).toBe(true);
   });
+
+  it("a tank hit stuns the player into the next turn instead of expiring it away", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const ogre = monster(game.player.x + 1, game.player.y, {
+      name: "ogre",
+      archetype: "tank",
+      hp: 30,
+      maxHp: 30,
+      atk: 5,
+    });
+    game.monstersByFloor.get(game.depth)!.push(ogre);
+    // First battleRng roll is 0.266, under the 0.35 stun chance.
+    game.battleRng.setState(0);
+
+    game.monstersAct();
+
+    expect(game.player.hp).toBeLessThan(12);
+    expect(game.playerStunned()).toBe(true);
+    expect(game.player.statuses.find((s) => s.kind === "stun")?.turns).toBe(1);
+  });
+
+  it("poison applied by a hit lasts its full turns and skips the turn it landed", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const warlock = monster(game.player.x + 1, game.player.y, {
+      name: "warlock",
+      archetype: "summoner",
+      hp: 30,
+      maxHp: 30,
+      atk: 4,
+    });
+    game.monstersByFloor.get(game.depth)!.push(warlock);
+
+    const before = game.player.hp;
+    game.monstersAct();
+
+    const poison = game.player.statuses.find((s) => s.kind === "poison");
+    expect(poison?.turns).toBe(3);
+    const lost = before - game.player.hp;
+    expect(lost).toBeLessThanOrEqual(4);
+    for (let i = 0; i < game.messages.length; i++) {
+      expect(game.messages.at(i)).not.toContain("poison damage");
+    }
+  });
+
+  it("bleeding from a boss hit lasts its full turns", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const demon = monster(game.player.x + 1, game.player.y, {
+      name: "demon",
+      archetype: "boss",
+      hp: 60,
+      maxHp: 60,
+      atk: 7,
+    });
+    game.monstersByFloor.get(game.depth)!.push(demon);
+
+    game.monstersAct();
+
+    expect(game.player.statuses.find((s) => s.kind === "bleeding")?.turns).toBe(3);
+  });
 });
 
 describe("Game skills", () => {

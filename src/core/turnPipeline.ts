@@ -26,6 +26,23 @@ export interface TurnContext {
 export function runMonsterTurn(ctx: TurnContext): void {
   if (ctx.lightTurns > 0) ctx.lightTurns--;
 
+  // Statuses tick at the start of the round, so a status granted during this
+  // round survives until the affected entity has had its chance to act.
+  if (ctx.player.alive) {
+    const playerTick = tickStatuses(ctx.player);
+    ctx.protectPlayer();
+    if (playerTick.damage > 0) {
+      ctx.spawnEffect(ctx.player.x, ctx.player.y, `-${playerTick.damage}`, "#9be56f");
+      for (const msg of playerTick.messages) ctx.logMessage(msg);
+      ctx.playerFlashUntil = ctx.clock() + 250;
+      ctx.events.hurt?.();
+      if (!ctx.player.alive) {
+        ctx.gameOver = true;
+        ctx.events.death?.();
+      }
+    }
+  }
+
   for (const m of ctx.monsters()) {
     if (!m.alive) continue;
     if (m.hp * 3 < m.maxHp && !m.panicked) {
@@ -78,21 +95,6 @@ export function runMonsterTurn(ctx: TurnContext): void {
       ctx.gameOver = true;
       ctx.events.death?.();
       break;
-    }
-  }
-
-  if (ctx.player.alive) {
-    const playerTick = tickStatuses(ctx.player);
-    ctx.protectPlayer();
-    if (playerTick.damage > 0) {
-      ctx.spawnEffect(ctx.player.x, ctx.player.y, `-${playerTick.damage}`, "#9be56f");
-      for (const msg of playerTick.messages) ctx.logMessage(msg);
-      ctx.playerFlashUntil = ctx.clock() + 250;
-      ctx.events.hurt?.();
-      if (!ctx.player.alive) {
-        ctx.gameOver = true;
-        ctx.events.death?.();
-      }
     }
   }
 }
