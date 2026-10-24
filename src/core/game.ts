@@ -383,9 +383,10 @@ export class Game {
   }
 
   drink(): boolean {
-    const msg = usePotion(this.player, this.inventory);
-    if (!msg) return false;
-    this.logMessage(msg);
+    const result = usePotion(this.player, this.inventory);
+    if (!result) return false;
+    this.logMessage(result.message);
+    if (!result.took) return false;
     this.events.potion?.();
     return true;
   }

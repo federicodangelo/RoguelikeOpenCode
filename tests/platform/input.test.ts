@@ -138,6 +138,29 @@ describe("input", () => {
     expect(menu.ids()[0]).toBe("inventory");
   });
 
+  it("drinking at full health reports the refusal without consuming a turn", () => {
+    const game = new Game();
+    game.screen = "game";
+    game.dirty = false;
+    game.lightTurns = 5;
+    game.inventory.consumables.push({
+      kind: "potion",
+      variant: "minor potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 5,
+      count: 1,
+    });
+    const messages = game.messages.length;
+    const menu = makeMenu(game);
+
+    expect(handleKeydown(key("u"), makeContext(game, menu))).toBe(false);
+
+    expect(game.lightTurns).toBe(5);
+    expect(game.inventory.consumables[0]!.count).toBe(1);
+    expect(game.messages.length).toBe(messages + 1);
+  });
+
   it("non-action keys do not consume a turn while stunned", () => {
     const game = new Game();
     game.screen = "game";

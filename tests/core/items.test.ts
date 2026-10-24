@@ -281,10 +281,14 @@ describe("usePotion", () => {
     const inv = makeInventory();
     pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
     pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
-    expect(usePotion(p, inv)).toContain("minor potion");
+    const first = usePotion(p, inv);
+    expect(first?.message).toContain("minor potion");
+    expect(first?.took).toBe(true);
     expect(p.hp).toBe(8);
     expect(inv.consumables[0]!.count).toBe(1);
-    expect(usePotion(p, inv)).toContain("potion");
+    const second = usePotion(p, inv);
+    expect(second?.message).toContain("potion");
+    expect(second?.took).toBe(true);
     expect(p.hp).toBe(12);
     expect(inv.consumables.length).toBe(0);
   });
@@ -298,12 +302,15 @@ describe("usePotion", () => {
     expect(p.hp).toBe(10);
   });
 
-  it("does nothing without potions or at full HP", () => {
+  it("reports full health as a no-op that spends no potion", () => {
     const p = makePlayer(0, 0);
     const inv = makeInventory();
     expect(usePotion(p, inv)).toBeNull();
     pickUp(p, inv, inst("potion", "minor potion", 5, T.Potion));
-    expect(usePotion(p, inv)).toContain("full health");
+    const result = usePotion(p, inv);
+    expect(result?.took).toBe(false);
+    expect(result?.message).toContain("full health");
+    expect(p.hp).toBe(12);
     expect(inv.consumables[0]!.count).toBe(1);
   });
 });

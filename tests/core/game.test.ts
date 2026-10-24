@@ -53,6 +53,33 @@ describe("Game torches", () => {
   });
 });
 
+describe("Game drinking", () => {
+  it("refuses to drink at full health without spending the potion or a turn", () => {
+    const game = new Game();
+    game.inventory.consumables.push({
+      kind: "potion",
+      variant: "minor potion",
+      quality: "common",
+      tile: T.Potion,
+      stat: 5,
+      count: 1,
+    });
+    let potionSound = 0;
+    game.events.potion = () => {
+      potionSound++;
+    };
+    const messages = game.messages.length;
+
+    expect(game.player.hp).toBe(game.player.maxHp);
+    expect(game.drink()).toBe(false);
+
+    expect(game.inventory.consumables[0]!.count).toBe(1);
+    expect(potionSound).toBe(0);
+    expect(game.messages.length).toBe(messages + 1);
+    expect(game.messages.at(game.messages.length - 1)).toContain("full health");
+  });
+});
+
 describe("Game status effects", () => {
   it("ticks player poison after monsters act", () => {
     const game = new Game();

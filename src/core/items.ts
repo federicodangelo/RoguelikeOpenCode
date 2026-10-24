@@ -254,13 +254,19 @@ function takeStack(inv: Inventory, kind: ConsumableKind): ConsumableStack | null
   return stack;
 }
 
-export function usePotion(player: Entity, inv: Inventory): string | null {
+export interface PotionResult {
+  message: string;
+  took: boolean;
+}
+
+export function usePotion(player: Entity, inv: Inventory): PotionResult | null {
   const stack = inv.consumables.find((s) => s.kind === "potion");
   if (!stack) return null;
-  if (player.hp >= player.maxHp) return "You are already at full health.";
+  // A refused drink is not an action, so it must not consume the stack or the caller's turn.
+  if (player.hp >= player.maxHp) return { took: false, message: "You are already at full health." };
   takeStack(inv, "potion");
   player.hp = Math.min(player.maxHp, player.hp + stack.stat);
-  return `You drink a ${stack.variant} (+${stack.stat} HP).`;
+  return { took: true, message: `You drink a ${stack.variant} (+${stack.stat} HP).` };
 }
 
 export function useTorch(inv: Inventory): TorchResult | null {
