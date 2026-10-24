@@ -1,3 +1,9 @@
+/**
+ * A log line as it is written to a save. Older saves store the bare text; a bare string reads
+ * back as uncolored, so the color field stays optional instead of forcing a format change.
+ */
+export type SavedMessage = { text: string; color?: string };
+
 export class MessageLog {
   private lines: { text: string; color?: string }[] = [];
 
@@ -25,12 +31,14 @@ export class MessageLog {
     this.lines.length = 0;
   }
 
-  snapshot(): string[] {
-    return this.lines.map((l) => l.text);
+  snapshot(): SavedMessage[] {
+    return this.lines.map((l) => (l.color === undefined ? { text: l.text } : { text: l.text, color: l.color }));
   }
 
-  restore(lines: string[]): void {
-    this.lines = lines.map((text) => ({ text }));
+  restore(lines: (string | SavedMessage)[]): void {
+    this.lines = lines.map((line) =>
+      typeof line === "string" ? { text: line } : { text: line.text, color: line.color },
+    );
     if (this.lines.length > this.max) this.lines = this.lines.slice(-this.max);
   }
 }

@@ -32,7 +32,7 @@ describe("save/load", () => {
     game.inventory.gold = 7;
     game.player.hp = 5;
     game.godMode = true;
-    game.logMessage("saved message");
+    game.logMessage("saved message", "#9be56f");
 
     saveRun(storage, game);
 
@@ -44,6 +44,7 @@ describe("save/load", () => {
     expect(loaded.player.hp).toBe(5);
     expect(loaded.godMode).toBe(true);
     expect(loaded.messages.at(loaded.messages.length - 1)).toBe("saved message");
+    expect(loaded.messages.colorAt(loaded.messages.length - 1)).toBe("#9be56f");
     expect(loaded.map).toBe(loaded.floors.get(2)!);
   });
 

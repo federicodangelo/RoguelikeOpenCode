@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
 import { BASE_SEED } from "../../src/core/constants.ts";
-import { isSavedRun, migrateSavedRun } from "../../src/core/save.ts";
+import { isSavedRun, migrateSavedRun, type SavedRun } from "../../src/core/save.ts";
 import { MAP_H, MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
 
@@ -197,6 +197,49 @@ describe("isSavedRun numeric bounds", () => {
       tile: T.Dagger,
       stat: 2.5,
     };
+  });
+});
+
+describe("saved messages", () => {
+  it("keeps the color of every message through a save", () => {
+    const source = new Game();
+    source.logMessage("The goblin hits you for 3.", "#ff6a6a");
+    source.logMessage("You are poisoned.", "#9be56f");
+    const saved = source.serialize();
+
+    expect(saved.messages.at(-2)).toEqual({ text: "The goblin hits you for 3.", color: "#ff6a6a" });
+    expect(isSavedRun(saved)).toBe(true);
+
+    const loaded = new Game();
+    loaded.loadRun(saved);
+    const last = loaded.messages.length - 1;
+    expect(loaded.messages.at(last)).toBe("You are poisoned.");
+    expect(loaded.messages.colorAt(last)).toBe("#9be56f");
+    expect(loaded.messages.colorAt(last - 1)).toBe("#ff6a6a");
+  });
+
+  it("stores an uncolored message without inventing a color for it", () => {
+    const source = new Game();
+    source.logMessage("You have nothing to drink.");
+    expect(source.serialize().messages.at(-1)).toEqual({ text: "You have nothing to drink." });
+  });
+
+  it("still loads a save whose messages are stored as bare strings", () => {
+    const save = validSave();
+    save.messages = ["You are poisoned.", "The goblin hits you for 3."];
+    expect(isSavedRun(save)).toBe(true);
+
+    const loaded = new Game();
+    loaded.loadRun(save as unknown as SavedRun);
+    const last = loaded.messages.length - 1;
+    expect(loaded.messages.at(last)).toBe("The goblin hits you for 3.");
+    expect(loaded.messages.colorAt(last)).toBeUndefined();
+  });
+
+  it("rejects a message that is neither a string nor carries its text", () => {
+    const save = validSave();
+    save.messages = [{ color: "#ff6a6a" }];
+    expect(isSavedRun(save)).toBe(false);
   });
 });
 

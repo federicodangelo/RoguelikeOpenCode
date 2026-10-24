@@ -1,5 +1,6 @@
 import type { Entity } from "./entities.ts";
 import type { Inventory } from "./items.ts";
+import type { SavedMessage } from "./messages.ts";
 import { MAP_H, MAP_W, type GameMap } from "./mapgen/common.ts";
 import { BASE_SEED, TORCH_TURNS } from "./constants.ts";
 import { T } from "./tiles.ts";
@@ -27,7 +28,8 @@ export interface SavedRun {
   aiRng: number;
   battleRng: number;
   floors: SavedFloor[];
-  messages: string[];
+  /** Runs written before colors were stored keep the bare text; both shapes load. */
+  messages: (string | SavedMessage)[];
 }
 
 function isInt(value: unknown): boolean {
@@ -354,6 +356,13 @@ export function migrateSavedRun(value: unknown): unknown {
   return v;
 }
 
+function isSavedMessageShape(value: unknown): boolean {
+  if (typeof value === "string") return true;
+  if (typeof value !== "object" || value === null) return false;
+  const m = value as Partial<SavedMessage>;
+  return typeof m.text === "string" && (m.color === undefined || typeof m.color === "string");
+}
+
 export function isSavedRun(value: unknown): value is SavedRun {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Partial<SavedRun>;
@@ -373,6 +382,6 @@ export function isSavedRun(value: unknown): value is SavedRun {
     Array.isArray(v.floors) &&
     v.floors.every(isSavedFloorShape) &&
     Array.isArray(v.messages) &&
-    v.messages.every((m) => typeof m === "string")
+    v.messages.every(isSavedMessageShape)
   );
 }
