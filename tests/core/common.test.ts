@@ -89,6 +89,29 @@ describe("bfs helpers", () => {
     carveH(cells, 5, 2, 10);
     expect(bfsFarthest(cells, { x: 2, y: 5 })).toEqual({ x: 10, y: 5 });
   });
+
+  it("keeps the shortest distance when a long detour is carved first", () => {
+    const cells = emptyCells();
+    carveV(cells, 2, 2, 8);
+    carveH(cells, 8, 2, 10);
+    carveV(cells, 10, 2, 8);
+    carveH(cells, 2, 2, 10);
+
+    const dist = bfsDistances(cells, { x: 2, y: 2 });
+    expect(dist[2 * MAP_W + 10]).toBe(8);
+    expect(dist[2 * MAP_W + 6]).toBe(4);
+    expect(dist[8 * MAP_W + 10]).toBe(14);
+    expect(dist[5 * MAP_W + 5]).toBe(-1);
+    expect(bfsFarthest(cells, { x: 2, y: 2 })).toEqual({ x: 10, y: 8 });
+  });
+
+  it("nearestOpen reports the closest floor, not the first one it reaches", () => {
+    const cells = emptyCells();
+    carveH(cells, 5, 6, 12);
+    carveV(cells, 5, 1, 3);
+    const found = nearestOpen(cells, { x: 5, y: 5 });
+    expect(found).toEqual({ x: 6, y: 5 });
+  });
 });
 
 describe("keepLargestRegion", () => {

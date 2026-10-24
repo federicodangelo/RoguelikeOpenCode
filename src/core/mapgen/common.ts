@@ -131,9 +131,12 @@ export function bfsFarthest(cells: CellType[][], start: Point): Point {
   const startK = start.y * MAP_W + start.x;
   const queue: number[] = [startK];
   dist[startK] = 0;
+  let head = 0;
   let far = startK;
-  while (queue.length > 0) {
-    const k = queue.shift()!;
+  // An index cursor instead of shift() keeps the walk linear: shift() copies the rest of the
+  // queue on every cell.
+  while (head < queue.length) {
+    const k = queue[head++]!;
     if (dist[k]! > dist[far]!) far = k;
     const x = k % MAP_W;
     const y = Math.floor(k / MAP_W);
@@ -156,8 +159,9 @@ export function bfsDistances(cells: CellType[][], start: Point, blocked?: (c: Ce
   const startK = start.y * MAP_W + start.x;
   const queue: number[] = [startK];
   dist[startK] = 0;
-  while (queue.length > 0) {
-    const k = queue.shift()!;
+  let head = 0;
+  while (head < queue.length) {
+    const k = queue[head++]!;
     const x = k % MAP_W;
     const y = Math.floor(k / MAP_W);
     for (const [dx, dy] of DIRS) {
@@ -215,9 +219,10 @@ export function nearestOpen(cells: CellType[][], at: Point): Point | null {
   const startK = sy * MAP_W + sx;
   const seen = new Set<number>([startK]);
   const queue: number[] = [startK];
+  let head = 0;
   let fallback: number | null = null;
-  while (queue.length > 0) {
-    const k = queue.shift()!;
+  while (head < queue.length) {
+    const k = queue[head++]!;
     const x = k % MAP_W;
     const y = Math.floor(k / MAP_W);
     const c = cells[y]![x]!;
