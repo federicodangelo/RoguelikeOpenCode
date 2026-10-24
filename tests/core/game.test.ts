@@ -116,6 +116,19 @@ describe("Game status effects", () => {
     }
   });
 
+  it("a monster that panics keeps its full fear duration", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const rat = monster(game.player.x + 5, game.player.y, { hp: 3, maxHp: 12 });
+    game.monstersByFloor.get(game.depth)!.push(rat);
+
+    game.monstersAct();
+
+    expect(rat.panicked).toBe(true);
+    expect(rat.statuses.find((s) => s.kind === "fear")?.turns).toBe(3);
+  });
+
   it("bleeding from a boss hit lasts its full turns", () => {
     const game = new Game();
     game.map.cells = openInterior();
@@ -378,9 +391,12 @@ describe("Game fear", () => {
 
     game.monstersAct();
     expect(hasStatus(m, "fear")).toBe(true);
-    expect(m.statuses.find((s) => s.kind === "fear")!.turns).toBe(2);
+    expect(m.statuses.find((s) => s.kind === "fear")!.turns).toBe(3);
 
     game.monstersAct();
+    game.monstersAct();
+    expect(m.statuses.find((s) => s.kind === "fear")!.turns).toBe(1);
+
     game.monstersAct();
     expect(hasStatus(m, "fear")).toBe(false);
 

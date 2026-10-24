@@ -45,10 +45,6 @@ export function runMonsterTurn(ctx: TurnContext): void {
 
   for (const m of ctx.monsters()) {
     if (!m.alive) continue;
-    if (m.hp * 3 < m.maxHp && !m.panicked) {
-      m.panicked = true;
-      addStatus(m, "fear", 3, 1);
-    }
     const tick = tickStatuses(m);
     if (tick.damage > 0) {
       ctx.spawnEffect(m.x, m.y, `-${tick.damage}`, "#9be56f");
@@ -56,7 +52,13 @@ export function runMonsterTurn(ctx: TurnContext): void {
       if (!m.alive) {
         ctx.logMessage(`The ${m.name} dies from status effects.`);
         ctx.handleMonsterDeath(m);
+        continue;
       }
+    }
+    // Panic is checked after the tick so fear granted this round keeps its turns.
+    if (m.hp * 3 < m.maxHp && !m.panicked) {
+      m.panicked = true;
+      addStatus(m, "fear", 3, 1);
     }
   }
 
