@@ -55,10 +55,19 @@ describe("computeScaling", () => {
     expect(s.cssH * 1.25).toBe(640);
   });
 
-  it("integer mode factor is at least 1", () => {
+  it("integer mode keeps the factor at 1 but shrinks css to what the viewport fits", () => {
     const s = computeScaling("integer", W, H, 0.5, 1);
     expect(s.backingW).toBe(960);
-    expect(s.cssW).toBe(960);
+    expect(s.backingH).toBe(640);
+    expect(s.cssW).toBe(480);
+    expect(s.cssH).toBe(320);
+  });
+
+  it("integer mode shrinks css below backing/dpr at fractional dpr", () => {
+    const s = computeScaling("integer", W, H, 0.5, 1.25);
+    expect(s.backingW).toBe(960);
+    expect(s.cssW).toBe(480);
+    expect(s.cssH).toBe(320);
   });
 
   it("fractional mode snaps scale down to 0.25 steps", () => {

@@ -18,11 +18,16 @@ export function computeScaling(
 ): CanvasFit {
   if (mode === "integer") {
     const factor = Math.max(1, Math.floor(fit * dpr));
+    const backingW = logicalW * factor;
+    const backingH = logicalH * factor;
+    // The smallest whole factor is 1, so when fit*dpr < 1 the backing store is bigger than the
+    // viewport. Show it at the fitted size instead of pushing the canvas off screen; the extra
+    // backing pixels are downsampled by the browser.
     return {
-      cssW: (logicalW * factor) / dpr,
-      cssH: (logicalH * factor) / dpr,
-      backingW: logicalW * factor,
-      backingH: logicalH * factor,
+      cssW: Math.min(backingW / dpr, logicalW * fit),
+      cssH: Math.min(backingH / dpr, logicalH * fit),
+      backingW,
+      backingH,
     };
   }
   if (mode === "fractional") {
