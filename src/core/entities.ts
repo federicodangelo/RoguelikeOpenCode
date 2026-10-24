@@ -184,6 +184,7 @@ export function spawnMonsters(map: GameMap, rng: RNG, depth: number): Entity[] {
   }
 
   const available = MONSTER_KINDS.filter((k) => k.minDepth <= depth);
+  if (available.length === 0) return [];
   const count = Math.min(3 + depth, candidates.length);
   const monsters: Entity[] = [];
   let next = 0;

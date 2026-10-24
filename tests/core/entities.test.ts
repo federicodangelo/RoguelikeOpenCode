@@ -171,4 +171,9 @@ describe("spawnMonsters", () => {
       expect(map.items.some((i) => i.x === m.x && i.y === m.y)).toBe(false);
     }
   });
+
+  it("spawns nothing when no monster kind is legal for the depth", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    expect(spawnMonsters(map, new RNG(3), 0)).toEqual([]);
+  });
 });

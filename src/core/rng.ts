@@ -18,6 +18,7 @@ export class RNG {
   }
 
   pick<T>(arr: readonly T[]): T {
+    if (arr.length === 0) throw new RangeError("RNG.pick called with an empty array");
     return arr[this.int(0, arr.length - 1)]!;
   }
 

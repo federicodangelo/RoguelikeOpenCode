@@ -42,4 +42,9 @@ describe("RNG", () => {
     const arr = ["a", "b", "c"];
     for (let i = 0; i < 100; i++) expect(arr).toContain(r.pick(arr));
   });
+
+  it("pick() rejects an empty array instead of handing back undefined as an element", () => {
+    const r = new RNG(11);
+    expect(() => r.pick([])).toThrow(/empty/);
+  });
 });
