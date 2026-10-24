@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Game } from "../../src/core/game.ts";
 import { BASE_SEED } from "../../src/core/constants.ts";
 import { isSavedRun, migrateSavedRun } from "../../src/core/save.ts";
+import { MAP_H, MAP_W } from "../../src/core/mapgen/common.ts";
 import { T } from "../../src/core/tiles.ts";
 
 function validSave(): Record<string, unknown> {
@@ -63,6 +64,139 @@ describe("isSavedRun validation", () => {
     const save = validSave();
     (floorsOf(save)[0]!.map as Record<string, unknown>).items = [{ x: 1, y: 2, tile: T.Gold }];
     expect(isSavedRun(save)).toBe(false);
+  });
+});
+
+describe("isSavedRun numeric bounds", () => {
+  function playerOf(save: Record<string, unknown>): Record<string, unknown> {
+    return save.player as Record<string, unknown>;
+  }
+
+  function mapOf(save: Record<string, unknown>): Record<string, unknown> {
+    return floorsOf(save)[0]!.map as Record<string, unknown>;
+  }
+
+  function monsterOf(save: Record<string, unknown>): Record<string, unknown> {
+    return (floorsOf(save)[0]!.monsters as Record<string, unknown>[])[0]!;
+  }
+
+  function rejects(label: string, patch: (save: Record<string, unknown>) => void): void {
+    it(`rejects ${label}`, () => {
+      const save = validSave();
+      patch(save);
+      expect(isSavedRun(save)).toBe(false);
+    });
+  }
+
+  rejects("a depth below the first floor", (s) => {
+    s.depth = 0;
+  });
+  rejects("a negative depth", (s) => {
+    s.depth = -3;
+  });
+  rejects("a fractional depth", (s) => {
+    s.depth = 2.5;
+  });
+  rejects("a NaN depth", (s) => {
+    s.depth = Number.NaN;
+  });
+  rejects("a floor entry below the first floor", (s) => {
+    floorsOf(s)[0]!.depth = 0;
+  });
+  rejects("negative light turns", (s) => {
+    s.lightTurns = -1;
+  });
+  rejects("fractional light turns", (s) => {
+    s.lightTurns = 1.5;
+  });
+  rejects("negative kills", (s) => {
+    s.kills = -2;
+  });
+  rejects("a fractional run seed", (s) => {
+    s.seed = 1.5;
+  });
+  rejects("a negative rng state", (s) => {
+    s.aiRng = -1;
+  });
+  rejects("a fractional battle rng state", (s) => {
+    s.battleRng = 2.5;
+  });
+  rejects("a player healed past their maximum", (s) => {
+    playerOf(s).hp = (playerOf(s).maxHp as number) + 1;
+  });
+  rejects("a player with negative hp", (s) => {
+    playerOf(s).hp = -5;
+  });
+  rejects("fractional hp", (s) => {
+    playerOf(s).hp = 3.5;
+  });
+  rejects("a zero maximum hp", (s) => {
+    playerOf(s).maxHp = 0;
+  });
+  rejects("a player level below the first level", (s) => {
+    playerOf(s).level = 0;
+  });
+  rejects("negative skill points", (s) => {
+    playerOf(s).skillPoints = -1;
+  });
+  rejects("negative attack", (s) => {
+    playerOf(s).atk = -7;
+  });
+  rejects("a monster standing outside the map", (s) => {
+    monsterOf(s).x = MAP_W + 5;
+  });
+  rejects("fractional monster coordinates", (s) => {
+    monsterOf(s).y = 4.5;
+  });
+  rejects("a monster with hp past its maximum", (s) => {
+    const m = monsterOf(s);
+    m.hp = (m.maxHp as number) + 1;
+  });
+  rejects("a status with negative turns", (s) => {
+    playerOf(s).statuses = [{ kind: "poison", turns: -1, power: 1 }];
+  });
+  rejects("a status with negative power", (s) => {
+    playerOf(s).statuses = [{ kind: "poison", turns: 2, power: -3 }];
+  });
+  rejects("a spawn point outside the map", (s) => {
+    mapOf(s).spawn = { x: -1, y: 5 };
+  });
+  rejects("map dimensions that are not the map size", (s) => {
+    mapOf(s).width = 4;
+  });
+  rejects("map rows that are not the map width", (s) => {
+    (mapOf(s).cells as unknown[][])[0] = [];
+  });
+  rejects("an explored index outside the grid", (s) => {
+    floorsOf(s)[0]!.explored = [-1];
+  });
+  rejects("an explored index past the last cell", (s) => {
+    floorsOf(s)[0]!.explored = [MAP_W * MAP_H];
+  });
+  rejects("fractional gold", (s) => {
+    (s.inventory as Record<string, unknown>).gold = 1.5;
+  });
+  rejects("negative gold", (s) => {
+    (s.inventory as Record<string, unknown>).gold = -10;
+  });
+  rejects("a consumable stack with no charges", (s) => {
+    (s.inventory as Record<string, unknown>).consumables = [
+      { kind: "potion", variant: "minor potion", quality: "common", tile: T.Potion, stat: 5, count: 0 },
+    ];
+  });
+  rejects("a consumable stack with fractional charges", (s) => {
+    (s.inventory as Record<string, unknown>).consumables = [
+      { kind: "potion", variant: "minor potion", quality: "common", tile: T.Potion, stat: 5, count: 1.5 },
+    ];
+  });
+  rejects("an equipped weapon with a fractional stat", (s) => {
+    (s.inventory as { equipment: Record<string, unknown> }).equipment.weapon = {
+      kind: "weapon",
+      variant: "dagger",
+      quality: "common",
+      tile: T.Dagger,
+      stat: 2.5,
+    };
   });
 });
 
@@ -151,6 +285,9 @@ describe("save seed and migration", () => {
     const save = validSave();
     save.version = 4;
     const map = floorsOf(save)[0]!.map as Record<string, unknown>;
+    // The toy grid has to agree with the map's own dimensions.
+    map.width = 5;
+    map.height = 4;
     map.cells = [
       ["wall", "wall", "wall", "wall", "wall"],
       ["wall", "trap", "floor", "trap", "wall"],

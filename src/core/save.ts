@@ -1,6 +1,6 @@
 import type { Entity } from "./entities.ts";
 import type { Inventory } from "./items.ts";
-import type { GameMap } from "./mapgen/common.ts";
+import { MAP_H, MAP_W, type GameMap } from "./mapgen/common.ts";
 import { BASE_SEED, TORCH_TURNS } from "./constants.ts";
 import { T } from "./tiles.ts";
 
@@ -30,37 +30,69 @@ export interface SavedRun {
   messages: string[];
 }
 
+function isInt(value: unknown): boolean {
+  return typeof value === "number" && Number.isInteger(value);
+}
+
+function isNonNegativeInt(value: unknown): boolean {
+  return isInt(value) && (value as number) >= 0;
+}
+
+function isCoord(value: unknown, limit: number): boolean {
+  return isInt(value) && (value as number) >= 0 && (value as number) < limit;
+}
+
+function isHp(value: unknown, maxHp: unknown): boolean {
+  return (
+    isInt(value) &&
+    isInt(maxHp) &&
+    (maxHp as number) >= 1 &&
+    (value as number) >= 0 &&
+    (value as number) <= (maxHp as number)
+  );
+}
+
+function isPositiveInt(value: unknown): boolean {
+  return isInt(value) && (value as number) >= 1;
+}
+
 function isPoint(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const p = value as Record<string, unknown>;
-  return typeof p.x === "number" && typeof p.y === "number";
+  return isCoord(p.x, MAP_W) && isCoord(p.y, MAP_H);
+}
+
+function isStatusShape(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const s = value as Record<string, unknown>;
+  return typeof s.kind === "string" && isNonNegativeInt(s.turns) && isNonNegativeInt(s.power);
 }
 
 function isEntityShape(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const e = value as Record<string, unknown>;
   return (
-    typeof e.id === "number" &&
+    isNonNegativeInt(e.id) &&
     typeof e.name === "string" &&
-    typeof e.x === "number" &&
-    typeof e.y === "number" &&
-    typeof e.hp === "number" &&
-    typeof e.maxHp === "number" &&
-    typeof e.atk === "number" &&
-    typeof e.def === "number" &&
-    typeof e.baseAtk === "number" &&
-    typeof e.baseDef === "number" &&
-    typeof e.sprite === "number" &&
+    isCoord(e.x, MAP_W) &&
+    isCoord(e.y, MAP_H) &&
+    isHp(e.hp, e.maxHp) &&
+    isNonNegativeInt(e.atk) &&
+    isNonNegativeInt(e.def) &&
+    isNonNegativeInt(e.baseAtk) &&
+    isNonNegativeInt(e.baseDef) &&
+    isNonNegativeInt(e.sprite) &&
     typeof e.isPlayer === "boolean" &&
     typeof e.alive === "boolean" &&
-    typeof e.xp === "number" &&
-    typeof e.level === "number" &&
-    typeof e.xpValue === "number" &&
-    typeof e.skillPoints === "number" &&
+    isNonNegativeInt(e.xp) &&
+    isPositiveInt(e.level) &&
+    isNonNegativeInt(e.xpValue) &&
+    isNonNegativeInt(e.skillPoints) &&
     typeof e.archetype === "string" &&
-    typeof e.speed === "number" &&
-    typeof e.range === "number" &&
-    Array.isArray(e.statuses)
+    isPositiveInt(e.speed) &&
+    isNonNegativeInt(e.range) &&
+    Array.isArray(e.statuses) &&
+    e.statuses.every(isStatusShape)
   );
 }
 
@@ -68,26 +100,17 @@ function isGameMapShape(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const m = value as Record<string, unknown>;
   return (
-    typeof m.width === "number" &&
-    typeof m.height === "number" &&
+    isPositiveInt(m.width) &&
+    isPositiveInt(m.height) &&
     Array.isArray(m.cells) &&
-    m.cells.every((row) => Array.isArray(row) && row.every((c) => typeof c === "string")) &&
+    m.cells.length === m.height &&
+    m.cells.every((row) => Array.isArray(row) && row.length === m.width && row.every((c) => typeof c === "string")) &&
     Array.isArray(m.rooms) &&
     isPoint(m.spawn) &&
     isPoint(m.stairs) &&
     (m.upStairs === null || isPoint(m.upStairs)) &&
     Array.isArray(m.items) &&
-    m.items.every((it) => {
-      if (!isPoint(it)) return false;
-      const i = it as Record<string, unknown>;
-      return (
-        typeof i.kind === "string" &&
-        typeof i.variant === "string" &&
-        typeof i.quality === "string" &&
-        typeof i.tile === "number" &&
-        typeof i.stat === "number"
-      );
-    }) &&
+    m.items.every((it) => isPoint(it) && isItemInstanceShape(it)) &&
     typeof m.algorithm === "string"
   );
 }
@@ -99,9 +122,9 @@ function isItemInstanceShape(value: unknown): boolean {
     typeof i.kind === "string" &&
     typeof i.variant === "string" &&
     typeof i.quality === "string" &&
-    typeof i.tile === "number" &&
-    typeof i.stat === "number" &&
-    (i.uid === undefined || typeof i.uid === "number")
+    isNonNegativeInt(i.tile) &&
+    isInt(i.stat) &&
+    (i.uid === undefined || isNonNegativeInt(i.uid))
   );
 }
 
@@ -112,9 +135,9 @@ function isConsumableStackShape(value: unknown): boolean {
     typeof s.kind === "string" &&
     typeof s.variant === "string" &&
     typeof s.quality === "string" &&
-    typeof s.tile === "number" &&
-    typeof s.stat === "number" &&
-    typeof s.count === "number"
+    isNonNegativeInt(s.tile) &&
+    isInt(s.stat) &&
+    isPositiveInt(s.count)
   );
 }
 
@@ -123,7 +146,7 @@ function isInventoryShape(value: unknown): boolean {
   const inv = value as Record<string, unknown>;
   const eq = inv.equipment;
   return (
-    typeof inv.gold === "number" &&
+    isNonNegativeInt(inv.gold) &&
     Array.isArray(inv.consumables) &&
     inv.consumables.every(isConsumableStackShape) &&
     Array.isArray(inv.carried) &&
@@ -139,12 +162,12 @@ function isSavedFloorShape(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const f = value as Record<string, unknown>;
   return (
-    typeof f.depth === "number" &&
+    isPositiveInt(f.depth) &&
     isGameMapShape(f.map) &&
     Array.isArray(f.monsters) &&
     f.monsters.every(isEntityShape) &&
     Array.isArray(f.explored) &&
-    f.explored.every((n) => typeof n === "number")
+    f.explored.every((n) => isNonNegativeInt(n) && (n as number) < MAP_W * MAP_H)
   );
 }
 
@@ -336,17 +359,17 @@ export function isSavedRun(value: unknown): value is SavedRun {
   const v = value as Partial<SavedRun>;
   return (
     v.version === SAVE_VERSION &&
-    typeof v.seed === "number" &&
-    typeof v.depth === "number" &&
-    typeof v.kills === "number" &&
+    isInt(v.seed) &&
+    isPositiveInt(v.depth) &&
+    isNonNegativeInt(v.kills) &&
     typeof v.gameOver === "boolean" &&
     (v.screen === "title" || v.screen === "game") &&
     isEntityShape(v.player) &&
     isInventoryShape(v.inventory) &&
-    typeof v.lightTurns === "number" &&
+    isNonNegativeInt(v.lightTurns) &&
     typeof v.godMode === "boolean" &&
-    typeof v.aiRng === "number" &&
-    typeof v.battleRng === "number" &&
+    isNonNegativeInt(v.aiRng) &&
+    isNonNegativeInt(v.battleRng) &&
     Array.isArray(v.floors) &&
     v.floors.every(isSavedFloorShape) &&
     Array.isArray(v.messages) &&
