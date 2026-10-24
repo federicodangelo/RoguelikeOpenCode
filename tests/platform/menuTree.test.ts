@@ -292,6 +292,36 @@ describe("inventory menu", () => {
     expect(game.inventory.consumables[0]!.variant).toBe("minor potion");
   });
 
+  it("keeps two stacks of the same potion variant as separate rows", () => {
+    const game = new Game();
+    game.monstersByFloor.set(game.depth, []);
+    game.inventory.consumables.push(
+      { kind: "potion", variant: "minor potion", quality: "common", tile: T.Potion, stat: 5, count: 1 },
+      { kind: "potion", variant: "minor potion", quality: "uncommon", tile: T.MajorPotion, stat: 8, count: 1 },
+    );
+    game.player.hp = 1;
+    const menu = makeMenu(game);
+    menu.open();
+
+    menu.index = menu.entries().findIndex((entry) => entry.label === "Inventory");
+    menu.enter();
+
+    const potionRows = menu.entries().filter((entry) => entry.label.startsWith("Potions:"));
+    expect(potionRows.length).toBe(2);
+    expect(new Set(potionRows.map((entry) => entry.id)).size).toBe(2);
+
+    const stronger = menu.entries().findIndex((entry) => entry.id === "stack-potion-minor potion-uncommon");
+    expect(stronger).toBeGreaterThanOrEqual(0);
+    menu.index = stronger;
+    menu.enter();
+    menu.index = menu.entries().findIndex((entry) => entry.label === "Drink");
+    menu.enter();
+
+    expect(game.player.hp).toBe(9);
+    expect(game.inventory.consumables.length).toBe(1);
+    expect(game.inventory.consumables[0]!.quality).toBe("common");
+  });
+
   it("lights torches with enter", () => {
     const game = new Game();
     game.monstersByFloor.set(game.depth, []);

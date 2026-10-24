@@ -126,8 +126,11 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
           const group = isPotion ? "Potions" : "Torches";
           const verb = isPotion ? "Drink" : "Light";
           const benefit = isPotion ? `+${stack.stat} HP` : `+${stack.stat} light turns`;
+          // Quality belongs in the id: two stacks of the same potion at different quality are
+          // different rows, and a shared id makes the stronger one unreachable.
+          const stackId = `stack-${stack.kind}-${stack.variant}-${stack.quality}`;
           entries.push({
-            id: `stack-${stack.kind}-${stack.variant}`,
+            id: stackId,
             label: `${group}: ${stack.variant} x${stack.count}`,
             color: qualityColor(stack.quality),
             hint: [
@@ -139,7 +142,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
               const kids: MenuEntry[] = [];
               if (inv.consumables.includes(stack)) {
                 kids.push({
-                  id: `stack-${stack.kind}-${stack.variant}-use`,
+                  id: `${stackId}-use`,
                   label: verb,
                   hint: isPotion
                     ? [benefit, `Current HP: ${game.player.hp}/${game.player.maxHp}`]
@@ -147,7 +150,7 @@ export function buildMenuTree(game: Game, settings: Settings, actions: MenuTreeA
                   action: consumeBack(() => (isPotion ? game.drink(stack) : game.useTorch(stack))),
                 });
                 kids.push({
-                  id: `stack-${stack.kind}-${stack.variant}-drop`,
+                  id: `${stackId}-drop`,
                   label: "Drop one",
                   hint: "Enter: leave one on the ground",
                   action: consumeBack(() => game.dropConsumable(stack)),
