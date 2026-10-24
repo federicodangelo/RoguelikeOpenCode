@@ -143,6 +143,18 @@ describe("monsterStep", () => {
     expect(m.shootCooldown).toBe(3);
   });
 
+  it("reports a shot so the caller can show the arrow and word the message", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const archer = monster(13, 10, { name: "archer", archetype: "ranged", range: 5, sprite: T.Archer });
+    const context = { player, map, rng: new RNG(1), dist: chaseDistances(map, player), monsters: [archer] };
+
+    expect(monsterStep(archer, context)).toEqual({ kind: "shot" });
+    expect(monsterStep(archer, context)).toBeNull();
+    expect(monsterStep(monster(12, 10, { name: "rat" }), context)).toBeNull();
+    expect(player.hp).toBeLessThan(12);
+  });
+
   it("reloading ranged monsters back away when adjacent", () => {
     const map = mkMap(openInterior(), { x: 10, y: 10 });
     const player = makePlayer(10, 10);

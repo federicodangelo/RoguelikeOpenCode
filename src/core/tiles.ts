@@ -24,6 +24,8 @@ export const T = {
   Warlock: 19,
   Demon: 20,
   Torch: 21,
+  // Reserved sprite slot for an arrow in flight. Nothing draws it yet, but saved runs store
+  // tile indices, so the entry has to keep its number.
   Projectile: 22,
   Dagger: 23,
   LongSword: 24,

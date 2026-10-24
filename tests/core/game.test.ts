@@ -186,6 +186,45 @@ describe("Game status effects", () => {
     expect(rat.statuses.find((s) => s.kind === "fear")?.turns).toBe(3);
   });
 
+  it("shows when a ranged monster shoots instead of only the damage it lands", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const archer = monster(game.player.x + 3, game.player.y, {
+      name: "archer",
+      archetype: "ranged",
+      range: 5,
+      sprite: T.Archer,
+    });
+    game.monstersByFloor.get(game.depth)!.push(archer);
+    game.effects.length = 0;
+
+    game.monstersAct();
+
+    const shot = game.effects.find((e) => e.x === archer.x && e.y === archer.y);
+    expect(shot?.text).toBe("*");
+    expect(game.messages.at(game.messages.length - 1)).toContain("shoots you for");
+  });
+
+  it("marks only the turn an arrow actually left the bow", () => {
+    const game = new Game();
+    game.map.cells = openInterior();
+    game.monstersByFloor.set(game.depth, []);
+    const archer = monster(game.player.x + 3, game.player.y, {
+      name: "archer",
+      archetype: "ranged",
+      range: 5,
+      sprite: T.Archer,
+    });
+    game.monstersByFloor.get(game.depth)!.push(archer);
+
+    game.monstersAct();
+    game.effects.length = 0;
+    game.monstersAct();
+
+    expect(game.effects.some((e) => e.x === archer.x && e.y === archer.y)).toBe(false);
+  });
+
   it("bleeding from a boss hit lasts its full turns", () => {
     const game = new Game();
     game.map.cells = openInterior();

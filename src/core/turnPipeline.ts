@@ -66,7 +66,7 @@ export function runMonsterTurn(ctx: TurnContext): void {
   for (const m of ctx.monsters()) {
     if (!m.alive) continue;
     const before = ctx.player.hp;
-    monsterStep(m, {
+    const acted = monsterStep(m, {
       player: ctx.player,
       map: ctx.map,
       rng: ctx.aiRng,
@@ -74,10 +74,16 @@ export function runMonsterTurn(ctx: TurnContext): void {
       monsters: ctx.monsters(),
     });
     ctx.protectPlayer();
-    if (ctx.player.hp < before) {
-      const verb = m.archetype === "ranged" ? "shoots" : "hits";
-      ctx.logMessage(`The ${m.name} ${verb} you for ${before - ctx.player.hp}.`);
-      ctx.spawnEffect(ctx.player.x, ctx.player.y, `-${before - ctx.player.hp}`, "#ff6a6a");
+    const damage = before - ctx.player.hp;
+    const shot = acted?.kind === "shot";
+    if (shot) {
+      // Arrows have no sprite of their own, so flash the cell the shot left; the damage
+      // number is spawned after it so the number wins if both share a cell.
+      ctx.spawnEffect(m.x, m.y, "*", "#ffd166");
+    }
+    if (damage > 0) {
+      ctx.logMessage(`The ${m.name} ${shot ? "shoots" : "hits"} you for ${damage}.`);
+      ctx.spawnEffect(ctx.player.x, ctx.player.y, `-${damage}`, "#ff6a6a");
       ctx.playerFlashUntil = ctx.clock() + 250;
       ctx.events.hurt?.();
 

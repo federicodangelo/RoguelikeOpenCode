@@ -88,16 +88,23 @@ function seesWithinLight(map: GameMap, m: Entity, player: Entity): boolean {
   return hasLineOfSight(map, m.x, m.y, player.x, player.y);
 }
 
-export function monsterStep(m: Entity, ctx: MonsterContext): void {
+/**
+ * What the monster actually did during its step. The turn pipeline needs this to word and draw
+ * the action correctly: a ranged monster is not always the one that shot, and a shot has to be
+ * visible even when it is the same damage formula as a blow.
+ */
+export type MonsterAction = { kind: "shot" };
+
+export function monsterStep(m: Entity, ctx: MonsterContext): MonsterAction | null {
   const { player, map, rng, dist, monsters } = ctx;
-  if (hasStatus(m, "stun")) return;
+  if (hasStatus(m, "stun")) return null;
 
   const seesPlayer = seesWithinLight(map, m, player);
   const myDist = dist[m.y * MAP_W + m.x] ?? -1;
 
   if (hasStatus(m, "fear")) {
     moveAway(m, player, map, dist, monsters);
-    return;
+    return null;
   }
 
   if (seesPlayer && myDist !== -1) {
@@ -107,12 +114,12 @@ export function monsterStep(m: Entity, ctx: MonsterContext): void {
         m.shootCooldown = cooldown - 1;
         const adjacent = DIRS4.some(([dx, dy]) => m.x + dx === player.x && m.y + dy === player.y);
         if (adjacent) moveAway(m, player, map, dist, monsters);
-        return;
+        return null;
       }
       if (myDist <= m.range) {
         m.shootCooldown = SHOOT_COOLDOWN;
         attack(rng, m, player);
-        return;
+        return { kind: "shot" };
       }
     }
 
@@ -120,19 +127,20 @@ export function monsterStep(m: Entity, ctx: MonsterContext): void {
       const adjacent = DIRS4.some(([dx, dy]) => m.x + dx === player.x && m.y + dy === player.y);
       if (adjacent) {
         attack(rng, m, player);
-        return;
+        return null;
       }
       if (!moveTowards(m, player, map, dist, monsters)) break;
     }
-    return;
+    return null;
   }
 
   if (rng.next() < 0.5) {
     const [dx, dy] = rng.pick(DIRS4);
     const nx = m.x + dx;
     const ny = m.y + dy;
-    if (!canMove(m, nx, ny, player, map, monsters)) return;
+    if (!canMove(m, nx, ny, player, map, monsters)) return null;
     m.x = nx;
     m.y = ny;
   }
+  return null;
 }
