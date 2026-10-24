@@ -52,6 +52,35 @@ describe("Game torches", () => {
     game.monstersAct();
     expect(game.lightTurns).toBe(TORCH_TURNS - 1);
   });
+
+  it("lighting a torch never shortens the light already burning", () => {
+    const game = new Game();
+    const stub: ConsumableStack = {
+      kind: "torch",
+      variant: "torch stub",
+      quality: "common",
+      tile: T.Torch,
+      stat: 5,
+      count: 1,
+    };
+    const lantern: ConsumableStack = {
+      kind: "torch",
+      variant: "bullseye lantern",
+      quality: "common",
+      tile: T.Torch,
+      stat: TORCH_TURNS,
+      count: 1,
+    };
+    game.inventory.consumables.push(stub, lantern);
+    game.lightTurns = 10;
+
+    expect(game.useTorch(stub)).toBe(true);
+    expect(stub.count).toBe(0);
+    expect(game.lightTurns).toBe(10);
+
+    expect(game.useTorch(lantern)).toBe(true);
+    expect(game.lightTurns).toBe(TORCH_TURNS);
+  });
 });
 
 describe("Game drinking", () => {

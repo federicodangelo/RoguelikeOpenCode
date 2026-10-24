@@ -404,7 +404,8 @@ export class Game {
     if (!target) return false;
     const result = useTorch(this.inventory, target);
     if (!result) return false;
-    this.lightTurns = result.turns;
+    // The item is spent either way, so a weaker torch must not cut the light that is already burning.
+    this.lightTurns = Math.max(this.lightTurns, result.turns);
     this.logMessage(`${result.message} Your light radius expands for ${result.turns} turns.`);
     this.events.pickup?.();
     return true;
