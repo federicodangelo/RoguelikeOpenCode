@@ -45,6 +45,32 @@ describe("chaseDistances", () => {
 });
 
 describe("monsterStep", () => {
+  it("chases a player at the edge of the light radius without taking a random step", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(10, 18);
+    const rng = new RNG(1);
+    const before = rng.getState();
+
+    monsterStep(m, { player, map, rng, dist: chaseDistances(map, player), monsters: [m] });
+
+    expect(m.y).toBe(17);
+    expect(rng.getState()).toBe(before);
+  });
+
+  it("wanders instead of chasing a player standing outside the light radius", () => {
+    const map = mkMap(openInterior(), { x: 10, y: 10 });
+    const player = makePlayer(10, 10);
+    const m = monster(10, 19);
+    const rng = new RNG(1);
+    const before = rng.getState();
+
+    monsterStep(m, { player, map, rng, dist: chaseDistances(map, player), monsters: [m] });
+
+    expect(player.hp).toBe(12);
+    expect(rng.getState()).not.toBe(before);
+  });
+
   it("attacks the player when adjacent and visible", () => {
     const map = mkMap(openInterior(), { x: 10, y: 10 });
     const player = makePlayer(10, 10);

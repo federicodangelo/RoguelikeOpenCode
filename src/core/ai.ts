@@ -1,7 +1,7 @@
 import { RNG } from "./rng.ts";
 import { attack, type Entity } from "./entities.ts";
 import { bfsDistances, MAP_W, type GameMap } from "./mapgen/common.ts";
-import { computeFOV } from "./fov.ts";
+import { FOV_RADIUS, hasLineOfSight } from "./fov.ts";
 import { effectiveSpeed, hasStatus } from "./status.ts";
 
 const DIRS4: [number, number][] = [
@@ -77,11 +77,22 @@ function moveAway(m: Entity, player: Entity, map: GameMap, dist: Int32Array, mon
   return true;
 }
 
+/**
+ * Sight test for one monster. The light radius caps how far a monster notices the player, and
+ * a single ray is cheaper than the per-monster field of view the shadowcaster would give us.
+ */
+function seesWithinLight(map: GameMap, m: Entity, player: Entity): boolean {
+  const dx = player.x - m.x;
+  const dy = player.y - m.y;
+  if (dx * dx + dy * dy > FOV_RADIUS * FOV_RADIUS) return false;
+  return hasLineOfSight(map, m.x, m.y, player.x, player.y);
+}
+
 export function monsterStep(m: Entity, ctx: MonsterContext): void {
   const { player, map, rng, dist, monsters } = ctx;
   if (hasStatus(m, "stun")) return;
 
-  const seesPlayer = computeFOV(map, m.x, m.y).has(player.y * MAP_W + player.x);
+  const seesPlayer = seesWithinLight(map, m, player);
   const myDist = dist[m.y * MAP_W + m.x] ?? -1;
 
   if (hasStatus(m, "fear")) {
