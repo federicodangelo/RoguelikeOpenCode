@@ -283,6 +283,12 @@ export class GameAudio {
       return;
     }
 
+    if (this.nextMusicTime < this.ctx.currentTime) {
+      // A throttled tab starves the scheduler timer, so the step clock can be minutes behind the
+      // audio clock. Resync it: everything scheduled from a stale time would start now, playing
+      // every missed step at once as one burst.
+      this.nextMusicTime = this.ctx.currentTime;
+    }
     const lookaheadEnd = this.ctx.currentTime + MUSIC_LOOKAHEAD_SECONDS;
     while (this.nextMusicTime < lookaheadEnd) {
       this.musicTick(this.nextMusicTime);

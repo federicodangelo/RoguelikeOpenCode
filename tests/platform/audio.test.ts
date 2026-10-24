@@ -252,6 +252,42 @@ describe("game audio", () => {
     }
   });
 
+  it("resyncs the music clock after a throttled tab instead of dumping every missed step", () => {
+    const previousWindow = (globalThis as { window?: unknown }).window;
+    const previousContextCount = createdAudioContexts.length;
+    const scheduled: (() => void)[] = [];
+
+    (globalThis as { window?: unknown }).window = {
+      AudioContext: FakeAudioContext as unknown as typeof AudioContext,
+      setTimeout: (callback: () => void) => {
+        scheduled.push(callback);
+        return scheduled.length;
+      },
+      clearTimeout: () => {},
+    };
+
+    try {
+      const audio = new GameAudio();
+      audio.startMusic();
+      const context = createdAudioContexts[previousContextCount]!;
+      const before = context.createdOscillators.length;
+      expect(scheduled.length).toBe(1);
+
+      // A backgrounded tab freezes the scheduler timer: the audio clock races ahead while the
+      // next step time stays put. The pending pass must not schedule every missed step at once.
+      context.currentTime = 120;
+      scheduled[0]!();
+
+      const scheduledSteps = context.createdOscillators.length - before;
+      expect(scheduledSteps).toBeLessThan(20);
+      expect(scheduled.length).toBe(2);
+
+      audio.stopMusic();
+    } finally {
+      (globalThis as { window?: unknown }).window = previousWindow;
+    }
+  });
+
   it("fades and restarts music when the music context changes", () => {
     const previousWindow = (globalThis as { window?: unknown }).window;
     const scheduled: (() => void)[] = [];
